@@ -11,11 +11,5 @@ public partial class Slot
 
     public TimeOnly EndTime { get; set; }
 
-    public byte Weekdays { get; set; }
-
-    public int Clinic { get; set; }
-
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-
-    public virtual Clinic ClinicNavigation { get; set; } = null!;
+    public virtual ICollection<ScheduledSlot> ScheduledSlots { get; set; } = new List<ScheduledSlot>();
 }

@@ -9,29 +9,31 @@ public partial class Clinic
 
     public string Name { get; set; } = null!;
 
+    public string Address { get; set; } = null!;
+
+    public TimeOnly OpenHour { get; set; }
+
+    public TimeOnly CloseHour { get; set; }
+
     public string? Description { get; set; }
 
-    public string? Address { get; set; }
+    public string Email { get; set; } = null!;
 
-    public int Owner { get; set; }
+    public string Phone { get; set; } = null!;
 
-    public string? Phone { get; set; }
+    public bool Status { get; set; }
 
-    public string? Email { get; set; }
+    public int OwnerId { get; set; }
 
-    public int Status { get; set; }
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
-    public TimeOnly? OpenHour { get; set; }
-
-    public TimeOnly? CloseHour { get; set; }
+    public virtual ICollection<Certification> Certifications { get; set; } = new List<Certification>();
 
     public virtual ICollection<ClinicService> ClinicServices { get; set; } = new List<ClinicService>();
 
-    public virtual User OwnerNavigation { get; set; } = null!;
+    public virtual ICollection<ClinicStaff> ClinicStaffs { get; set; } = new List<ClinicStaff>();
 
-    public virtual ICollection<Slot> Slots { get; set; } = new List<Slot>();
+    public virtual User Owner { get; set; } = null!;
 
-    public virtual Status StatusNavigation { get; set; } = null!;
-
-    public virtual ICollection<User> Users { get; set; } = new List<User>();
+    public virtual ICollection<ScheduledSlot> ScheduledSlots { get; set; } = new List<ScheduledSlot>();
 }

@@ -9,6 +9,7 @@ using Repositories;
 using Repositories.Models;
 using Services.EmailSerivce;
 using Services.JwtManager;
+using Services.TokenManager;
 using System.Net;
 using System.Security.Claims;
 using System.Text;
@@ -139,16 +140,13 @@ namespace WebAPI.Controllers
             UserInfoModel userInfo = new UserInfoModel()
             {
                 Id = user.UserId,
-                Username = user.Username,
-                Email = user.Email,
+                Username = user.Username ?? null,
+                Email = user.Email ?? null,
                 Fullname = user.Fullname ?? null,
                 JoinedDate = user.CreationDate,
-                Phone = user.Phone ?? null,
-                ProfilePicture = user.ProfilePic ?? null,
+                Phone = user.PhoneNumber ?? null,
                 Role = claims.Claims.First(claim => claim.Type == ClaimTypes.Role).Value,
                 Status = claims.Claims.First(claim => claim.Type == "status").Value,
-                Clinic = user.ClinicDentist ?? null,
-                Insurance = user.Insurance ?? null
             };
 
             return Ok(userInfo);
@@ -176,8 +174,8 @@ namespace WebAPI.Controllers
                     Username = requestObject.Username,
                     Password = requestObject.Password,
                     Email = requestObject.Email,
-                    Role = 4,
-                    Status = 3
+                    Status = true,
+                    RoleId = 3,
                 };
                 _unitOfWork.UserRepository.Add(newUser);
                 _unitOfWork.Save();
@@ -216,10 +214,9 @@ namespace WebAPI.Controllers
                 {
                     OldInfo!.Fullname = UpdatedInfo.Fullname;
                     OldInfo.Email = UpdatedInfo.Email;
-                    OldInfo.Phone = UpdatedInfo.Phone ?? OldInfo.Phone;
-                    OldInfo.Role = _unitOfWork.GetRoleByName(UpdatedInfo.Role)?.RoleId ?? OldInfo.Role;
-                    OldInfo.Status = _unitOfWork.GetStatusByName(UpdatedInfo.Status)?.StatusId ?? OldInfo.Status;
-                    OldInfo.Insurance = UpdatedInfo.Insurance ?? OldInfo.Insurance;
+                    OldInfo.PhoneNumber = UpdatedInfo.Phone ?? OldInfo.PhoneNumber;
+                    //OldInfo.Role = _unitOfWork.GetRoleByName(UpdatedInfo.Role)?.RoleId ?? OldInfo.Role;
+                    //OldInfo.Status = _unitOfWork.GetStatusByName(UpdatedInfo.Status)?.StatusId ?? OldInfo.Status;
 
                     _unitOfWork.UserRepository.Update(OldInfo);
                     _unitOfWork.Save();

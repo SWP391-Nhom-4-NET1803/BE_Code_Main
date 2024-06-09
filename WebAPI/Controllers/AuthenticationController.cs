@@ -46,12 +46,12 @@ namespace WebAPI.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return this.BadRequest(new HttpErrorResponse() { statusCode=401, message="người dùng không chưa đăng kí trong hệ thống."});
+                    return this.BadRequest(new HttpErrorResponse() { statusCode = 401, message = "người dùng không chưa đăng kí trong hệ thống." });
                 }
             }
             else
             {
-                return BadRequest(new HttpErrorResponse(){statusCode=401, message="Username or Password is invalid."});
+                return BadRequest(new HttpErrorResponse() { statusCode = 401, message = "Username or Password is invalid." });
             }
         }
 
@@ -80,12 +80,12 @@ namespace WebAPI.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(new HttpErrorResponse(){statusCode=500,message=ex.Message});
+                    return BadRequest(new HttpErrorResponse() { statusCode = 500, message = ex.Message });
                 }
             }
             else
             {
-                return BadRequest(new HttpErrorResponse(){statusCode=401,message="Người dùng không đăng kí trong hệ thống"});
+                return BadRequest(new HttpErrorResponse() { statusCode = 401, message = "Người dùng không đăng kí trong hệ thống" });
             }
         }
 
@@ -157,12 +157,12 @@ namespace WebAPI.Controllers
             if (user != null)
             {
 
-                if (user.Status == 1)
+                if (user.Status == true)
                 {
-                    return BadRequest(new HttpErrorResponse() { statusCode=400, message="Tài khoản người dùng này đã được kích hoạt."});
+                    return BadRequest(new HttpErrorResponse() { statusCode = 400, message = "Tài khoản người dùng này đã được kích hoạt." });
                 }
 
-                user.Status = 1;
+                user.Status = true;
                 _unitOfWork.UserRepository.Update(user);
                 _unitOfWork.Save();
 

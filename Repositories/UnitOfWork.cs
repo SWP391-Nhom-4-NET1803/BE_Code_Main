@@ -14,17 +14,11 @@ namespace Repositories
 
         private GenericRepository<User, int>? _userRepository;
         private GenericRepository<Role, int>? _roleRepository;
-        private GenericRepository<Service, int>? _serviceRepository;
         private GenericRepository<Clinic, int>? _clinicRepository;
-        private GenericRepository<ClinicService, Guid>? _clinicServiceRepository;
-        private GenericRepository<Booking, Guid>? _bookRepository;
-        private GenericRepository<Medium, Guid>? _mediaRepository;
+        private GenericRepository<Service, int>? _serviceRepository;
+        private GenericRepository<ClinicService, int>? _clinicServiceRepository;
         private GenericRepository<Status, int>? _statusRepository;
-        private GenericRepository<Slot, Guid>? _slotRepository;
-        private GenericRepository<Result, Guid>? _resultRepository;
-        private GenericRepository<Payment, Guid>? _paymentRepository;
-        private GenericRepository<Message, Guid>? _messageRepository;
-        private GenericRepository<PaymentType, int>? _paymentTypeRepository;
+
 
         public UnitOfWork(DentalClinicPlatformContext context)
         {
@@ -35,7 +29,7 @@ namespace Repositories
         {
             get
             {
-                if (_statusRepository == null) 
+                if (_statusRepository == null)
                 {
                     this._statusRepository = new GenericRepository<Status, int>(_context);
                 }
@@ -44,7 +38,7 @@ namespace Repositories
             }
         }
 
-        public GenericRepository<User, int> UserRepository 
+        public GenericRepository<User, int> UserRepository
         {
             get
             {
@@ -57,11 +51,50 @@ namespace Repositories
             }
         }
 
+        public GenericRepository<Clinic, int> ClinicRepository
+        {
+            get
+            {
+                if (_clinicRepository == null)
+                {
+                    this._clinicRepository = new GenericRepository<Clinic, int>(_context);
+                }
+
+                return this._clinicRepository;
+            }
+        }
+
+        public GenericRepository<Service, int> ServiceRepository
+        {
+            get
+            {
+                if (_serviceRepository == null)
+                {
+                    this._serviceRepository = new GenericRepository<Service, int>(_context);
+                }
+
+                return this._serviceRepository;
+            }
+        }
+
+        public GenericRepository<ClinicService, int> ClinicServiceRepository
+        {
+            get
+            {
+                if (_clinicServiceRepository == null)
+                {
+                    this._clinicServiceRepository = new GenericRepository<ClinicService, int>(_context);
+                }
+
+                return this._clinicServiceRepository;
+            }
+        }
+
         public GenericRepository<Role, int> RoleRepository
         {
             get
             {
-                if ( _roleRepository == null)
+                if (_roleRepository == null)
                 {
                     this._roleRepository = new GenericRepository<Role, int>(_context);
                 }
@@ -70,135 +103,6 @@ namespace Repositories
             }
         }
 
-        public GenericRepository<Service, int> ServiceRepository
-        {
-            get
-            {
-                if (this._serviceRepository == null)
-                {
-                    this._serviceRepository = new GenericRepository<Service, int>(_context);
-                }
-
-                return _serviceRepository;
-            }
-        }
-
-        public GenericRepository<Clinic, int> ClinicRepository
-        {
-            get 
-            {
-                if (_clinicRepository == null)
-                {
-                    this._clinicRepository = new GenericRepository<Clinic, int>(_context);  
-                }
-
-                return this._clinicRepository;
-            }
-        }
-
-        public GenericRepository<ClinicService, Guid> ClinicServiceRepository
-        {
-            get 
-            { 
-                if (_clinicServiceRepository == null)
-                {
-                    this._clinicServiceRepository = new GenericRepository<ClinicService, Guid>(_context);
-                }
-
-                return _clinicServiceRepository;
-            }
-        }
-
-        public GenericRepository<Booking, Guid> BookingRepository
-        {
-            get
-            {
-                if (_bookRepository == null)
-                {
-                    this._bookRepository = new GenericRepository<Booking, Guid>(_context);
-                }
-
-                return _bookRepository;
-            }
-        }
-
-        public GenericRepository<Medium, Guid> MediaRepository
-        {
-            get
-            {
-                if (this._mediaRepository == null)
-                {
-                    this._mediaRepository = new GenericRepository<Medium, Guid>(_context);
-                }
-
-                return _mediaRepository;
-            }
-        }
-
-        public GenericRepository<Slot, Guid> SlotRepository
-        {
-            get
-            {
-                if ( this._slotRepository == null)
-                {
-                    this._slotRepository = new GenericRepository<Slot, Guid>(_context);
-                }
-
-                return _slotRepository;
-            }
-        }
-
-        public GenericRepository<Result, Guid> ResultRepository
-        {
-            get
-            {
-                if (this._resultRepository == null)
-                {
-                    this._resultRepository = new GenericRepository<Result, Guid>(_context);
-                }
-
-                return _resultRepository;
-            }
-        }
-
-        public GenericRepository<Payment, Guid> PaymentRepository
-        {
-            get
-            {
-                if (this._paymentRepository == null)
-                {
-                    this._paymentRepository = new GenericRepository<Payment, Guid>(_context);
-                }
-
-                return _paymentRepository;
-            }
-        }
-
-        public GenericRepository<PaymentType, int> PaymentTypeRepositoy
-        {
-            get
-            {
-                if (this._paymentTypeRepository == null)
-                {
-                    this._paymentTypeRepository = new GenericRepository<PaymentType, int>(_context);
-                }
-
-                return _paymentTypeRepository;
-            }
-        }
-
-        public GenericRepository<Message, Guid> MessageRepository
-        {
-            get
-            {
-                if (this._messageRepository == null)
-                {
-                    this._messageRepository = new GenericRepository<Message, Guid>(_context);
-                }
-
-                return _messageRepository;
-            }
-        }
 
         /// <summary>
         ///  <para>Kiểm tra thông tin đăng nhập của một người dùng.</para>
@@ -242,6 +146,28 @@ namespace Repositories
             return true;
         }
 
+
+        public bool CheckClinicAvailability(string clinicName, out string message)
+        {
+            List<Clinic> ExistanceList = ClinicRepository.context.Clinics.Where((clinic) => (clinic.Name == clinicName)).ToList();
+
+            foreach (Clinic clinic in ExistanceList)
+            {
+                if (clinic.Name.Equals(clinicName))
+                {
+                    message = "Clinic with this name already existed";
+                    return false;
+                }
+            }
+
+            message = "Clinic is available for creation";
+            return true;
+        }
+
+
+
+        //    return true;
+        //}
         /// <summary>
         ///  <para>Kiểm tra xem người dùng có tồn tại trong hệ thống hay không dựa trên ID của họ trong hệ thống.</para>
         /// </summary>
@@ -286,10 +212,10 @@ namespace Repositories
         /// </summary>
         /// <param name="statusName">Tên của trạng thái</param>
         /// <returns>thông tin trạng thái <see cref="Status"/> trong hệ thống nếu tồn tại, không thì <see cref="Nullable">null</see>.</returns>
-        public Status? GetStatusByName(string statusName)
-        {
-            return _context.Statuses.First(x => x.StatusName == statusName);
-        }
+        //public Status? GetStatusByName(string statusName)
+        //{
+        //    return _context.Statuses.First(x => x.StatusName == statusName);
+        //}
 
         /// <summary>
         ///  Lưu trạng thái hiện tại của context xuống database. (commit changes) <br/>

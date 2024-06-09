@@ -3,12 +3,13 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Repositories;
 using Repositories.Models;
+using Services.JwtManager;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Services.JwtManager
+namespace Services.TokenManager
 {
     /// <summary>
     ///  The Service for creating and validating json web token, refreshing new token.
@@ -40,8 +41,11 @@ namespace Services.JwtManager
             string Issuer = _config.GetValue<string>("JWT:Issuer")!;
 
             // Get User information to put in the token to create user Identity.
-            var userStatus = _unitOfWork.StatusRepository.GetById(user.Status)!;
-            var userRole = _unitOfWork.RoleRepository.GetById(user.Role)!;
+
+            //var userStatus = _unitOfWork.StatusRepository.GetById(user.Status)!;
+
+            var userStatus = true;
+            var userRole = _unitOfWork.RoleRepository.GetById(user.RoleId)!;
 
             var claims = new ClaimsIdentity(new[]
             {
@@ -49,7 +53,8 @@ namespace Services.JwtManager
                 new Claim("username", user.Username),
                 new Claim("email", user.Email),
                 new Claim("role", userRole.RoleName),
-                new Claim("status",userStatus.StatusName),
+
+                //new Claim("status",userStatus.StatusName),
             });
 
             var TokenHandler = new JwtSecurityTokenHandler();

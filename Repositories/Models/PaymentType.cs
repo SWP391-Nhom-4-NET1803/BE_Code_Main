@@ -11,7 +11,7 @@ public partial class PaymentType
 
     public string TypeProviderSecret { get; set; } = null!;
 
-    public string? TypeProviderToken { get; set; }
+    public string TypeProviderToken { get; set; } = null!;
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 }

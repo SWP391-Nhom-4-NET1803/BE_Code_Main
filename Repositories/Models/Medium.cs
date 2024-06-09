@@ -9,11 +9,17 @@ public partial class Medium
 
     public int? MediaPath { get; set; }
 
-    public int Creator { get; set; }
-
     public DateTime CreatedDate { get; set; }
 
-    public virtual User CreatorNavigation { get; set; } = null!;
+    public int TypeId { get; set; }
 
-    public virtual ICollection<Result> Results { get; set; } = new List<Result>();
+    public int CreatorId { get; set; }
+
+    public Guid CertificationId { get; set; }
+
+    public virtual Certification Certification { get; set; } = null!;
+
+    public virtual User Creator { get; set; } = null!;
+
+    public virtual MediaType Type { get; set; } = null!;
 }

@@ -7,27 +7,29 @@ public partial class Booking
 {
     public Guid BookId { get; set; }
 
-    public int Customer { get; set; }
-
-    public int Dentist { get; set; }
-
-    public Guid Slot { get; set; }
-
     public DateOnly AppointmentDate { get; set; }
+
+    public int CustomerId { get; set; }
+
+    public int ClinicId { get; set; }
+
+    public int DentistId { get; set; }
+
+    public Guid ScheduleSlotId { get; set; }
 
     public DateTime CreationDate { get; set; }
 
-    public int Status { get; set; }
+    public bool Status { get; set; }
 
-    public virtual User CustomerNavigation { get; set; } = null!;
+    public string BookingType { get; set; } = null!;
 
-    public virtual User DentistNavigation { get; set; } = null!;
+    public virtual Clinic Clinic { get; set; } = null!;
+
+    public virtual Customer Customer { get; set; } = null!;
+
+    public virtual ClinicStaff Dentist { get; set; } = null!;
 
     public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
-    public virtual ICollection<Result> Results { get; set; } = new List<Result>();
-
-    public virtual Slot SlotNavigation { get; set; } = null!;
-
-    public virtual Status StatusNavigation { get; set; } = null!;
+    public virtual ScheduledSlot ScheduleSlot { get; set; } = null!;
 }

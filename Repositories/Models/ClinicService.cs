@@ -5,13 +5,17 @@ namespace Repositories.Models;
 
 public partial class ClinicService
 {
-    public Guid ClainService { get; set; }
+    public int ClinicServiceId { get; set; }
 
-    public int ServiceserviceId { get; set; }
+    public long? Price { get; set; }
 
-    public int ClinicclinicId { get; set; }
+    public string? Description { get; set; }
 
-    public virtual Clinic Clinicclinic { get; set; } = null!;
+    public int ClinicId { get; set; }
 
-    public virtual Service Serviceservice { get; set; } = null!;
+    public int ServiceId { get; set; }
+
+    public virtual Clinic Clinic { get; set; } = null!;
+
+    public virtual Service Service { get; set; } = null!;
 }

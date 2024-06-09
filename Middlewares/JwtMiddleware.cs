@@ -1,30 +1,34 @@
-﻿//namespace WebAPI.Middlewares
-//{
-//    public class JwtMiddleware
-//    {
-//        private readonly RequestDelegate _next;
+﻿using Microsoft.AspNetCore.Http;
+using Services.JwtManager;
+using Services.TokenManager;
+using System.Linq;
+using System.Threading.Tasks;
 
-//        public JwtMiddleware(RequestDelegate next)
-//        {
-//            _next = next;
-//        }
+namespace WebAPI.Middlewares
+{
+    public class JwtMiddleware
+    {
+        private readonly RequestDelegate _next;
 
-//        public async Task Invoke(HttpContext context, IJwtTokenService tokenManager)
-//        {
-//            string? token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
+        public JwtMiddleware(RequestDelegate next)
+        {
+            _next = next;
+        }
 
-//            // using the Token Manager Service from the Service Collection to validate the token.
-//            var User = tokenManager.ValidateAccessToken(token);
+        public async Task Invoke(HttpContext context, IJwtTokenService tokenManager)
+        {
+            string? token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
-//            // Set the user item for furthur usage down the api endpoint.
-//            if (User != null)
-//            {
-//                context.Items["UserInfo"] = User;
-//            }
+            string validationMessage;
+            var user = tokenManager.ValidateAccessToken(token, out validationMessage);
 
+            // Set the user item for further usage down the API endpoint.
+            if (user != null)
+            {
+                context.Items["UserInfo"] = user;
+            }
 
-
-//            await _next(context);
-//        }
-//    }
-//}
+            await _next(context);
+        }
+    }
+}
