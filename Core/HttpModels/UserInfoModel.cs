@@ -16,7 +16,6 @@ namespace Core.HttpModels
         public string? Phone { get; set; } = string.Empty;
         public string? Fullname { get; set; } = string.Empty;
         public string? ProfilePicture { get; set; } = string.Empty;
-        public string? SocialSecurity {  get; set; } = string.Empty;
         public string? Insurance {  get; set; } = string.Empty;
         public string Role { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;

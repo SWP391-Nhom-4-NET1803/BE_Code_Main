@@ -143,6 +143,7 @@ namespace WebAPI.Controllers
                 Id = user.UserId,
                 Username = user.Username ?? null,
                 Email = user.Email ?? null,
+                ProfilePicture = null,
                 Fullname = user.Fullname ?? null,
                 JoinedDate = user.CreationDate,
                 Phone = user.PhoneNumber ?? null,
