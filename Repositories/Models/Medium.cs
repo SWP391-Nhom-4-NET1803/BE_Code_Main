@@ -15,9 +15,7 @@ public partial class Medium
 
     public int CreatorId { get; set; }
 
-    public Guid CertificationId { get; set; }
-
-    public virtual Certification Certification { get; set; } = null!;
+    public virtual ICollection<Certification> Certifications { get; set; } = new List<Certification>();
 
     public virtual User Creator { get; set; } = null!;
 

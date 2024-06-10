@@ -13,7 +13,9 @@ public partial class Certification
 
     public int ClinicId { get; set; }
 
+    public Guid MediaId { get; set; }
+
     public virtual Clinic Clinic { get; set; } = null!;
 
-    public virtual ICollection<Medium> Media { get; set; } = new List<Medium>();
+    public virtual Medium Media { get; set; } = null!;
 }

@@ -15,11 +15,9 @@ public partial class Payment
 
     public Guid BookingId { get; set; }
 
-    public int PaymentType { get; set; }
-
     public int? PaymentTypeId { get; set; }
 
     public virtual Booking Booking { get; set; } = null!;
 
-    public virtual PaymentType? PaymentTypeNavigation { get; set; }
+    public virtual PaymentType? PaymentType { get; set; }
 }

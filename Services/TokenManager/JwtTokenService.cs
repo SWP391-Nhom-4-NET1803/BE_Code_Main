@@ -33,6 +33,11 @@ namespace Services.TokenManager
         /// <param name="user"> The user object (for claims generation)</param>
         /// <param name="duration"> The token lifetime</param>
         /// <returns></returns>
+
+
+
+        //Cái AccessToken với cái RefreshToken là từ cái JWT Token ra hả ông
+
         public string GenerateAccessToken(User user, int duration = 10)
         {
 
@@ -141,7 +146,7 @@ namespace Services.TokenManager
             {
                 TokenHandler.ValidateToken(token, validatior, out var validatedToken);
 
-                var Token = (JwtSecurityToken) validatedToken;
+                var Token = (JwtSecurityToken)validatedToken;
 
                 int userId = int.Parse(Token.Claims.First(x => x.Type == "id").Value);
 

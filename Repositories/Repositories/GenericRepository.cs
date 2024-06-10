@@ -52,6 +52,12 @@ namespace PlatformRepository.Repositories
             return query.ToList();
         }
 
+        // cho tui xin thêm cái hàm này lấy hết mấy cái service
+        public virtual IEnumerable<T> GetAll()
+        {
+            return dbSet.ToList();
+        }
+
         public virtual T? GetById(X id)
         {
             return dbSet.Find(id);
@@ -79,7 +85,7 @@ namespace PlatformRepository.Repositories
             dbSet.Remove(entity);
         }
 
-        public virtual int Count(Expression<Func<T, bool>> ?filter)
+        public virtual int Count(Expression<Func<T, bool>>? filter)
         {
             IQueryable<T> query = dbSet;
 

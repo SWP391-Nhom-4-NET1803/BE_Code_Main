@@ -117,6 +117,9 @@ namespace WebAPI.Controllers
 
             // Nhưng sẽ phải update lại desgin database của bên mình.
 
+
+            // Cái refresh token là để người dùng logout rồi lần sau truy cập trang web mà vẫn còn refresh token thì không cần đăng nhập lại hả ông
+
             return Ok(newToken);
         }
 

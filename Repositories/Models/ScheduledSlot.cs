@@ -9,7 +9,7 @@ public partial class ScheduledSlot
 
     public int MaxAppointments { get; set; }
 
-    public DateOnly DateOfWeek { get; set; }
+    public byte DateOfWeek { get; set; }
 
     public int ClinicId { get; set; }
 
