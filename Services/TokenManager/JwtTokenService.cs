@@ -1,4 +1,4 @@
-﻿using Core.HttpModels;
+﻿using Core.HttpModels.ObjectModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Repositories;
@@ -46,10 +46,6 @@ namespace Services.TokenManager
             string Issuer = _config.GetValue<string>("JWT:Issuer")!;
 
             // Get User information to put in the token to create user Identity.
-
-            //var userStatus = _unitOfWork.StatusRepository.GetById(user.Status)!;
-
-            var userStatus = true;
             var userRole = _unitOfWork.RoleRepository.GetById(user.RoleId);
 
             if (userRole == null)
@@ -61,7 +57,7 @@ namespace Services.TokenManager
             {
                 new Claim("id", user.UserId.ToString()),
                 new Claim("username", user.Username),
-                new Claim("email", user.Email!),
+                new Claim("email", user.Email),
                 new Claim("role", userRole.RoleName),
 
                 //new Claim("status",userStatus.StatusName),
@@ -82,7 +78,6 @@ namespace Services.TokenManager
             var token = TokenHandler.CreateToken(TokenDescriptor);
 
             return TokenHandler.WriteToken(token);
-
         }
 
         /// <summary>
@@ -120,7 +115,7 @@ namespace Services.TokenManager
             return authToken;
         }
 
-        public User? ValidateAccessToken(string token, out string message)
+        public User? ValidateAccessToken(string? token, out string message)
         {
             if (token == null)
             {

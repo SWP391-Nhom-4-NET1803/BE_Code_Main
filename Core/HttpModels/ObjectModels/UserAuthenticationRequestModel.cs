@@ -4,12 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.HttpModels
+namespace Core.HttpModels.ObjectModels
 {
-    public class UserRegistrationModel
+    public class UserAuthenticationRequestModel
     {
-        public string Username {  get; set; } = string.Empty;   
+        public string UserName { get; set; } = string.Empty;
         public string Password { get; set; } = string.Empty;
-        public string Email { get; set; } = string.Empty;
     }
 }
