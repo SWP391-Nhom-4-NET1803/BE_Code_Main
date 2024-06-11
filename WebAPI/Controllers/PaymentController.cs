@@ -5,7 +5,7 @@ using Repositories.Models;
 using Services.VNPay;
 using System.Web;
 using WebAPI.Helper.AuthorizationPolicy;
-using Core.HttpModels;
+using Core.HttpModels.ObjectModels;
 
 namespace WebAPI.Controllers
 {
