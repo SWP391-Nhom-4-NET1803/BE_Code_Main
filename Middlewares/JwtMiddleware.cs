@@ -20,13 +20,15 @@ namespace WebAPI.Middlewares
         {
             string? token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
-            string validationMessage;
-            var user = tokenManager.ValidateAccessToken(token, out validationMessage);
+            var user = tokenManager.ValidateAccessToken(token, out _);
+
+            Console.WriteLine(token);
+            Console.WriteLine($"Is user authorized: {user?.Email}");
 
             // Set the user item for further usage down the API endpoint.
             if (user != null)
             {
-                context.Items["UserInfo"] = user;
+                context.Items["user"] = user;
             }
 
             await _next(context);

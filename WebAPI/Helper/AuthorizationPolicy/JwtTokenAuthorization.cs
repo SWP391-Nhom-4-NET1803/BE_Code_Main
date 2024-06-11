@@ -1,9 +1,8 @@
-﻿using Core.NewFolder;
+﻿using Core.HttpModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
-using Repositories.Models;
 using Services.JwtManager;
 
 namespace WebAPI.Helper.AuthorizationPolicy
@@ -46,7 +45,8 @@ namespace WebAPI.Helper.AuthorizationPolicy
             if (tokenManager!.ValidateAccessToken(AccessToken.Split(" ").Last(), allowedRoles, out var message) == null)
             {
 
-                var response = new HttpErrorResponse() {statusCode = 404, message = message};
+                var response = new HttpResponseModel() {StatusCode = 404, Message = message};
+
                 context.Result = new JsonResult(new { response })
                 {
                     StatusCode = StatusCodes.Status200OK,

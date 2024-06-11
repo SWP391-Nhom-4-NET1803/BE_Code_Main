@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Repositories.Models;
+using Repositories.Repositories.Contracts;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,10 +10,10 @@ using System.Threading.Tasks;
 
 namespace PlatformRepository.Repositories
 {
-    public class GenericRepository<T, X> where T : class
+    public class GenericRepository<T, X>: IGenericRepository<T, X> where T : class
     {
-        internal DentalClinicPlatformContext context;
-        internal DbSet<T> dbSet;
+        protected DentalClinicPlatformContext context;
+        protected DbSet<T> dbSet;
 
         public GenericRepository(DentalClinicPlatformContext context)
         {
@@ -20,6 +21,7 @@ namespace PlatformRepository.Repositories
             this.dbSet = context.Set<T>();
         }
 
+        // Function to get item using filter.
         public virtual IEnumerable<T> GetAll(Expression<Func<T, bool>> filter, Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
             IQueryable<T> query = dbSet;
@@ -52,22 +54,25 @@ namespace PlatformRepository.Repositories
             return query.ToList();
         }
 
-        // cho tui xin thêm cái hàm này lấy hết mấy cái service
+        // Function to get all items from database.
         public virtual IEnumerable<T> GetAll()
         {
             return dbSet.ToList();
         }
 
+        // Function to get a record by id.
         public virtual T? GetById(X id)
         {
             return dbSet.Find(id);
         }
 
+        // Function to add new record.
         public virtual void Add(T entity)
         {
             dbSet.Add(entity);
         }
 
+        // Function to update an existing record.
         public virtual void Update(T entity)
         {
             dbSet.Attach(entity);
@@ -75,6 +80,7 @@ namespace PlatformRepository.Repositories
             context.Entry(entity).State = EntityState.Modified;
         }
 
+        // Function to delete a record.
         public virtual void Delete(T entity)
         {
             if (context.Entry(entity).State == EntityState.Detached)
@@ -85,6 +91,7 @@ namespace PlatformRepository.Repositories
             dbSet.Remove(entity);
         }
 
+        // Function to count the number of record.
         public virtual int Count(Expression<Func<T, bool>>? filter)
         {
             IQueryable<T> query = dbSet;
@@ -96,9 +103,9 @@ namespace PlatformRepository.Repositories
             return query.Count();
         }
 
-        public static implicit operator GenericRepository<T, X>(GenericRepository<ClinicService, Guid> v)
+        public virtual void Save()
         {
-            throw new NotImplementedException();
+            context.SaveChanges();
         }
     }
 }

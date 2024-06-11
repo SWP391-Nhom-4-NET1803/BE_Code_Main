@@ -1,6 +1,4 @@
-﻿using Core.Exception;
-using Core.HttpModels;
-using Core.NewFolder;
+﻿using Core.HttpModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +6,7 @@ using Repositories;
 using Repositories.Models;
 using System.Net;
 using System.Security.Claims;
+using WebAPI.Helper.AuthorizationPolicy;
 
 namespace WebAPI.Controllers
 {
@@ -29,32 +28,49 @@ namespace WebAPI.Controllers
 
         [HttpPost]
         [Route("register")]
-        [AllowAnonymous]
+        [JwtTokenAuthorization]
         public async Task<IActionResult> RegisterClinic([FromBody] ClinicRegistrationModel requestObject)
         {
-            //Khúc này chatgpt nhờ ông check giúp tui coi có cách nào khác không
-            //-----------------------------------
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier);
-            if (userIdClaim == null)
+
+            // Validate user authorization information
+            var user = (User?) HttpContext.Items["user"];
+
+            if (user == null)
             {
-                return Unauthorized(new HttpErrorResponse()
+                return Ok(new HttpResponseModel() { StatusCode = 401, Message = "You are unauthorized"});
+            }
+
+            //Get staff info
+            ClinicStaff staff = _unitOfWork.UserRepository.GetStaffInfo(user.UserId)!;
+
+            // Check if the user is a clinic owner or not, whether the owner already created a clinic before
+            if (staff == null || !staff.IsOwner)
+            {
+                return Ok(new HttpResponseModel()
                 {
-                    statusCode = 401,
-                    message = "Bạn cần đăng nhập để thực hiện hành động này"
+                    StatusCode = 401,
+                    Message = "You are unauthorized!",
+                    Detail = "You are not a clinic owner."
                 });
             }
 
-            int userId = int.Parse(userIdClaim.Value);
-
-            //-----------------------------------
-
-            if (!_unitOfWork.CheckClinicAvailability(requestObject.Name, out var responseMessage))
+            if (staff.ClinicId != null)
             {
-                return BadRequest(new HttpErrorResponse()
+                return Ok(new HttpResponseModel()
                 {
-                    statusCode = 400,
-                    message = "Phòng khám với tên này đã tồn tại",
-                    errorDetail = responseMessage
+                    StatusCode = 400,
+                    Message = "Unable to process request",
+                    Detail = "You already created a clinic."
+                });
+            }
+
+            if (!_unitOfWork.ClinicRepository.CheckClinicAvailability(requestObject.Name, out var responseMessage))
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Unable to process request",
+                    Detail = responseMessage
                 });
             }
             try
@@ -68,7 +84,7 @@ namespace WebAPI.Controllers
                     OpenHour = TimeOnly.Parse(requestObject.OpenHour),
                     CloseHour = TimeOnly.Parse(requestObject.CloseHour),
                     Status = true,
-                    Owner = _unitOfWork.UserRepository.GetById(userId) // Update this to get the correct Owner ID
+                    Owner = _unitOfWork.UserRepository.GetById(staff.UserId)!
                 };
 
                 // Add clinic services
@@ -86,50 +102,44 @@ namespace WebAPI.Controllers
                     }
                     else
                     {
-                        return BadRequest(new HttpErrorResponse()
+                        return Ok(new HttpResponseModel()
                         {
-                            statusCode = 400,
-                            message = $"Service with ID {serviceId} does not exist"
+                            StatusCode = 400,
+                            Message = "Unable to process request",
+                            Detail = $"Service with ID {serviceId} does not exist"
                         });
                     }
                 }
-
+                staff.Clinic = newClinic;
+                _unitOfWork.clinicStaffRepository.Update(staff);
                 _unitOfWork.ClinicRepository.Add(newClinic);
                 _unitOfWork.Save();
 
-                return Ok(new HttpValidResponse()
+                return Ok(new HttpResponseModel()
                 {
-                    statusCode = 202,
-                    message = "Yêu cầu tạo mới phòng khám đang được xử lí"
+                    StatusCode = 202,
+                    Message = "Request accepted",
+                    Detail = $"Created clinic {newClinic.Name}."
                 });
             }
             catch (DbUpdateException dbEx)
             {
-                // Log the exception (you can use a logging library like Serilog or NLog here)
                 var innerExceptionMessage = dbEx.InnerException?.Message ?? dbEx.Message;
-                return new JsonResult(new HttpErrorResponse()
+                return Ok(new HttpResponseModel()
                 {
-                    statusCode = 500,
-                    message = "Lỗi hệ thống trong lúc xử lí yêu cầu",
-                    errorDetail = innerExceptionMessage
-                })
-                {
-                    StatusCode = (int)HttpStatusCode.InternalServerError,
-                    ContentType = "application/json"
-                };
+                    StatusCode = 500,
+                    Message = "Internal Server Error",
+                    Detail = innerExceptionMessage
+                });
             }
             catch (Exception e)
             {
-                return new JsonResult(new HttpErrorResponse()
+                return Ok(new HttpResponseModel()
                 {
-                    statusCode = 500,
-                    message = "Lỗi hệ thống trong lúc xử lí yêu cầu",
-                    errorDetail = e.Message
-                })
-                {
-                    StatusCode = (int)HttpStatusCode.InternalServerError,
-                    ContentType = "application/json"
-                };
+                    StatusCode = 500,
+                    Message = "Internal Server Error",
+                    Detail = e.Message
+                });
             }
         }
     }
