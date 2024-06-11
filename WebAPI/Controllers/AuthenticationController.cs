@@ -1,7 +1,6 @@
-﻿using Core.Exception;
-using Core.HttpModels;
+﻿using Core.HttpModels;
+using Core.HttpModels.ObjectModels;
 using Core.Misc;
-using Core.NewFolder;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -20,13 +19,11 @@ namespace WebAPI.Controllers
     [ApiController]
     public class AuthenticationController : ControllerBase
     {
-        private readonly DentalClinicPlatformContext _context;
         private readonly IConfiguration _config;
         private readonly UnitOfWork _unitOfWork;
 
         public AuthenticationController(IConfiguration configuration, DentalClinicPlatformContext context)
         {
-            _context = context;
             _config = configuration;
             _unitOfWork = new UnitOfWork(context);
         }
@@ -36,7 +33,7 @@ namespace WebAPI.Controllers
         [AllowAnonymous]
         public IActionResult LogUserIn([FromBody] UserAuthenticationRequestModel requestObject)
         {
-            User? user = _unitOfWork.Authenticate(requestObject.UserName, requestObject.Password);
+            User? user = _unitOfWork.UserRepository.Authenticate(requestObject.UserName, requestObject.Password);
 
             if (user != null)
             {
@@ -47,12 +44,12 @@ namespace WebAPI.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return this.BadRequest(new HttpErrorResponse() { statusCode = 401, message = ex.Message });
+                    return Ok(new HttpResponseModel() { StatusCode = 401, Message = ex.Message });
                 }
             }
             else
             {
-                return BadRequest(new HttpErrorResponse() { statusCode = 401, message = "Username or Password is invalid." });
+                return Ok(new HttpResponseModel() { StatusCode = 401, Message = "Username or Password is invalid." });
             }
         }
 
@@ -70,7 +67,7 @@ namespace WebAPI.Controllers
                 Console.WriteLine($"{item.Type} : {item.Value}");
             }
 
-            User? user = _unitOfWork.GetUserWithEmail(principals.First(x => x.Type == "email").Value)!;
+            User? user = _unitOfWork.UserRepository.GetUserWithEmail(principals.First(x => x.Type == "email").Value)!;
 
             if (user != null)
             {
@@ -81,12 +78,12 @@ namespace WebAPI.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(new HttpErrorResponse() { statusCode = 500, message = ex.Message });
+                    return Ok(new HttpResponseModel() { StatusCode = 500, Message = ex.Message });
                 }
             }
             else
             {
-                return BadRequest(new HttpErrorResponse() { statusCode = 401, message = "Người dùng không đăng kí trong hệ thống" });
+                return Ok(new HttpResponseModel() { StatusCode = 401, Message = "This user does not exist in the system" });
             }
         }
 
@@ -115,11 +112,6 @@ namespace WebAPI.Controllers
             // Đang tìm cách logout user, có một cách tạm thời đó là sử dụng một trường thuộc tính hoặc một bảng.
             // để ghi nhớ cái refreshToken hiện tại của người dùng trong database.
 
-            // Nhưng sẽ phải update lại desgin database của bên mình.
-
-
-            // Cái refresh token là để người dùng logout rồi lần sau truy cập trang web mà vẫn còn refresh token thì không cần đăng nhập lại hả ông
-
             return Ok(newToken);
         }
 
@@ -142,7 +134,7 @@ namespace WebAPI.Controllers
 
             if (DateTime.Compare(DateTime.Parse(refreshTokenParts[2]), DateTime.UtcNow) < 0)
             {
-                return Ok(new HttpErrorResponse() { statusCode = 400, message = "Refresh Token is expired" });
+                return Ok(new HttpResponseModel() { StatusCode = 400, Message = "Refresh Token is expired" });
             }
 
             var principals = tokenService.GetPrincipalsFromToken(accessToken);
@@ -163,7 +155,7 @@ namespace WebAPI.Controllers
 
                 if (user.Status == true)
                 {
-                    return BadRequest(new HttpErrorResponse() { statusCode = 400, message = "Tài khoản người dùng này đã được kích hoạt." });
+                    return Ok(new HttpResponseModel() { StatusCode = 400, Message ="Invalid Request", Detail="This user account has been activated" });
                 }
 
                 user.Status = true;
@@ -178,10 +170,10 @@ namespace WebAPI.Controllers
 
                 emailService.SendMailGoogleSmtp(target: user.Email, subject: "Thông báo kích hoạt tài khoản thành công", body: emailBody);
 
-                return Ok(new HttpValidResponse() { statusCode = 200, message = "Đã kích hoạt tài khoản người dùng!" });
+                return Ok(new HttpResponseModel() { StatusCode = 200, Message = "User account activated!" });
             };
 
-            return Ok(new HttpErrorResponse() { statusCode = 404, message = "Không tìm thấy người dùng!" });
+            return Ok(new HttpResponseModel() { StatusCode = 400, Message = "User not found!" });
         }
 
         // ================================================== FOR TESTING PURPOSES ======================================================
@@ -191,13 +183,7 @@ namespace WebAPI.Controllers
         [JwtTokenAuthorization(Roles: "Admin")]
         public ActionResult CheckLoginAdmin()
         {
-            JsonResult response = new JsonResult(new { message = "Authorized", time = DateTime.UtcNow })
-            {
-                StatusCode = 200,
-                ContentType = "application/json",
-            };
-
-            return response;
+            return Ok(new { message = "Authorized", time = DateTime.UtcNow });
         }
 
         [HttpGet]
@@ -205,13 +191,7 @@ namespace WebAPI.Controllers
         [JwtTokenAuthorization]
         public ActionResult CheckLogin()
         {
-            JsonResult response = new JsonResult(new { message = "Authorized", time = DateTime.UtcNow })
-            {
-                StatusCode = 200,
-                ContentType = "application/json",
-            };
-
-            return response;
+            return Ok(new { message = "Authorized", time = DateTime.UtcNow });
         }
     }
 }

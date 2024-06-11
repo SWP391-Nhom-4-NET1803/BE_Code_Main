@@ -1,10 +1,10 @@
-﻿using Core.Exception;
-using Core.HttpModels;
-using Core.NewFolder;
+﻿using Core.HttpModels;
+using Core.HttpModels.ObjectModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 using Repositories;
 using Repositories.Models;
 using Services.EmailSerivce;
@@ -19,16 +19,13 @@ namespace WebAPI.Controllers
 {
     [Route("api/user")]
     [ApiController]
-    [JwtTokenAuthorization]
     public class UsersController : ControllerBase
     {
-        private readonly DentalClinicPlatformContext _context;
         private readonly IConfiguration _config;
         private readonly UnitOfWork _unitOfWork;
 
         public UsersController(IConfiguration config, DentalClinicPlatformContext context)
         {
-            _context = context;
             _config = config;
             _unitOfWork = new UnitOfWork(context);
         }
@@ -41,23 +38,19 @@ namespace WebAPI.Controllers
         [HttpPost]
         [Route("request-reset")]
         [AllowAnonymous]
-        public ActionResult RequestResetPassword([FromBody] PasswordResetModel target)
+        public async  Task<ActionResult> RequestResetPassword([FromBody] PasswordResetModel target)
         {
-            User? user = _unitOfWork.GetUserWithEmail(target.Email);
+            User? user = _unitOfWork.UserRepository.GetUserWithEmail(target.Email);
 
             if (user == null)
             {
-                return BadRequest(new HttpErrorResponse()
+                return Ok(new HttpResponseModel()
                 {
-                    statusCode = 400,
-                    message = "Email này chưa được sử dụng để đăng kí tài khoản trong hệ thống.",
-                    errorDetail = $"Địa chỉ email {target.Email} chưa được sử dụng, hãy đăng kí tài khoản và thử lại sau."
+                    StatusCode = 400,
+                    Message = "Email này chưa được sử dụng để đăng kí tài khoản trong hệ thống.",
+                    Detail = $"Địa chỉ email {target.Email} chưa được sử dụng, hãy đăng kí tài khoản và thử lại sau."
                 });
             }
-
-            string UserFullname = user.Fullname != null ? user.Fullname : $"người dùng {user.UserId}";
-
-            var emailService = _context.GetService<IEmailService>();
 
             string newPassword = CreatePassword(24);
 
@@ -66,17 +59,18 @@ namespace WebAPI.Controllers
             _unitOfWork.UserRepository.Update(user);
             _unitOfWork.Save();
 
+            string UserFullname = user.Fullname ?? $"người dùng {user.UserId}";
+
             string subject = $"Khôi phục mật khẩu cho tài khoản {user.Username}";
 
             string body = $"Xin chào, <b>{UserFullname}</b>!<br/>" +
                 $"Chúng tôi đã nhận được yêu cầu thay đổi mật khẩu tài khoản của bạn, hãy sử dụng mật khẩu <b>{newPassword}</b> cho lần đăng nhập kế tiếp và thay đổi mật khẩu của bạn.<br/>";
 
+            var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
 
-            //var configuration = emailService.CreateConfiguration(_config.GetValue<string>("EmailService:Email")!, _config.GetValue<string>("EmailService:Password")!, target.Email, subject, body);
+            await emailService.SendMailGoogleSmtp(target.Email, subject, body);
 
-            emailService.SendMailGoogleSmtp(target.Email, subject, body);
-
-            return Ok(new HttpValidResponse() { statusCode = 202, message = "Yêu cầu được chấp thuận." });
+            return Ok(new HttpResponseModel() { StatusCode = 202, Message = "Yêu cầu được chấp thuận." });
         }
 
         /// <summary>
@@ -90,31 +84,32 @@ namespace WebAPI.Controllers
         {
             // Searching for user that invoked the reset password prompt in order to validate user existance
             // and send confirmation emails after changing their password.
-            User? user = _unitOfWork.GetUserWithEmail(target.Email);
+            User? user = _unitOfWork.UserRepository.GetUserWithEmail(target.Email);
 
             if (user == null)
             {
-                return BadRequest(new HttpErrorResponse() { statusCode = 400, message = "Email này chưa được sử dụng để đăng kí tài khoản trong hệ thống." });
+                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Email này chưa được sử dụng để đăng kí tài khoản trong hệ thống." });
             }
 
             if (target.PasswordReset == null || target.PasswordReset.Length < 10)
             {
-                return BadRequest(new HttpErrorResponse() { statusCode = 400, message = "Mật khẩu mới không hợp lệ" });
+                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Mật khẩu mới không hợp lệ" });
             }
 
             user.Password = target.PasswordReset;
+
+            _unitOfWork.UserRepository.Update(user);
             _unitOfWork.Save();
 
+
+            string emailBody = $"<p></p> <p>Mật khẩu của bạn đã được thay đổi, hãy sử dụng mật khẩu mới cho lần đăng nhập kế tiếp. Trong trường hợp bạn không phải là người thực hiện việc thay đổi mật khẩu, hãy đổi lại mật khẩu ở mục <b>Quên mật khẩu</b></p>";
+
             // Sending confirmation email to user.
-            var emailService = _context.GetService<IEmailService>();
-
-            string UserFullname = user.Fullname != null ? user.Fullname : "Người dùng";
-
-            string emailBody = $"Mật khẩu của bạn đã được thay đổi. nếu bạn không thực hiện thay đổi này, vui lòng bấm vào mục \"quên mật khẩu\" đề thực hiện thay đổi lại mật khẩu.";
+            var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
 
             emailService.SendMailGoogleSmtp(target: target.Email, subject: $"Thay đổi mật khẩu cho tài khoản ${user.Username}", body: emailBody);
 
-            return Ok(new HttpErrorResponse() { statusCode = 202, message = "Accepted" });
+            return Ok(new HttpResponseModel() { StatusCode = 202, Message = "Accepted" });
         }
 
         /// <summary>
@@ -125,32 +120,43 @@ namespace WebAPI.Controllers
         [JwtTokenAuthorization]
         public ActionResult<UserInfoModel> GetUser()    
         {
-            var token = Request.Headers.Authorization.ToString().Split(' ').Last();
-
-            var service = _context.GetService<IJwtTokenService>();
-
-            var claims = service.GetPrincipalsFromToken(token);
-
-            var user = _unitOfWork.UserRepository.GetById(int.Parse(claims.Claims.First(claim => claim.Type == "id").Value));
+            var user = (User) HttpContext.Items["user"]!;
 
             if (user == null)
             {
-                return BadRequest(new HttpErrorResponse() { statusCode = 404, message = "Token không hợp lệ hoặc người dùng không tồn tại!" });
+                return Ok(new HttpResponseModel() { StatusCode = 401, Message = "Token is expired, invalid or user does not exist." });
             }
 
-            UserInfoModel userInfo = new UserInfoModel()
+            UserInfoModel userInfo = new()
             {
                 Id = user.UserId,
-                Username = user.Username ?? null,
-                Email = user.Email ?? null,
+                Username = user.Username,
+                Email = user.Email,
                 Fullname = user.Fullname ?? null,
                 JoinedDate = user.CreationDate,
                 Phone = user.PhoneNumber ?? null,
-                Role = claims.Claims.First(claim => claim.Type == ClaimTypes.Role).Value,
-                Status = user.Status ? "Active" : "Inactive",
+                Role = _unitOfWork.RoleRepository.GetById(user.RoleId)!.RoleName,
+                Status = user.Status ? "verified" : "unverified",
             };
 
             return Ok(userInfo);
+        }
+
+        /// <summary>
+        ///  Get user detailed information based on the valdated token.
+        /// </summary>
+        /// <returns>A User Info Model thats contains basic user information</returns>
+        [HttpGet("info-free{id}")]
+        public ActionResult<UserInfoModel> GetUserFree(int id)
+        {
+            var user = _unitOfWork.UserRepository.GetById(id);
+
+            if (user == null)
+            {
+                return Ok(new HttpResponseModel() { StatusCode = 401, Message = "Token is expired, invalid or user does not exist." });
+            }
+
+            return Ok(user);
         }
 
         [HttpPost]
@@ -158,24 +164,41 @@ namespace WebAPI.Controllers
         [AllowAnonymous]
         public async Task<IActionResult> RegisterCustomer([FromBody] UserRegistrationModel requestObject)
         {
-            // Check for user availability before register them in the database.
-            if (!_unitOfWork.CheckAvailability(requestObject.Username, requestObject.Email, out var responseMessage))
-            {
-                return BadRequest(new HttpErrorResponse()
-                {
-                    statusCode = 400,
-                    message = "Không thể thực hiện yêu cầu tạo mới người dùng.",
-                    errorDetail = responseMessage
-                });
-            }
-
             try
             {
-                User newUser = new User()
+                // Validate information
+                if (requestObject.Email.IsNullOrEmpty())
                 {
-                    Username = requestObject.Username,
-                    Password = requestObject.Password,
-                    Email = requestObject.Email,
+                    return Ok(new HttpResponseModel() { StatusCode = 400, Message = "No email were given" });
+                }
+
+                if (requestObject.Username.IsNullOrEmpty())
+                {
+                    return Ok(new HttpResponseModel() { StatusCode = 400, Message = "No email were given" });
+                }
+
+                if (requestObject.Password.IsNullOrEmpty())
+                {
+                    return Ok(new HttpResponseModel() { StatusCode = 400, Message = "No password were given" });
+                }
+
+                // Check for user availability before register them in the database.
+                if (!_unitOfWork.UserRepository.CheckAvailability(requestObject.Username!, requestObject.Email!, out var responseMessage))
+                {
+                    return Ok(new HttpResponseModel()
+                    {
+                        StatusCode = 400,
+                        Message = "Không thể thực hiện yêu cầu tạo mới người dùng.",
+                        Detail = responseMessage
+                    });
+                }
+
+
+                User newUser = new()
+                {
+                    Username = requestObject.Username!,
+                    Password = requestObject.Password!,
+                    Email = requestObject.Email!,
                     Status = true,
                     RoleId = 3,
                 };
@@ -188,67 +211,93 @@ namespace WebAPI.Controllers
                     $"Chúng tôi đã nhận được yêu cầu tạo tài khoản cho email {requestObject.Email}, cảm ơn bạn đã đăng kí dịch vụ của chúng tôi. <br/>" +
                     $"Vui lòng xác thực tài khoản thông qua cổng xác thực của chúng tôi tại [Tạo trang xác thực bên phía front-end call tới api xác thực phía backend]";
 
-                if (!await emailService.SendMailGoogleSmtp(requestObject.Email, "Xác nhận yêu cầu tạo tài khoản người dùng", body))
+                if (!await emailService.SendMailGoogleSmtp(requestObject.Email!, "Xác nhận yêu cầu tạo tài khoản người dùng", body))
                 {
                     throw new Exception("Không thể gửi email cho người dùng");
                 }
 
-                return Ok(new HttpValidResponse() { statusCode = 202, message = "Yêu cầu tạo mới người dùng đang được xử lí." });
+                return Ok(new HttpResponseModel() { StatusCode = 202, Message = "Yêu cầu tạo mới người dùng đang được xử lí." });
             }
             catch (Exception ex)
             {
-                return new JsonResult(new HttpErrorResponse() { statusCode = 500, message = "Lỗi hệ thống trong lúc xử lí yêu cầu", errorDetail = ex.Message })
-                {
-                    StatusCode = (int)HttpStatusCode.InternalServerError,
-                    ContentType = "application/json",
-                };
+                return Ok(new HttpResponseModel() { StatusCode = 500, Message = "Internal Server Error", Detail = ex.Message });
             }
         }
 
         [HttpPut]
-        [Route("{id}")]
+        [Route("put")]
         [JwtTokenAuthorization]
         public IActionResult PutUser(UserInfoModel UpdatedInfo)
         {
             try
             {
-                if (_unitOfWork.UserExists(UpdatedInfo.Id, out var OldInfo))
+                if (_unitOfWork.UserRepository.ExistUser(UpdatedInfo.Id, out var OldInfo))
                 {
-                    OldInfo!.Fullname = UpdatedInfo.Fullname;
-                    OldInfo.Email = UpdatedInfo.Email;
+
+                    if (((User) HttpContext.Items["user"]!).UserId != UpdatedInfo.Id)
+                    {
+                        throw new Exception("You are not authorized!");
+                    }
+
+                    OldInfo!.Fullname = UpdatedInfo.Fullname ?? OldInfo.Fullname;
+                    OldInfo.Email = UpdatedInfo.Email ?? OldInfo.Email;
                     OldInfo.PhoneNumber = UpdatedInfo.Phone ?? OldInfo.PhoneNumber;
-                    //OldInfo.Role = _unitOfWork.GetRoleByName(UpdatedInfo.Role)?.RoleId ?? OldInfo.Role;
-                    //OldInfo.Status = _unitOfWork.GetStatusByName(UpdatedInfo.Status)?.StatusId ?? OldInfo.Status;
+
+                    if (_unitOfWork.RoleRepository.GetById(OldInfo.RoleId)!.RoleName == "customer")
+                    {
+                        var customerInfo = _unitOfWork.UserRepository.GetCustomerInfo(UpdatedInfo.Id);
+                        customerInfo!.Insurance = UpdatedInfo.Insurance ?? customerInfo.Insurance;
+                        customerInfo.BirthDate = UpdatedInfo.Birthdate ?? customerInfo.BirthDate;
+                    }
+
+                    if (_unitOfWork.RoleRepository.GetById(OldInfo.RoleId)!.RoleName == "dentist" || _unitOfWork.RoleRepository.GetById(OldInfo.RoleId)!.RoleName == "clinic owner")
+                    {
+                        var staffInfo = OldInfo.ClinicStaffs.First();
+                        staffInfo.ClinicId = UpdatedInfo.Clinic ?? staffInfo.ClinicId;
+                        staffInfo.IsOwner = UpdatedInfo.IsOwner ?? staffInfo.IsOwner;
+                    }
 
                     _unitOfWork.UserRepository.Update(OldInfo);
                     _unitOfWork.Save();
 
-                    return NoContent();
+                    return Ok(new HttpResponseModel() { StatusCode = 200, Message = "User information updated!" });
                 };
-                throw new DbUpdateException("Không tồn tại người dùng trong hệ thống");
+                throw new DbUpdateException("The user does not exist in the database!");
             }
             catch (Exception ex)
             {
-                return BadRequest(new HttpErrorResponse() { statusCode = 404, message = "Lỗi xảy ra khi cố gắng cập nhật thông tin người dùng.", errorDetail = ex.Message });
+            return Ok(new HttpResponseModel() { StatusCode = 400, Message = "Error occured while trying to update user information!" });//, Detail = ex.Message });
             }
         }
 
         // ================================================== UNFINISHED ====================================================
 
         [HttpDelete("{id}")]
-        [JwtTokenAuthorization(Roles: "Admin")]
-        public async Task<IActionResult> DeleteUser(int id)
+        [JwtTokenAuthorization]
+        public IActionResult DeleteUser(int id)
         {
-            var user = await _context.Users.FindAsync(id);
-            if (user == null)
+            try
             {
-                return NotFound();
+                if (_unitOfWork.UserRepository.ExistUser(id, out var OldInfo))
+                {
+                    var invoker = (User) HttpContext.Items["user"]!;
+
+                    if (invoker.UserId != id && invoker.RoleId != 1)
+                    {
+                        throw new Exception("You are not authorized!");
+                    }
+
+                    _unitOfWork.UserRepository.Delete(OldInfo!);
+                    _unitOfWork.Save();
+
+                    return Ok(new HttpResponseModel() { StatusCode = 200, Message = "User information updated!" });
+                };
+                throw new DbUpdateException("The user does not exist in the database!");
             }
-
-            _context.Users.Remove(user);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
+            catch (Exception ex)
+            {
+                return Ok(new HttpResponseModel() { StatusCode = 400, Message = "Error occured while trying to update user information!", Detail = ex.Message });
+            }
         }
 
         private string CreatePassword(int length)

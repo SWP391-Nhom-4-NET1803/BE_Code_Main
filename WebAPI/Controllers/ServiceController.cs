@@ -12,12 +12,12 @@ namespace WebAPI.Controllers
     public class ServiceController : ControllerBase
     {
         private readonly DentalClinicPlatformContext _DbContext;
-        private readonly GenericRepository<Service, int> _serviceRepository;
+        private readonly UnitOfWork _unitOfWork;
 
         public ServiceController(DentalClinicPlatformContext context)
         {
             _DbContext = context;
-            _serviceRepository = new GenericRepository<Service, int>(_DbContext);
+            _unitOfWork = new UnitOfWork(_DbContext);
         }
 
         [HttpGet]
@@ -26,7 +26,7 @@ namespace WebAPI.Controllers
         {
             try
             {
-                var services = _serviceRepository.GetAll();
+                var services = _unitOfWork.ServiceRepository.GetAll();
                 if (services == null)
                 {
                     return NotFound("No services found.");

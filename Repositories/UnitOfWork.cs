@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Repositories.Repositories;
+using Repositories.Repositories.Contracts;
 
 namespace Repositories
 {
@@ -12,215 +14,116 @@ namespace Repositories
     {
         private readonly DentalClinicPlatformContext _context;
 
-        private GenericRepository<User, int>? _userRepository;
-        private GenericRepository<Role, int>? _roleRepository;
-        private GenericRepository<Clinic, int>? _clinicRepository;
-        private GenericRepository<Service, int>? _serviceRepository;
-        private GenericRepository<ClinicService, int>? _clinicServiceRepository;
-        private GenericRepository<Status, int>? _statusRepository;
-
+        private IUserRepository? _userRepository;
+        private IClinicRepository? _clinicRepository;
+        private IBookingRepository? _bookingRepository;
+        private IClinicServiceRepository? _clinicServiceRepository;
+        private IServiceRepository? _serviceRepository;
+        private IRoleRepository? _roleRepository;
+        private IClinicStaffRepository? _clinicStaffRepository;
 
         public UnitOfWork(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public GenericRepository<Status, int> StatusRepository
-        {
-            get
-            {
-                if (_statusRepository == null)
-                {
-                    this._statusRepository = new GenericRepository<Status, int>(_context);
-                }
-
-                return _statusRepository;
-            }
-        }
-
-        public GenericRepository<User, int> UserRepository
+        public UserRepository UserRepository
         {
             get
             {
                 if (_userRepository == null)
                 {
-                    this._userRepository = new GenericRepository<User, int>(_context);
+                    this._userRepository = new UserRepository(this._context);
                 }
 
-                return this._userRepository;
+                return (UserRepository) this._userRepository;
             }
         }
 
-        public GenericRepository<Clinic, int> ClinicRepository
+        public ClinicRepository ClinicRepository
         {
             get
             {
                 if (_clinicRepository == null)
                 {
-                    this._clinicRepository = new GenericRepository<Clinic, int>(_context);
+                    this._clinicRepository = new ClinicRepository(this._context);
                 }
 
-                return this._clinicRepository;
+                return (ClinicRepository) this._clinicRepository;
             }
         }
 
-        public GenericRepository<Service, int> ServiceRepository
+        public BookingRepository BookingRepository
         {
             get
             {
-                if (_serviceRepository == null)
+                if (_bookingRepository == null)
                 {
-                    this._serviceRepository = new GenericRepository<Service, int>(_context);
+                    this._bookingRepository = new BookingRepository(this._context);
                 }
 
-                return this._serviceRepository;
+                return (BookingRepository) this._bookingRepository;
             }
         }
 
-        public GenericRepository<ClinicService, int> ClinicServiceRepository
+        public ClinicServiceRepository ClinicServiceRepository
         {
             get
             {
                 if (_clinicServiceRepository == null)
                 {
-                    this._clinicServiceRepository = new GenericRepository<ClinicService, int>(_context);
+                    this._clinicServiceRepository = new ClinicServiceRepository(this._context);
                 }
 
-                return this._clinicServiceRepository;
+                return (ClinicServiceRepository)this._clinicServiceRepository;
             }
         }
 
-        public GenericRepository<Role, int> RoleRepository
+        public ServiceRepository ServiceRepository
         {
             get
             {
-                if (_roleRepository == null)
+                if (_serviceRepository == null)
                 {
-                    this._roleRepository = new GenericRepository<Role, int>(_context);
+                    this._serviceRepository = new ServiceRepository(this._context);
                 }
 
-                return this._roleRepository;
+                return (ServiceRepository) this._serviceRepository;
             }
         }
 
-
-        /// <summary>
-        ///  <para>Kiểm tra thông tin đăng nhập của một người dùng.</para>
-        /// </summary>
-        /// <param name="username">Tên tài khoản đăng nhập</param>
-        /// <param name="password">Mật khẩu của tài khoản</param>
-        /// <returns>Thông tin chi tiết của <see cref="User">người dùng</see> </returns>
-        public User? Authenticate(string username, string password)
+        public RoleRepository RoleRepository
         {
-            return UserRepository.context.Users.Where((user) => (user.Username == username && user.Password == password)).FirstOrDefault();
-        }
-
-        /// <summary>
-        ///   <para>Kiểm tra thông tin về username và email để kiểm tra có thể tạo người dùng mới trong hệ thống hay không.</para>
-        ///   <para>Trả về một chuỗi nêu lí do tại sao lại thất bại (nếu có).</para>
-        /// </summary>
-        /// <param name="username">Tên tài khoản cần kiểm tra</param>
-        /// <param name="email">Email tài khoản cần kiểm tra</param>
-        /// <param name="message">Tin nhắn đầu ra</param>
-        /// <returns><see cref="bool">true</see> nếu có thể tạo một người dùng, <see cref="bool">false</see> nếu email hoặc username đã tồn tại.</returns>
-        public bool CheckAvailability(string username, string email, out string message)
-        {
-            List<User> ExistanceList = UserRepository.context.Users.Where((user) => (user.Username == username || user.Email == email)).ToList(); ;
-
-            foreach (User user in ExistanceList)
+            get
             {
-                if (user.Username.Equals(username))
+                if (this._roleRepository == null)
                 {
-                    message = "Account with this username is already existed";
-                    return false;
+                    this._roleRepository = new RoleRepository(this._context);
                 }
 
-                if (user.Email.Equals(email))
-                {
-                    message = "Account with this email is already existed";
-                    return false;
-                }
+                return (RoleRepository) this._roleRepository;
             }
-
-            message = "Account is available for creation";
-            return true;
         }
 
-
-        public bool CheckClinicAvailability(string clinicName, out string message)
+        public ClinicStaffRepository clinicStaffRepository
         {
-            List<Clinic> ExistanceList = ClinicRepository.context.Clinics.Where((clinic) => (clinic.Name == clinicName)).ToList();
-
-            foreach (Clinic clinic in ExistanceList)
+            get
             {
-                if (clinic.Name.Equals(clinicName))
+                if (this._clinicStaffRepository == null)
                 {
-                    message = "Clinic with this name already existed";
-                    return false;
+                    this._clinicStaffRepository = new ClinicStaffRepository(this._context);
                 }
+
+                return (ClinicStaffRepository)this._clinicStaffRepository;
             }
-
-            message = "Clinic is available for creation";
-            return true;
         }
 
-
-
-        //    return true;
-        //}
-        /// <summary>
-        ///  <para>Kiểm tra xem người dùng có tồn tại trong hệ thống hay không dựa trên ID của họ trong hệ thống.</para>
-        /// </summary>
-        /// <param name="id">Id người dùng</param>
-        /// <param name="user">Đầu ra là một thông tin User nếu tìm thấy, không thì null</param>
-        /// <returns>Trả về <see cref="bool">true</see> nếu có tồn tại người dùng với id này, không thì <see cref="bool">false</see>.</returns>
-        public bool UserExists(int id, out User? user)
-        {
-            if (UserRepository.GetById(id) != null)
-            {
-                user = UserRepository.GetById(id);
-                return true;
-            };
-
-            user = null;
-            return false;
-        }
-
-        /// <summary>
-        ///  <para>Tìm thông tin của một vai trò người dùng trong hệ thống.</para>
-        /// </summary>
-        /// <param name="roleName">Tên vai trò</param>
-        /// <returns><see cref="Nullable">null</see> nếu không tồn tại <see cref="Role"/> nào có tên như input, nếu tồn tại thì trả về thông tin của <see cref="Role"/> đó.</returns>
-        public Role? GetRoleByName(string roleName)
-        {
-            return _context.Roles.First(x => x.RoleName == roleName);
-        }
-
-        /// <summary>
-        ///     <para>Tìm thông tin của người dùng dựa trên email.</para>
-        ///     <para>Mỗi người dùng chỉ được liên kết một địa chỉ với một tài khoản nên có thể dễ dàng tìm kiếm thông tin cảu người đó.</para>
-        /// </summary>
-        /// <param name="email">Email của người dùng</param>
-        /// <returns><see cref="Nullable">null</see> nếu người dùng không tồn tại, thông tin <see cref="User"/> nếu có.</returns>
-        public User? GetUserWithEmail(string email)
-        {
-            return _context.Users.FirstOrDefault(x => x.Email == email);
-        }
-
-        /// <summary>
-        ///  <para>Kiếm thông tin về một trạng thái của vật thể trong database dựa trên tên của trạng thái.</para>
-        /// </summary>
-        /// <param name="statusName">Tên của trạng thái</param>
-        /// <returns>thông tin trạng thái <see cref="Status"/> trong hệ thống nếu tồn tại, không thì <see cref="Nullable">null</see>.</returns>
-        //public Status? GetStatusByName(string statusName)
-        //{
-        //    return _context.Statuses.First(x => x.StatusName == statusName);
-        //}
-
-        /// <summary>
-        ///  Lưu trạng thái hiện tại của context xuống database. (commit changes) <br/>
-        ///  Nếu không gọi hàm này khi thay đổi thông tin thì tất cả thay đổi sẽ được đặt trong trạng thái "chờ"
-        /// </summary>
+        /**
+         * <summary>
+         *  Lưu trạng thái hiện tại của context xuống database. (commit changes) <br/>
+         *  Nếu không gọi hàm này khi thay đổi thông tin thì tất cả thay đổi sẽ được đặt trong trạng thái "chờ"
+         * </summary>
+         */
         public void Save()
         {
             _context.SaveChanges();
