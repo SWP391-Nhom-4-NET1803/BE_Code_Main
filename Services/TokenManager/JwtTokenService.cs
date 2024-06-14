@@ -1,4 +1,5 @@
-﻿using Core.HttpModels.ObjectModels;
+﻿using Core.HttpModels.ObjectModels.AuthenticationModels;
+using Core.HttpModels.ObjectModels.RoleModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Repositories;
@@ -32,12 +33,7 @@ namespace Services.TokenManager
         /// </summary>
         /// <param name="user"> The user object (for claims generation)</param>
         /// <param name="duration"> The token lifetime</param>
-        /// <returns></returns>
-
-
-
-        //Cái AccessToken với cái RefreshToken là từ cái JWT Token ra hả ông
-
+        /// <returns>An access token string</returns>
         public string GenerateAccessToken(User user, int duration = 10)
         {
 
@@ -58,7 +54,7 @@ namespace Services.TokenManager
                 new Claim("id", user.UserId.ToString()),
                 new Claim("username", user.Username),
                 new Claim("email", user.Email),
-                new Claim("role", userRole.RoleName),
+                new Claim("role", userRole.RoleId.ToString()),
 
                 //new Claim("status",userStatus.StatusName),
             });
@@ -104,7 +100,7 @@ namespace Services.TokenManager
             }
         }
 
-        public AuthenticationToken GenerateTokens(User user, int accessDuration = 1, int refreshDuration = 2)
+        public AuthenticationToken GenerateTokens(User user, int accessDuration = 10, int refreshDuration = 30)
         {
             AuthenticationToken authToken = new AuthenticationToken()
             {
@@ -164,7 +160,7 @@ namespace Services.TokenManager
             return null;
         }
 
-        public User? ValidateAccessToken(string token, string?[] roles, out string message)
+        public User? ValidateAccessToken(string token, RoleModel.Roles[] roles, out string message)
         {
             if (token == null)
             {
@@ -195,7 +191,7 @@ namespace Services.TokenManager
                 int userId = int.Parse(Token.Claims.First(x => x.Type == "id").Value);
                 string userRole = Token.Claims.First(x => x.Type == "role").Value;
 
-                if (roles.Length > 0 && !roles.Contains(userRole))
+                if (roles.Length > 0 && !roles.Contains((RoleModel.Roles) int.Parse(userRole)))
                 {
                     throw new Exception("Unauthorized!");
                 }

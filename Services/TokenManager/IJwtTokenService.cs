@@ -1,7 +1,8 @@
 ﻿using Repositories.Models;
 using Core;
 using System.Security.Claims;
-using Core.HttpModels.ObjectModels;
+using Core.HttpModels.ObjectModels.AuthenticationModels;
+using Core.HttpModels.ObjectModels.RoleModels;
 
 namespace Services.JwtManager
 {
@@ -13,7 +14,7 @@ namespace Services.JwtManager
 
         User? ValidateAccessToken(string? token, out string message);
 
-        User? ValidateAccessToken(string token, string[] roles, out string message);
+        User? ValidateAccessToken(string token, RoleModel.Roles[] roles, out string message);
 
         AuthenticationToken GenerateTokens(User user, int accessDuration = 10, int refreshDuration = 60);
 
