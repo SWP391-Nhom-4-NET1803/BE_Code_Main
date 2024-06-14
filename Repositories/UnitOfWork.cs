@@ -12,7 +12,7 @@ namespace Repositories
 {
     public class UnitOfWork
     {
-        private readonly DentalClinicPlatformContext _context;
+        public readonly DentalClinicPlatformContext _context;
 
         private IUserRepository? _userRepository;
         private IClinicRepository? _clinicRepository;
