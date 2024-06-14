@@ -7,15 +7,15 @@ using System.Threading.Tasks;
 
 namespace Core.HttpModels
 {
-    public class HttpResponseModel
+    public class HttpResponseModel: IHttpResponseModel<Object>
     {
         public int StatusCode { get; set; }
         public string? Message { get; set; } = string.Empty;
         public string? Detail { get; set; } = string.Empty;
-        public object? Content { get; set; } = null;
+        public Object? Content { get; set; } = null;
 
         public HttpResponseModel() { }
-        public HttpResponseModel(object content)
+        public HttpResponseModel(Object content)
         {
             Content = content;
         }

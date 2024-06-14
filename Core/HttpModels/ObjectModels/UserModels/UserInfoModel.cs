@@ -6,7 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.HttpModels.ObjectModels
+namespace Core.HttpModels.ObjectModels.UserModel
 {
     public class UserInfoModel
     {
@@ -26,11 +26,11 @@ namespace Core.HttpModels.ObjectModels
 
         // Customer table
         public DateOnly? Birthdate { get; set; } = null;
-        public string? Sex {  get; set; }
+        public string? Sex { get; set; }
         public string? Insurance { get; set; }
 
         // ClinicStaff table
         public int? Clinic { get; set; }
-        public bool? IsOwner { get; set; } 
+        public bool? IsOwner { get; set; }
     }
 }
