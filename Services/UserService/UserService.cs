@@ -27,43 +27,7 @@ namespace Services.UserService
             this._unitOfWork = new UnitOfWork(context);
         }
 
-        public bool changePassword(PasswordResetModel target, out string message)
-        {
-            if (target.Email.IsNullOrEmpty())
-            {
-                message = "No target email was provided for this operation!";
-                return false;
-            }
-            
-            if (target.PasswordReset.IsNullOrEmpty())
-            {
-                message = "No password was provided for this operation";
-                return false;
-            }
-
-            User? user = _unitOfWork.UserRepository.GetUserWithEmail(target.Email);
-
-            if (user == null)
-            {
-                message = "No user found with provided email!";
-                return false;
-            }
-
-            if (!Regex.Match(target.PasswordReset!, "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$").Success)
-            {
-                message = "password is not long enough (at least 10 characters, including uppercase, lowercase and digits) ";
-                return false;
-            }
-
-            user.Password = target.PasswordReset!;
-            _unitOfWork.UserRepository.Update(user);
-            _unitOfWork.Save();
-
-            message = "Password was changed successfully!";
-            return true;
-        }
-
-        public bool createClinicStaff(UserRegistrationModel information, bool isOwner, out string message)
+        public bool CreateClinicStaff(UserRegistrationModel information, bool isOwner, out string message)
         {
             try
             {
@@ -74,13 +38,13 @@ namespace Services.UserService
                     return false;
                 }
 
-                if (!checkValidUsername(information.Username))
+                if (!CheckValidUsername(information.Username))
                 {
                     message = "username length should be between 7 and 30 and contain no white space or special character!";
                     return false;
                 }
 
-                if (!checkValidPassword(information.Password))
+                if (!CheckValidPassword(information.Password))
                 {
                     message = "password should be between 8 and 30 characters long. Containing at least one uppercase, lowercase, and digit!";
                     return false;
@@ -116,7 +80,7 @@ namespace Services.UserService
             }
         }
 
-        public bool createCustomer(UserRegistrationModel information, out string message)
+        public bool CreateCustomer(UserRegistrationModel information, out string message)
         {
             try
             {
@@ -127,13 +91,13 @@ namespace Services.UserService
                     return false;
                 }
 
-                if (!checkValidUsername(information.Username))
+                if (!CheckValidUsername(information.Username))
                 {
                     message = "username length should be between 7 and 30 and contain no white space or special character!";
                     return false;
                 }
 
-                if (!checkValidPassword(information.Password))
+                if (!CheckValidPassword(information.Password))
                 {
                     message = "password should be between 8 and 30 characters long. Containing at least one uppercase, lowercase, and digit!";
                     return false;
@@ -170,45 +134,108 @@ namespace Services.UserService
             }
         }
 
-        public IEnumerable<ClinicStaff> getAllClinicStaffInfo(int clinicId)
+        public IEnumerable<ClinicStaff> GetAllClinicStaffInfo(int clinicId)
         {
             return _unitOfWork._context.ClinicStaffs.Where(x => x.ClinicId == clinicId).ToList();
         }
 
-        public IEnumerable<User> getAllUserInfo()
+        public IEnumerable<User> GetAllUserInfo()
         {
             return _unitOfWork.UserRepository.GetAll();
         }
 
-        public ClinicStaff getClinicStaffInfo(int Id)
+        public User? GetUserInfo(int userId)
         {
-            return _unitOfWork._context.ClinicStaffs.Include(x => x.User).Where(x => x.UserId == Id).ToList().First();
+            return _unitOfWork._context.Users.Include(x => x.Customers.FirstOrDefault()).Include(x=>x.ClinicStaffs.FirstOrDefault()).Where(x => x.UserId == userId).FirstOrDefault();
         }
 
-        public Customer? getCustomerInfoById(int Id)
+        public ClinicStaff? GetClinicStaffInfoById(int userId)
         {
-            return _unitOfWork._context.Customers.Include(x => x.User).Where(x => x.UserId == Id).ToList().FirstOrDefault();
+            return _unitOfWork._context.ClinicStaffs.Include(x => x.User).Include(x => x.Clinic).Where(x => x.UserId == userId).ToList().FirstOrDefault();
         }
 
-        public bool InactivateUser(int userId, out string message)
+        public Customer? GetCustomerInfoById(int userId)
         {
-            try
-            {
-                var user = _unitOfWork.UserRepository.GetById(userId) ?? throw new Exception("No user found with provided information");
-                
-                user.Status = false;
+            
+            return _unitOfWork._context.Customers.Include(x => x.User).Where(x => x.UserId == userId).ToList().FirstOrDefault();
+        }
 
-                message = "Update user status successfully!";
-                return true;
+        public Customer? GetFromCustomerId(int customerId)
+        {
+            return _unitOfWork._context.Customers.Include(x => x.User).Where(x=> x.CustomerId == customerId).ToList().FirstOrDefault();
+        }
 
-            }
-            catch (Exception ex)
+        public ClinicStaff? GetFromStaffId(int staffId)
+        {
+            return _unitOfWork._context.ClinicStaffs.Include(x => x.User).Where(x => x.StaffId == staffId).ToList().FirstOrDefault();
+        }
+
+        public bool ChangePassword(PasswordResetModel target, out string message)
+        {
+            if (target.Email.IsNullOrEmpty())
             {
-                message = ex.Message;
+                message = "No target email was provided for this operation!";
                 return false;
             }
+
+            if (target.PasswordReset.IsNullOrEmpty())
+            {
+                message = "No password was provided for this operation";
+                return false;
+            }
+
+            User? user = _unitOfWork.UserRepository.GetUserWithEmail(target.Email);
+
+            if (user == null)
+            {
+                message = "No user found with provided email!";
+                return false;
+            }
+
+            if (!Regex.Match(target.PasswordReset!, "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$").Success)
+            {
+                message = "password is not long enough (at least 10 characters, including uppercase, lowercase and digits) ";
+                return false;
+            }
+
+            user.Password = target.PasswordReset!;
+            _unitOfWork.UserRepository.Update(user);
+            _unitOfWork.Save();
+
+            message = "Password was changed successfully!";
+            return true;
         }
 
+        public bool ActivateUser(int userId, out string message)
+        {
+            var user = _unitOfWork.UserRepository.GetById(userId);
+
+            if (user == null)
+            {
+                message = "No user found with provided information";
+                return false;
+            }
+
+            user.Status = true;
+
+            message = "Update user status successfully!";
+            return true;
+        }
+        public bool InactivateUser(int userId, out string message)
+        {
+            var user = _unitOfWork.UserRepository.GetById(userId);
+                    
+            if (user == null)
+            {
+                message = "No user found with provided information";
+                return false;
+            }
+                
+            user.Status = false;
+
+            message = "Update user status successfully!";
+            return true;
+        }
         public bool RemoveUser(int userId, out string message)
         {
             try
@@ -255,14 +282,13 @@ namespace Services.UserService
                 return false;
             }
         }
-
-        public bool updateUserInformation(UserInfoModel userNewInfo, out string message)
+        public bool UpdateUserInformation(UserInfoModel userNewInfo, out string message)
         {
             try
             {
                 if (_unitOfWork.UserRepository.ExistUser(userNewInfo.Id, out var OldInfo))
                 {
-                    OldInfo.Username = userNewInfo.Username.IsNullOrEmpty() ? OldInfo.Username! : userNewInfo.Username!;
+                    OldInfo!.Username = userNewInfo.Username.IsNullOrEmpty() ? OldInfo.Username! : userNewInfo.Username!;
                     OldInfo.Fullname = userNewInfo.Fullname.IsNullOrEmpty() ? OldInfo.Fullname : userNewInfo.Fullname;
                     OldInfo.Email = userNewInfo.Email.IsNullOrEmpty() ? OldInfo.Email : userNewInfo.Email!;
                     OldInfo.PhoneNumber = userNewInfo.Phone.IsNullOrEmpty() ? OldInfo.PhoneNumber : userNewInfo.Phone;
@@ -295,10 +321,27 @@ namespace Services.UserService
                 return false;
             }
         }
-
         public bool IsClinicOwner(int userId)
         {
             var clinicStaff = _unitOfWork._context.ClinicStaffs.Where(x => x.UserId == userId).First();
+
+            if (clinicStaff == null || !clinicStaff.IsOwner)
+            {
+                return false;
+            }
+
+            return true;
+        }
+
+        public bool IsClinicOwner(User? user)
+        {
+
+            if (user == null)
+            {
+                return false;
+            }
+
+            var clinicStaff = _unitOfWork._context.ClinicStaffs.Where(x => x.UserId == user.UserId).First();
 
             if (clinicStaff == null || !clinicStaff.IsOwner)
             {
@@ -318,7 +361,7 @@ namespace Services.UserService
             return _unitOfWork._context.Users.Where(x => x.Email == email && x.Password == password).First();
         }
 
-        public IEnumerable<User> SimpleFilter(Expression<Func<User, bool>> filter)
+        public IEnumerable<User> GetBySimpleFilter(Expression<Func<User, bool>> filter)
         {
             return _unitOfWork._context.Users.Where(filter).ToList();
         }
@@ -328,7 +371,7 @@ namespace Services.UserService
             return _unitOfWork._context.Users.Where(filter).Any();
         }
 
-        public bool checkValidUsername(string? username)
+        public bool CheckValidUsername(string? username)
         {
 
             if (username.IsNullOrEmpty())
@@ -339,7 +382,7 @@ namespace Services.UserService
             return Regex.Match(username!, "^[A-Za-z][A-Za-z0-9_]{7,29}$").Success;
         }
 
-        public bool checkValidPassword(string? password)
+        public bool CheckValidPassword(string? password)
         {
             if (password.IsNullOrEmpty())
             {
@@ -369,6 +412,15 @@ namespace Services.UserService
 
             return res.ToString();
         }
+
+        // ================================== Tested and ready to deploy ==============================================
+
+        // ==================================== Finished and untested  =================================================
+
+        // ===========================================  Unfinished =====================================================
+
+
+        // =================================== Generated ==================================================
 
         protected virtual void Dispose(bool disposing)
         {

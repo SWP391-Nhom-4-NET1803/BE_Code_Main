@@ -2,21 +2,14 @@
 using Core.HttpModels;
 using Core.HttpModels.ObjectModels.Others;
 using Core.HttpModels.ObjectModels.RegistrationModels;
+using Core.HttpModels.ObjectModels.RoleModels;
 using Core.HttpModels.ObjectModels.UserModel;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.IdentityModel.Tokens;
 using Repositories;
 using Repositories.Models;
-using Services.EmailSerivce;
-using Services.JwtManager;
-using Services.TokenManager;
 using Services.UserService;
-using System.Net;
-using System.Security.Claims;
-using System.Text;
 using WebAPI.Helper.AuthorizationPolicy;
 
 namespace WebAPI.Controllers
@@ -34,15 +27,48 @@ namespace WebAPI.Controllers
             _mapper = mapper;
         }
 
+        
+
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="requestObject"></param>
+        /// <returns></returns>
+        [HttpPost("register")]
+        //[AllowAnonymous]
+        public async Task<IActionResult> RegisterCustomer([FromBody] UserRegistrationModel requestObject)
+        {
+            var userService = HttpContext.RequestServices.GetService<IUserService>()!;
+
+            if (!userService.CreateCustomer(requestObject, out var message))
+            {
+                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Failed", Detail = message });
+            }
+
+            _unitOfWork.Save();
+
+            /*var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
+
+            string emailSubject = "Xác nhận yêu cầu tạo tài khoản người dùng";
+
+            string emailBody = 
+                $"<p>Xin chào người dùng {requestObject.Username}! </p>" +
+                $"Chúng tôi đã nhận được yêu cầu tạo tài khoản cho email {requestObject.Email}, cảm ơn bạn đã đăng kí dịch vụ của chúng tôi. </p>" +
+                $"<p>Vui lòng xác thực tài khoản thông qua cổng xác thực của chúng tôi tại <a href=\"http://localhost:5173/user/auth\"></a></p>";
+
+            await emailService.SendMailGoogleSmtp(requestObject.Email!, subject: emailSubject, body: emailBody);*/
+
+            return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Success" });
+        }
+
         /// <summary>
         ///     <para>Change user password by generating a random password</para>
         /// </summary>
         /// <param name="target">User email (and unused optional password)</param>
         /// <returns> The result (either failed or succeed)</returns>
-        [HttpPost]
-        [Route("request-reset")]
+        [HttpPost("password-reset-request")]
         //[AllowAnonymous]
-        public async  Task<ActionResult> RequestResetPassword([FromBody] PasswordResetModel target)
+        public ActionResult<IHttpResponseModel<object>> RequestResetPassword([FromBody] PasswordResetModel target)
         {
             var userService = HttpContext.RequestServices.GetService<IUserService>()!;
 
@@ -50,7 +76,7 @@ namespace WebAPI.Controllers
             string newPassword = userService.CreatePassword(8);
             target.PasswordReset = newPassword;
 
-            if (!userService.changePassword(target, out var message))
+            if (!userService.ChangePassword(target, out var message))
             {
                 return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Error while processing request", Detail = message });
             }
@@ -59,7 +85,7 @@ namespace WebAPI.Controllers
 
             var targetUser = _unitOfWork.UserRepository.GetUserWithEmail(target.Email)!;
 
-            string emailSubject = $"Khôi phục mật khẩu cho tài khoản {targetUser.Username}";
+            /*string emailSubject = $"Khôi phục mật khẩu cho tài khoản {targetUser.Username}";
 
             string emailBody = 
                 $"<p>Xin chào <b>{targetUser.Username}</b>!</p>" +
@@ -68,30 +94,34 @@ namespace WebAPI.Controllers
 
             // Sending new password in the email.
             var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
-            await emailService.SendMailGoogleSmtp(target.Email, emailSubject, emailBody);
+            await emailService.SendMailGoogleSmtp(target.Email, emailSubject, emailBody);*/
 
-            return Ok(new HttpResponseModel() { StatusCode = 202, Message = "Yêu cầu được chấp thuận." });
+            return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Success" });
         }
 
+
+
+        // ================================== Tested and ready to deploy ==============================================
+
         /// <summary>
-        ///  Thực hiện thay đổi mật khẩu của người dùng dựa trên mật khẩu mới nhập của họ.
+        ///  Change user password based on their new input.
         /// </summary>
         /// <param name="target">Email của người dùng cần thay đổi mật khẩu cũng như mật khẩu mới</param>
         /// <returns>Kết quả của việc thay đổi nói trên</returns>
-        [HttpPost("reset-password")]
+        [HttpPut("password-reset")]
         //[JwtTokenAuthorization]
         public ActionResult ResetPassword([FromBody] PasswordResetModel target)
         {
             var userService = HttpContext.RequestServices.GetService<IUserService>()!;
 
-            if (!userService.changePassword(target, out var message))
+            if (!userService.ChangePassword(target, out var message))
             {
-                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Error while processing request", Detail = message});
+                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Failed", Detail = message });
             }
 
             _unitOfWork.Save();
 
-            var targetUser = _unitOfWork.UserRepository.GetUserWithEmail(target.Email)!;
+            /*var targetUser = _unitOfWork.UserRepository.GetUserWithEmail(target.Email)!;
 
             string emailSubject = $"Thay đổi mật khẩu cho tài khoản {targetUser.Username}";
 
@@ -102,100 +132,125 @@ namespace WebAPI.Controllers
 
             // Sending confirmation email to user.
             var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
-            emailService.SendMailGoogleSmtp(target: target.Email, subject: emailSubject, body: emailBody);
+            emailService.SendMailGoogleSmtp(target: target.Email, subject: emailSubject, body: emailBody);*/
 
-            return Ok(new HttpResponseModel() { StatusCode = 202, Message = "Accepted" });
+            return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Accepted" });
         }
 
-        /// <summary>
-        ///  Get user detailed information based on the valdated token.
-        /// </summary>
-        /// <returns>A User Info Model thats contains basic user information</returns>
-        [HttpGet("info-customer")]
+        [HttpGet("{id}")]
         //[JwtTokenAuthorization]
-        public ActionResult<CustomerInfoModel> GetCustomer()    
+        public ActionResult<CustomerInfoModel> GetUserInfo(int id)
         {
-            var user = (User) HttpContext.Items["user"]!;
+            var user = (User)HttpContext.Items["user"]!;
 
             if (user == null)
             {
-                return Ok( new HttpResponseModel()
+                return Unauthorized(new HttpResponseModel()
                 {
-                    StatusCode = 404,
-                    Message = "NotFound"
+                    StatusCode = 401,
+                    Message = "Unauthorized"
                 });
             }
-
-            var userService = HttpContext.RequestServices.GetService<IUserService>()!;
-
-            var customer = userService.getCustomerInfoById(user.UserId);
-            var customerInfo = _mapper.Map<Customer,CustomerInfoModel>(customer);
-
-
-            HttpResponseModel response = new HttpResponseModel()
+            else
             {
-                StatusCode = 200,
-                Message = "Succeed",
-                Content = customerInfo
-            };
+                var userService = HttpContext.RequestServices.GetService<IUserService>()!;
 
-            return Ok(response);
-        }
+                var userInfo = userService.GetUserInfo(user.UserId)!;
 
-        [HttpPost]
-        [Route("register")]
-        //[AllowAnonymous]
-        public async Task<IActionResult> RegisterCustomer([FromBody] UserRegistrationModel requestObject)
-        {
-            var userService = HttpContext.RequestServices.GetService<IUserService>()!;
+                var mappedUserInfo = _mapper.Map<User, UserInfoModel>(userInfo);
 
-            if (!userService.createCustomer(requestObject, out var message))
-            {
-                return BadRequest(new HttpResponseModel() { StatusCode = 202, Message = "Can not create customer account", Detail = message });
+                HttpResponseModel response = new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Success",
+                    Content = mappedUserInfo
+                };
+
+                return Ok(response);
             }
 
-            _unitOfWork.Save();
 
-            var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
-
-            string emailSubject = "Xác nhận yêu cầu tạo tài khoản người dùng";
-
-            string emailBody = 
-                $"<p>Xin chào người dùng {requestObject.Username}! </p>" +
-                $"Chúng tôi đã nhận được yêu cầu tạo tài khoản cho email {requestObject.Email}, cảm ơn bạn đã đăng kí dịch vụ của chúng tôi. </p>" +
-                $"<p>Vui lòng xác thực tài khoản thông qua cổng xác thực của chúng tôi tại <a href=\"http://localhost:5173/user/auth\"></a></p>";
-
-            await emailService.SendMailGoogleSmtp(requestObject.Email!, subject: emailSubject, body: emailBody);
-
-            return Ok(new HttpResponseModel() { StatusCode = 202, Message = "Yêu cầu tạo mới người dùng đang được xử lí." });
         }
 
         [HttpPut]
-        [Route("update")]
         //[JwtTokenAuthorization]
         public IActionResult PutUser(UserInfoModel UpdatedInfo)
         {
 
-            var user = (User) HttpContext.Items["user"]!;
+            var user = (User)HttpContext.Items["user"]!;
 
-            if (user.UserId != UpdatedInfo.Id && ! (user.RoleId==1) )
+            // Validating if the request invoker is an admin or the one who have authority over the account
+            if (user.UserId != UpdatedInfo.Id && !(user.RoleId == 1))
             {
-                return Unauthorized( new HttpResponseModel() { StatusCode=401,  Message="Unauthorized access!" });
+                return Unauthorized(new HttpResponseModel() { StatusCode = 401, Message = "Unauthorized", Detail = "User is unauthorized!" });
             }
 
             var userService = HttpContext.RequestServices.GetService<IUserService>()!;
 
-            if (!userService.updateUserInformation(UpdatedInfo, out var message))
+            if (!userService.UpdateUserInformation(UpdatedInfo, out var message))
             {
-                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Error occured!", Detail = message });
+                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Failed", Detail = message });
             }
 
             _unitOfWork.Save();
 
-             return Ok(new HttpResponseModel() { StatusCode = 200, Message = "User information updated!" });
+            return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Success", Detail = "User information updateds" });
         }
 
-        // ================================================== UNFINISHED ====================================================
+        [HttpPut("inactivate/{id}")]
+        //[JwtTokenAuthorization]
+        public IActionResult UnactivateUser(int id)
+        {
+            var userService = HttpContext.RequestServices.GetService<IUserService>()!;
+
+            if (!userService.InactivateUser(id, out var message))
+            {
+                return BadRequest(new HttpResponseModel() {StatusCode = 400, Message = "Failed", Detail = message });
+            }
+            else
+            {
+                return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Success" });
+            }
+        }
+
+        /// <summary>
+        ///  Get user detailed information based on the validated token.
+        ///     
+        ///  Required user to logged (as customer role) in if 
+        /// </summary>
+        /// <returns>A User Info Model thats contains basic user information</returns>
+        [HttpGet("customer")]
+        [JwtTokenAuthorization(RoleModel.Roles.Customer)]
+        public ActionResult<CustomerInfoModel> GetCustomer(int id)
+        {
+            var user = (User)HttpContext.Items["user"]!;
+
+            if (user == null)
+            {
+                return Unauthorized(new HttpResponseModel()
+                {
+                    StatusCode = 401,
+                    Message = "Unauthorized"
+                });
+            }
+            else
+            {
+                var userService = HttpContext.RequestServices.GetService<IUserService>()!;
+
+                var customer = userService.GetCustomerInfoById(user.UserId)!;
+
+                var customerInfo = _mapper.Map<Customer, CustomerInfoModel>(customer);
+
+                HttpResponseModel response = new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Success",
+                    Content = customerInfo
+                };
+
+                return Ok(response);
+            }
+        }
 
         [HttpDelete("{id}")]
         //[JwtTokenAuthorization]
@@ -206,7 +261,7 @@ namespace WebAPI.Controllers
                 if (_unitOfWork.UserRepository.ExistUser(id, out var OldInfo))
                 {
 
-                    var invoker = (User) HttpContext.Items["user"]!;
+                    var invoker = (User)HttpContext.Items["user"]!;
 
                     if (invoker.UserId != id && invoker.RoleId != 1)
                     {
@@ -225,5 +280,9 @@ namespace WebAPI.Controllers
                 return Ok(new HttpResponseModel() { StatusCode = 400, Message = "Error occured while trying to update user information!", Detail = ex.Message });
             }
         }
+
+        // ==================================== Finished and untested  =================================================
+
+        // ===========================================  Unfinished =====================================================
     }
 }

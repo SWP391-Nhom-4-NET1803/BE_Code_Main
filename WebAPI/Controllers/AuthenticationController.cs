@@ -1,14 +1,21 @@
 ﻿using Core.HttpModels;
-using Core.HttpModels.ObjectModels;
+using Core.HttpModels.ObjectModels.AuthenticationModels;
+using Core.HttpModels.ObjectModels.RegistrationModels;
+using Core.HttpModels.ObjectModels.RoleModels;
+using Core.HttpModels.ObjectModels.UserModel;
 using Core.Misc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.IdentityModel.Tokens;
 using Repositories;
 using Repositories.Models;
 using Services.EmailSerivce;
 using Services.JwtManager;
 using Services.TokenManager;
+using Services.UserService;
+using System.Net;
+using System.Security.Claims;
 using System.Text;
 using WebAPI.Helper.AuthorizationPolicy;
 
@@ -28,6 +35,8 @@ namespace WebAPI.Controllers
             _unitOfWork = new UnitOfWork(context);
         }
 
+        // ================================== Tested and ready to deploy ==============================================
+
         [HttpPost]
         [Route("login")]
         [AllowAnonymous]
@@ -40,51 +49,60 @@ namespace WebAPI.Controllers
                 try
                 {
                     var token = HttpContext.RequestServices.GetService<IJwtTokenService>()?.GenerateTokens(user);
-                    return Ok(token);
+                    return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Authorized", Content = token });
                 }
                 catch (Exception ex)
                 {
-                    return Ok(new HttpResponseModel() { StatusCode = 401, Message = ex.Message });
+                    return Ok(new HttpResponseModel() { StatusCode = 401, Message = "Unauthorized", Detail=ex.Message });
                 }
             }
             else
             {
-                return Ok(new HttpResponseModel() { StatusCode = 401, Message = "Username or Password is invalid." });
+                return BadRequest(new HttpResponseModel() { StatusCode = 401, Message = "Unauthorized", Detail="Username or Password is invalid." });
             }
         }
 
         [HttpPost]
         [Route("google")]
         [AllowAnonymous]
-        public IActionResult LogUserInWithGoogle([FromBody] GoogleAuthModel Authtoken)
+        public async Task<IActionResult> LogUserInWithGoogle([FromBody] GoogleAuthModel Authtoken)
         {
-            var service = HttpContext.RequestServices.GetService<IJwtTokenService>()!;
+            var tokenService = HttpContext.RequestServices.GetService<IJwtTokenService>()!;
+            var userService = HttpContext.RequestServices.GetService<IUserService>()!;
 
-            var principals = service.GetPrincipalsFromGoogleToken(Authtoken.GoogleToken);
-
-            foreach (var item in principals)
-            {
-                Console.WriteLine($"{item.Type} : {item.Value}");
-            }
+            var principals = tokenService.GetPrincipalsFromGoogleToken(Authtoken.GoogleToken);
 
             User? user = _unitOfWork.UserRepository.GetUserWithEmail(principals.First(x => x.Type == "email").Value)!;
 
-            if (user != null)
+            if (user == null)
             {
-                try
+                UserRegistrationModel registration = new UserRegistrationModel()
                 {
-                    var token = HttpContext.RequestServices.GetService<IJwtTokenService>()?.GenerateTokens(user);
-                    return Ok(token);
-                }
-                catch (Exception ex)
+                    Username = principals.First(x => x.Type == "email").Value,
+                    Password = userService.CreatePassword(10),
+                    Email = principals.First(x => x.Type == "email").Value
+                };
+
+                if (!userService.CreateCustomer(registration, out var message))
                 {
-                    return Ok(new HttpResponseModel() { StatusCode = 500, Message = ex.Message });
-                }
+                    return BadRequest(new HttpResponseModel() { StatusCode = 500, Message = "Internal Server Error", Content = message });
+                };
+                _unitOfWork.Save();
+
+                var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
+
+                string body = $"Xin chào người dùng! <br/>" +
+                    $"Chúng tôi đã nhận được yêu cầu tạo tài khoản cho email {principals.First(x => x.Type == "email").Value}, cảm ơn bạn đã đăng kí dịch vụ của chúng tôi. <br/>" +
+                    $"Vui lòng xác thực tài khoản thông qua cổng xác thực của chúng tôi tại [Tạo trang xác thực bên phía front-end call tới api xác thực phía backend]";
+
+                await emailService.SendMailGoogleSmtp(principals.First(x => x.Type == "email").Value, "Xác nhận yêu cầu tạo tài khoản người dùng", body);
+
+                user = _unitOfWork.UserRepository.GetUserWithEmail(principals.First(x => x.Type == "email").Value)!;
             }
-            else
-            {
-                return Ok(new HttpResponseModel() { StatusCode = 401, Message = "This user does not exist in the system" });
-            }
+
+            var token = HttpContext.RequestServices.GetService<IJwtTokenService>()?.GenerateTokens(user);
+            return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Authorized", Content = token });
+
         }
 
         [HttpPost]
@@ -96,23 +114,21 @@ namespace WebAPI.Controllers
 
             string token = Request.Headers.Authorization.ToString();
 
+            if (token.IsNullOrEmpty())
+            {
+                return BadRequest(new HttpResponseModel() {StatusCode=401, Message="Unauthorized", Detail="User is not authorized!"}); 
+            }
+
             var claims = JwtService.GetPrincipalsFromToken(token);
 
             var userID = int.Parse(claims.Claims.FirstOrDefault(claim => claim.Type == "id")!.Value);
 
             User user = _unitOfWork.UserRepository.GetById(userID)!;
 
-            // Hiện tại có thể làm một cách đơn giản đó là trả lại cho bên kia một cái RefreshToken hết hạn rồi kêu nó xài.
-            AuthenticationToken newToken = new AuthenticationToken()
-            {
-                AccessToken = JwtService.GenerateAccessToken(user, 0),
-                RefreshToken = JwtService.GenerateRefreshToken(user, 0)
-            };
+            // Hiện tại có thể làm một cách đơn giản đó là trả lại cho bên kia một cái RefreshToken hết hạn.
+            AuthenticationToken newToken =  JwtService.GenerateTokens(user, 0, 0);
 
-            // Đang tìm cách logout user, có một cách tạm thời đó là sử dụng một trường thuộc tính hoặc một bảng.
-            // để ghi nhớ cái refreshToken hiện tại của người dùng trong database.
-
-            return Ok(newToken);
+            return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Authorized", Content=newToken });
         }
 
         [HttpPost]
@@ -126,36 +142,47 @@ namespace WebAPI.Controllers
             string accessToken = tokens.AccessToken;
             string refreshToken = tokens.RefreshToken;
 
-            string[] refreshTokenParts = Encoding.UTF8.GetString(Convert.FromBase64String(refreshToken)).Split("|");
-
-            Console.WriteLine(DateTime.Parse(refreshTokenParts[2]));
-            Console.WriteLine(DateTime.UtcNow);
-            Console.WriteLine(DateTime.Compare(DateTime.Parse(refreshTokenParts[2]), DateTime.UtcNow));
-
-            if (DateTime.Compare(DateTime.Parse(refreshTokenParts[2]), DateTime.UtcNow) < 0)
+            try
             {
-                return Ok(new HttpResponseModel() { StatusCode = 400, Message = "Refresh Token is expired" });
+                string[] refreshTokenParts = Encoding.UTF8.GetString(Convert.FromBase64String(refreshToken)).Split("|");
+
+                if (DateTime.Compare(DateTime.Parse(refreshTokenParts[2]), DateTime.UtcNow) < 0)
+                {
+                    return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Refresh Token is expired" });
+                }
+
+                var principals = tokenService.GetPrincipalsFromToken(accessToken);
+
+                Claim userIdClaim = principals.Claims.First(claim => claim.Type == "id");
+
+                User user = _unitOfWork.UserRepository.GetById(int.Parse(userIdClaim.Value))!;
+
+                var token = tokenService.GenerateTokens(user);
+
+                return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Authorized", Content = token });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Error while refreshing the user tokens", Detail = ex.Message });
             }
 
-            var principals = tokenService.GetPrincipalsFromToken(accessToken);
-            User user = _unitOfWork.UserRepository.GetById(int.Parse(principals.Claims.First(claim => claim.Type == "id").Value))!;
-
-            var token = HttpContext.RequestServices.GetService<IJwtTokenService>()?.GenerateTokens(user);
-            return Ok(token);
         }
 
         [HttpGet]
         [Route("activate/{id}")]
         [AllowAnonymous]
-        public IActionResult ActivateUserAccount(int id)
+        public IActionResult ActivateUserAccount(int userId)
         {
-            var user = _unitOfWork.UserRepository.GetById(id);
+
+
+            var user = _unitOfWork.UserRepository.GetById(userId);
+
             if (user != null)
             {
 
                 if (user.Status == true)
                 {
-                    return Ok(new HttpResponseModel() { StatusCode = 400, Message ="Invalid Request", Detail="This user account has been activated" });
+                    return Ok(new HttpResponseModel() { StatusCode = 400, Message = "Invalid Request", Detail = "This user account has been activated" });
                 }
 
                 user.Status = true;
@@ -164,23 +191,31 @@ namespace WebAPI.Controllers
 
                 var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
 
+                string emailSubject = "Thông báo kích hoạt tài khoản thành công";
+
                 string emailBody = $"Xin chào người dùng! <br/>" +
                     $"Chúng tôi đã kích hoạt tài khoản cho email {user.Email}, cảm ơn bạn đã đăng kí dịch vụ của chúng tôi.<br>" +
                     $"Nếu bạn không phải là người đăng kí tài khoản trên, hãy truy cập vào [Link xóa tài khoản] để hủy việc tạo tài khoản của bạn. Chúc bạn có một ngày mới vui vẻ!";
 
-                emailService.SendMailGoogleSmtp(target: user.Email, subject: "Thông báo kích hoạt tài khoản thành công", body: emailBody);
+                emailService.SendMailGoogleSmtp(target: user.Email, subject: emailSubject, body: emailBody);
 
                 return Ok(new HttpResponseModel() { StatusCode = 200, Message = "User account activated!" });
             };
 
-            return Ok(new HttpResponseModel() { StatusCode = 400, Message = "User not found!" });
+            return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Invalid request", Detail = "Can not find specified user" });
         }
+
+        // ==================================== Finished and untested  =================================================
+
+        // ===========================================  Unfinished =====================================================
+
+
 
         // ================================================== FOR TESTING PURPOSES ======================================================
 
         [HttpGet]
         [Route("check-login-admin")]
-        [JwtTokenAuthorization(Roles: "Admin")]
+        [JwtTokenAuthorization(Roles: RoleModel.Roles.Admin)]
         public ActionResult CheckLoginAdmin()
         {
             return Ok(new { message = "Authorized", time = DateTime.UtcNow });
