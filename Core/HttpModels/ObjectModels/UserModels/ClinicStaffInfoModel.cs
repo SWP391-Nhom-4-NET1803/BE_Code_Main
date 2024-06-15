@@ -19,7 +19,7 @@ namespace Core.HttpModels.ObjectModels.UserModel
         public string? Status { get; set; }
         public DateTime? JoinedDate { get; set; }
         public int? ClinicId { get; set; }
-        public int? ClinicName { get; set; }
+        public string? ClinicName { get; set; }
         public bool? IsOwner { get; set; }
     }
 }

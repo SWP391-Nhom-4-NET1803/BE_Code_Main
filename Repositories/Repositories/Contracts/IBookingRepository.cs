@@ -12,9 +12,10 @@ namespace Repositories.Repositories.Contracts
         IEnumerable<Booking> GetBookingForUser(int userId);
         IEnumerable<Booking> getBookingForCustomer(int customerId);
         IEnumerable<Booking> getBookingForClinicStaff(int staffId);
+        IEnumerable<Booking> getClinicBooking(int clinicId, bool futureOnly);
         IEnumerable<Booking> getClinicBookingInDateRange(int clinicId, DateOnly startDate, DateOnly endDate);
         IEnumerable<Booking> getBookingInDateRange(int userId, DateOnly startDate, DateOnly endDate);
         IEnumerable<Booking> getFutureBooking(int userId);
-        public Booking getFullBookingInfo(Guid bookId);
+        public Booking? getFullBookingInfo(Guid bookId);
     }
 }

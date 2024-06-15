@@ -9,7 +9,7 @@ namespace Core.HttpModels.ObjectModels.BookingModels
     public class BookingModel
     {
         // Thông tin client trả về để thực hiện yêu cầu.
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string? Type { get; set; }
         public Guid timeSlotId {  get; set; }
         public DateOnly appointmentDate { get; set; }
@@ -18,6 +18,7 @@ namespace Core.HttpModels.ObjectModels.BookingModels
         public int? CustomerId { get; set; }
         public int? DentistId { get; set; }
         public int? ClinicId { get; set; }
+
         public int? SelectedService { get; set; }
 
         // Thông tin trả về client

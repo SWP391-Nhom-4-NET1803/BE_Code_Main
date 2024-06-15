@@ -17,8 +17,8 @@ namespace Core.HttpModels.ObjectModels.UserModel
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Fullname { get; set; }
-        public string? Role { get; set; }
-        public string? Status { get; set; }
+        public int? Role { get; set; }
+        public bool? Status { get; set; }
         public DateTime? JoinedDate { get; set; }
 
         // Unused properties

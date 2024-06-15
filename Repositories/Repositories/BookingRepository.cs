@@ -23,7 +23,15 @@ namespace Repositories.Repositories
                             where customer.UserId == userId || dentist.UserId == userId
                             select bookItem);
 
-            return bookings;
+            return bookings
+                .Include(x => x.Clinic)
+                .Include(x => x.Customer)
+                    .ThenInclude(y => y.User)
+                .Include(x => x.Dentist)
+                    .ThenInclude(y => y.User)
+                .Include(x => x.ScheduleSlot)
+                    .ThenInclude(y => y.Slot)
+                .ToList();
         }
 
         public IEnumerable<Booking> getBookingForCustomer(int customerId)
@@ -33,7 +41,15 @@ namespace Repositories.Repositories
                             where customer.CustomerId == customerId
                             select bookItem);
 
-            return bookings;
+            return bookings
+                .Include(x=>x.Clinic)
+                .Include(x => x.Customer)
+                    .ThenInclude(y => y.User)
+                .Include(x=>x.Dentist)
+                    .ThenInclude(y=>y.User)
+                .Include(x=>x.ScheduleSlot)
+                    .ThenInclude(y=>y.Slot)
+                .ToList() ;
         }
 
         public IEnumerable<Booking> getBookingForClinicStaff(int staffId)
@@ -43,7 +59,29 @@ namespace Repositories.Repositories
                             where dentist.StaffId == staffId
                             select bookItem);
 
-            return bookings;
+            return bookings
+                .Include(x => x.Clinic)
+                .Include(x => x.Customer)
+                    .ThenInclude(y => y.User)
+                .Include(x => x.Dentist)
+                    .ThenInclude(y => y.User)
+                .Include(x => x.ScheduleSlot)
+                    .ThenInclude(y => y.Slot)
+                .ToList();
+        }
+
+        public IEnumerable<Booking> getClinicBooking(int clinicId, bool futureOnly)
+        {
+            var bookings = (from bookItem in this.context.Bookings
+                            join clinic in this.context.Clinics on bookItem.ClinicId equals clinic.ClinicId 
+                            select bookItem);
+
+            if (futureOnly)
+            {
+                return bookings.Where(x => x.AppointmentDate > DateOnly.FromDateTime(DateTime.Now)).ToList();
+            }
+
+            return bookings.ToList();
         }
 
         public IEnumerable<Booking> getClinicBookingInDateRange(int clinicId, DateOnly startDate, DateOnly endDate)
@@ -58,7 +96,7 @@ namespace Repositories.Repositories
                             where (clinic.ClinicId == clinicId) && (startDate <= bookItem.AppointmentDate && bookItem.AppointmentDate <= endDate)
                             select bookItem);
 
-            return bookings;
+            return bookings.ToList();
         }
 
         public IEnumerable<Booking> getBookingInDateRange(int userId, DateOnly startDate, DateOnly endDate)
@@ -88,9 +126,14 @@ namespace Repositories.Repositories
             return books.ToList();
         }
 
-        public Booking getFullBookingInfo(Guid bookId)
+        /// <summary>
+        ///  I'm sorry
+        /// </summary>
+        /// <param name="bookId"></param>
+        /// <returns></returns>
+        public Booking? getFullBookingInfo(Guid bookId)
         {
-            return (Booking) dbSet.Include(x => x.Customer).Include(x => x.Dentist).Include(x => x.Clinic).Include(x => x.ScheduleSlot).Include(x => x.ScheduleSlot.Slot).Where(x => x.BookId == bookId);
+            return (Booking?) dbSet.Include(x => x.Customer).Include(x => x.Dentist).Include(x => x.Clinic).Include(x => x.ScheduleSlot).Include(x => x.ScheduleSlot.Slot).Where(x => x.BookId == bookId).ToList().FirstOrDefault();
         }
     }
 }
