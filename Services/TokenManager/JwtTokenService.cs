@@ -126,9 +126,11 @@ namespace Services.TokenManager
 
             var validatior = new TokenValidationParameters()
             {
-                ValidateIssuer = false,
+                ValidateIssuer = true,
                 ValidateAudience = false,
                 ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ValidIssuer= Issuer,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TokenKey)),
                 ClockSkew = TimeSpan.Zero,
             };
@@ -175,10 +177,12 @@ namespace Services.TokenManager
 
             var validatior = new TokenValidationParameters()
             {
-                ValidateIssuer = false,
+                ValidateIssuer = true,
                 ValidateAudience = false,
                 ValidateIssuerSigningKey = true,
+                ValidIssuer = Issuer,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TokenKey)),
+                ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero,
             };
 
@@ -224,14 +228,15 @@ namespace Services.TokenManager
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var tokenKey = _config.GetValue<string>("JWT:Key")!;
+            var tokenIssuer = _config.GetValue<string>("JWT:Issuer")!;
 
             var tokenValidationParameters = new TokenValidationParameters
             {
-                ValidateIssuer = false,
+                ValidateIssuer = true,
                 ValidateAudience = false, //you might want to validate the audience and issuer depending on your use case
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey)),
-                //ValidIssuer = _config.GetValue<string>("JWT:Issuer")!,
+                ValidIssuer = tokenIssuer,
                 ValidateLifetime = false //here we are saying that we don't care about the token's expiration date
             };
 
