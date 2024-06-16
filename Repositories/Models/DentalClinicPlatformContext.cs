@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace Repositories.Models;
 
@@ -48,16 +49,31 @@ public partial class DentalClinicPlatformContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
-        => optionsBuilder.UseSqlServer("server=localhost;database=DentalClinicPlatform;user=sa;password=2512004quocbao;Encrypt=True;TrustServerCertificate=True;Trusted_Connection=True");
+        => optionsBuilder.UseSqlServer(GetConnectionString());
+
+    private string GetConnectionString()
+    {
+        IConfiguration config = new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", true, true)
+            .Build();
+
+        var connectionString = config.GetConnectionString("Database");
+
+        if (connectionString == null)
+        {
+            throw new Exception("Connection string not found! Please check your configuration files.");
+        }
+
+        return connectionString;
+    }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.UseCollation("Vietnamese_CI_AS");
-
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__Booking__490D1AE1E85E4A50");
+            entity.HasKey(e => e.BookId).HasName("PK__Booking__490D1AE14C4CB033");
 
             entity.ToTable("Booking");
 
@@ -65,6 +81,7 @@ public partial class DentalClinicPlatformContext : DbContext
                 .HasDefaultValueSql("(newid())")
                 .HasColumnName("book_id");
             entity.Property(e => e.AppointmentDate).HasColumnName("appointment_date");
+            entity.Property(e => e.BookingServiceId).HasColumnName("booking_service_id");
             entity.Property(e => e.BookingType)
                 .HasMaxLength(50)
                 .HasColumnName("booking_type");
@@ -76,6 +93,10 @@ public partial class DentalClinicPlatformContext : DbContext
             entity.Property(e => e.DentistId).HasColumnName("dentist_id");
             entity.Property(e => e.ScheduleSlotId).HasColumnName("schedule_slot_id");
             entity.Property(e => e.Status).HasColumnName("status");
+
+            entity.HasOne(d => d.BookingService).WithMany(p => p.Bookings)
+                .HasForeignKey(d => d.BookingServiceId)
+                .HasConstraintName("FKBooking137674");
 
             entity.HasOne(d => d.Clinic).WithMany(p => p.Bookings)
                 .HasForeignKey(d => d.ClinicId)
@@ -100,7 +121,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Certification>(entity =>
         {
-            entity.HasKey(e => e.CertificationId).HasName("PK__Certific__185D5AECD49B82C2");
+            entity.HasKey(e => e.CertificationId).HasName("PK__Certific__185D5AEC69C4D16D");
 
             entity.ToTable("Certification");
 
@@ -130,13 +151,17 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Clinic>(entity =>
         {
-            entity.HasKey(e => e.ClinicId).HasName("PK__Clinic__A0C8D19BC6955F8A");
+            entity.HasKey(e => e.ClinicId).HasName("PK__Clinic__A0C8D19BB2584EBF");
 
             entity.ToTable("Clinic");
 
-            entity.HasIndex(e => e.Email, "UQ__Clinic__AB6E6164E3534B89").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__Clinic__72E12F1B76636C56").IsUnique();
 
-            entity.HasIndex(e => e.Phone, "UQ__Clinic__B43B145FBF5C9997").IsUnique();
+            entity.HasIndex(e => e.Address, "UQ__Clinic__751C8E54DB095C3D").IsUnique();
+
+            entity.HasIndex(e => e.Email, "UQ__Clinic__AB6E616460DE48A6").IsUnique();
+
+            entity.HasIndex(e => e.Phone, "UQ__Clinic__B43B145F20B24831").IsUnique();
 
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
             entity.Property(e => e.Address)
@@ -168,7 +193,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<ClinicService>(entity =>
         {
-            entity.HasKey(e => e.ClinicServiceId).HasName("PK__ClinicSe__916E631C20C2FF5F");
+            entity.HasKey(e => e.ClinicServiceId).HasName("PK__ClinicSe__916E631C3393BB35");
 
             entity.Property(e => e.ClinicServiceId).HasColumnName("clinic_service_id");
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
@@ -191,7 +216,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<ClinicStaff>(entity =>
         {
-            entity.HasKey(e => e.StaffId).HasName("PK__ClinicSt__1963DD9C34FFA54B");
+            entity.HasKey(e => e.StaffId).HasName("PK__ClinicSt__1963DD9C582335C0");
 
             entity.ToTable("ClinicStaff");
 
@@ -212,7 +237,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__CD65CB85E225EC6A");
+            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__CD65CB852EBDD61D");
 
             entity.ToTable("Customer");
 
@@ -234,7 +259,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<MediaType>(entity =>
         {
-            entity.HasKey(e => e.TypeId).HasName("PK__MediaTyp__2C0005989B71D9E9");
+            entity.HasKey(e => e.TypeId).HasName("PK__MediaTyp__2C000598DEDB7314");
 
             entity.ToTable("MediaType");
 
@@ -246,7 +271,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Medium>(entity =>
         {
-            entity.HasKey(e => e.MediaId).HasName("PK__Media__D0A840F43A081C39");
+            entity.HasKey(e => e.MediaId).HasName("PK__Media__D0A840F4DE87E96B");
 
             entity.Property(e => e.MediaId)
                 .HasDefaultValueSql("(newid())")
@@ -272,9 +297,9 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE6C1104365");
+            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE6EC1FD666");
 
-            entity.HasIndex(e => e.Sender, "UQ__Messages__C605FA96C6DB1011").IsUnique();
+            entity.HasIndex(e => e.Sender, "UQ__Messages__C605FA9637FED96E").IsUnique();
 
             entity.Property(e => e.MessageId)
                 .HasDefaultValueSql("(newid())")
@@ -302,7 +327,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__Payment__ED1FC9EA9F2E7637");
+            entity.HasKey(e => e.PaymentId).HasName("PK__Payment__ED1FC9EA28F5E2CD");
 
             entity.ToTable("Payment");
 
@@ -329,7 +354,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<PaymentType>(entity =>
         {
-            entity.HasKey(e => e.TypeId).HasName("PK__PaymentT__2C0005986A190941");
+            entity.HasKey(e => e.TypeId).HasName("PK__PaymentT__2C000598A58FB67E");
 
             entity.ToTable("PaymentType");
 
@@ -347,11 +372,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Role__760965CC9E9E9E45");
+            entity.HasKey(e => e.RoleId).HasName("PK__Role__760965CC0F658391");
 
             entity.ToTable("Role");
 
-            entity.HasIndex(e => e.RoleName, "UQ__Role__783254B15230300D").IsUnique();
+            entity.HasIndex(e => e.RoleName, "UQ__Role__783254B115B44730").IsUnique();
 
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.RoleDescription)
@@ -364,7 +389,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<ScheduledSlot>(entity =>
         {
-            entity.HasKey(e => e.ScheduleSlotId).HasName("PK__Schedule__54B44F59807306CF");
+            entity.HasKey(e => e.ScheduleSlotId).HasName("PK__Schedule__54B44F59C0E42BB3");
 
             entity.ToTable("ScheduledSlot");
 
@@ -389,11 +414,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Service>(entity =>
         {
-            entity.HasKey(e => e.ServiceId).HasName("PK__Service__3E0DB8AFBBA070B2");
+            entity.HasKey(e => e.ServiceId).HasName("PK__Service__3E0DB8AF7563BB7D");
 
             entity.ToTable("Service");
 
-            entity.HasIndex(e => e.ServiceName, "UQ__Service__4A8EDF39E5D3B616").IsUnique();
+            entity.HasIndex(e => e.ServiceName, "UQ__Service__4A8EDF39E523D381").IsUnique();
 
             entity.Property(e => e.ServiceId).HasColumnName("service_id");
             entity.Property(e => e.ServiceName)
@@ -403,7 +428,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Slot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__Slot__971A01BBB5B63D1D");
+            entity.HasKey(e => e.SlotId).HasName("PK__Slot__971A01BBEC8001B8");
 
             entity.ToTable("Slot");
 
@@ -416,13 +441,13 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__User__B9BE370FBE8F78EC");
+            entity.HasKey(e => e.UserId).HasName("PK__User__B9BE370F5045B76D");
 
             entity.ToTable("User");
 
-            entity.HasIndex(e => e.Email, "UQ__User__AB6E616490AB7912").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__User__AB6E6164EF4BD5B3").IsUnique();
 
-            entity.HasIndex(e => e.Username, "UQ__User__F3DBC572100E9DB7").IsUnique();
+            entity.HasIndex(e => e.Username, "UQ__User__F3DBC57287241589").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.CreationDate)
