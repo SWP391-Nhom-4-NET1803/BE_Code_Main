@@ -1,4 +1,5 @@
-﻿using Core.HttpModels.ObjectModels;
+﻿using Core.HttpModels.ObjectModels.AuthenticationModels;
+using Core.HttpModels.ObjectModels.RoleModels;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Repositories;
@@ -32,12 +33,7 @@ namespace Services.TokenManager
         /// </summary>
         /// <param name="user"> The user object (for claims generation)</param>
         /// <param name="duration"> The token lifetime</param>
-        /// <returns></returns>
-
-
-
-        //Cái AccessToken với cái RefreshToken là từ cái JWT Token ra hả ông
-
+        /// <returns>An access token string</returns>
         public string GenerateAccessToken(User user, int duration = 10)
         {
 
@@ -58,7 +54,7 @@ namespace Services.TokenManager
                 new Claim("id", user.UserId.ToString()),
                 new Claim("username", user.Username),
                 new Claim("email", user.Email),
-                new Claim("role", userRole.RoleName),
+                new Claim("role", userRole.RoleId.ToString()),
 
                 //new Claim("status",userStatus.StatusName),
             });
@@ -104,7 +100,7 @@ namespace Services.TokenManager
             }
         }
 
-        public AuthenticationToken GenerateTokens(User user, int accessDuration = 1, int refreshDuration = 2)
+        public AuthenticationToken GenerateTokens(User user, int accessDuration = 10, int refreshDuration = 30)
         {
             AuthenticationToken authToken = new AuthenticationToken()
             {
@@ -130,9 +126,11 @@ namespace Services.TokenManager
 
             var validatior = new TokenValidationParameters()
             {
-                ValidateIssuer = false,
+                ValidateIssuer = true,
                 ValidateAudience = false,
                 ValidateIssuerSigningKey = true,
+                ValidateLifetime = true,
+                ValidIssuer= Issuer,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TokenKey)),
                 ClockSkew = TimeSpan.Zero,
             };
@@ -164,7 +162,7 @@ namespace Services.TokenManager
             return null;
         }
 
-        public User? ValidateAccessToken(string token, string?[] roles, out string message)
+        public User? ValidateAccessToken(string token, RoleModel.Roles[] roles, out string message)
         {
             if (token == null)
             {
@@ -179,10 +177,12 @@ namespace Services.TokenManager
 
             var validatior = new TokenValidationParameters()
             {
-                ValidateIssuer = false,
+                ValidateIssuer = true,
                 ValidateAudience = false,
                 ValidateIssuerSigningKey = true,
+                ValidIssuer = Issuer,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TokenKey)),
+                ValidateLifetime = true,
                 ClockSkew = TimeSpan.Zero,
             };
 
@@ -195,7 +195,7 @@ namespace Services.TokenManager
                 int userId = int.Parse(Token.Claims.First(x => x.Type == "id").Value);
                 string userRole = Token.Claims.First(x => x.Type == "role").Value;
 
-                if (roles.Length > 0 && !roles.Contains(userRole))
+                if (roles.Length > 0 && !roles.Contains((RoleModel.Roles) int.Parse(userRole)))
                 {
                     throw new Exception("Unauthorized!");
                 }
@@ -228,14 +228,15 @@ namespace Services.TokenManager
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var tokenKey = _config.GetValue<string>("JWT:Key")!;
+            var tokenIssuer = _config.GetValue<string>("JWT:Issuer")!;
 
             var tokenValidationParameters = new TokenValidationParameters
             {
-                ValidateIssuer = false,
+                ValidateIssuer = true,
                 ValidateAudience = false, //you might want to validate the audience and issuer depending on your use case
                 ValidateIssuerSigningKey = true,
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(tokenKey)),
-                //ValidIssuer = _config.GetValue<string>("JWT:Issuer")!,
+                ValidIssuer = tokenIssuer,
                 ValidateLifetime = false //here we are saying that we don't care about the token's expiration date
             };
 

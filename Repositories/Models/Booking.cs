@@ -23,6 +23,10 @@ public partial class Booking
 
     public string BookingType { get; set; } = null!;
 
+    public int? BookingServiceId { get; set; }
+
+    public virtual ClinicService? BookingService { get; set; }
+
     public virtual Clinic Clinic { get; set; } = null!;
 
     public virtual Customer Customer { get; set; } = null!;

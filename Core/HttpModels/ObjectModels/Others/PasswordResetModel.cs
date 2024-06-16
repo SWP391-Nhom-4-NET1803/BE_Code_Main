@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.HttpModels.ObjectModels
+namespace Core.HttpModels.ObjectModels.Others
 {
     public class PasswordResetModel
     {

@@ -15,6 +15,8 @@ public partial class ClinicService
 
     public int ServiceId { get; set; }
 
+    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+
     public virtual Clinic Clinic { get; set; } = null!;
 
     public virtual Service Service { get; set; } = null!;

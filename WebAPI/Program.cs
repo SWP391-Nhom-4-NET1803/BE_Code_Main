@@ -2,12 +2,15 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Middlewares.AuthMiddleware;
 using Repositories.Models;
+using Services.BookingService;
+using Services.ClinicsService;
 using Services.EmailSerivce;
 using Services.JwtManager;
 using Services.TokenManager;
+using Services.UserService;
 using System.Text;
-using WebAPI.Middlewares;
 
 
 namespace WebAPI
@@ -27,6 +30,13 @@ namespace WebAPI
             // Add Services to the program
             builder.Services.AddTransient<IJwtTokenService, JwtTokenService>();
             builder.Services.AddTransient<IEmailService, EmailService>();
+
+            builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<IClinicsService, ClinicsService>();
+            builder.Services.AddScoped<IUserService, UserService>();
+
+            // Add mapper
+            builder.Services.AddAutoMapper(typeof(Program).Assembly);
 
             // Add authorization testing for Swagger.
             builder.Services.AddSwaggerGen(option =>

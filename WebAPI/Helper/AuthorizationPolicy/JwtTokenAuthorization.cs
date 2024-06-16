@@ -4,20 +4,21 @@ using Microsoft.AspNetCore.Http.Features;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Services.JwtManager;
+using Core.HttpModels.ObjectModels.RoleModels;
 
 namespace WebAPI.Helper.AuthorizationPolicy
 {
     [AttributeUsage(AttributeTargets.Method | AttributeTargets.Class)]
     public class JwtTokenAuthorization : Attribute, IAuthorizationFilter
     {
-        private readonly string[] allowedRoles;
+        private readonly RoleModel.Roles[] allowedRoles;
 
         public JwtTokenAuthorization()
         {
             allowedRoles = [];
         }
 
-        public JwtTokenAuthorization(string? Roles)
+        public JwtTokenAuthorization(params RoleModel.Roles[]? Roles)
         {
             if (Roles == null)
             {
@@ -25,7 +26,7 @@ namespace WebAPI.Helper.AuthorizationPolicy
             }
             else
             {
-                allowedRoles = Roles.Split(",");
+                allowedRoles = Roles;
             }
             
         }
@@ -45,11 +46,11 @@ namespace WebAPI.Helper.AuthorizationPolicy
             if (tokenManager!.ValidateAccessToken(AccessToken.Split(" ").Last(), allowedRoles, out var message) == null)
             {
 
-                var response = new HttpResponseModel() {StatusCode = 404, Message = message};
+                var response = new HttpResponseModel() {StatusCode = 404, Message = "Unauthorized access", Detail = message};
 
                 context.Result = new JsonResult(new { response })
                 {
-                    StatusCode = StatusCodes.Status200OK,
+                    StatusCode = StatusCodes.Status401Unauthorized,
                     ContentType = "application/json",
                 };
                 return;

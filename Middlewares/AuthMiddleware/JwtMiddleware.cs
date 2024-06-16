@@ -5,7 +5,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 
-namespace WebAPI.Middlewares
+namespace Middlewares.AuthMiddleware
 {
     public class JwtMiddleware
     {
@@ -21,9 +21,6 @@ namespace WebAPI.Middlewares
             string? token = context.Request.Headers["Authorization"].FirstOrDefault()?.Split(" ").Last();
 
             var user = tokenManager.ValidateAccessToken(token, out _);
-
-            Console.WriteLine(token);
-            Console.WriteLine($"Is user authorized: {user?.Email}");
 
             // Set the user item for further usage down the API endpoint.
             if (user != null)
