@@ -103,7 +103,7 @@ namespace Services.ClinicsService
             return _unitOfWork._context.ClinicServices.Include(x=>x.Service).Where(x => x.ClinicId == clinicId).ToList() ;
         }
 
-        public ClinicService GetServiceInfo(int serviceId)
+        public ClinicService GetServiceInfo(Guid serviceId)
         {
 
             return _unitOfWork._context.ClinicServices.Include(x => x.Service).Where(x => x.ClinicServiceId == serviceId).First();

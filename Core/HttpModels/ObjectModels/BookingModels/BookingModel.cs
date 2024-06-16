@@ -19,7 +19,7 @@ namespace Core.HttpModels.ObjectModels.BookingModels
         public int? DentistId { get; set; }
         public int? ClinicId { get; set; }
 
-        public int? SelectedService { get; set; }
+        public Guid? SelectedService { get; set; }
 
         // Thông tin trả về client
         public string? CustomerFullName { get; set; }

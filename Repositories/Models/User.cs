@@ -23,11 +23,11 @@ public partial class User
 
     public int RoleId { get; set; }
 
-    public virtual ICollection<ClinicStaff> ClinicStaffs { get; set; } = new List<ClinicStaff>();
+    public virtual ClinicStaff? ClinicStaff { get; set; }
 
     public virtual ICollection<Clinic> Clinics { get; set; } = new List<Clinic>();
 
-    public virtual ICollection<Customer> Customers { get; set; } = new List<Customer>();
+    public virtual Customer? Customer { get; set; }
 
     public virtual ICollection<Medium> Media { get; set; } = new List<Medium>();
 

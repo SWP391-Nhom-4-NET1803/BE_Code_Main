@@ -146,7 +146,7 @@ namespace Services.UserService
 
         public User? GetUserInfo(int userId)
         {
-            return _unitOfWork._context.Users.Include(x => x.Customers.FirstOrDefault()).Include(x=>x.ClinicStaffs.FirstOrDefault()).Where(x => x.UserId == userId).FirstOrDefault();
+            return _unitOfWork._context.Users.Include(x => x.Customer).Include(x=>x.ClinicStaff).Where(x => x.UserId == userId).FirstOrDefault();
         }
 
         public ClinicStaff? GetClinicStaffInfoById(int userId)

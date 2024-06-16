@@ -5,7 +5,7 @@ namespace Repositories.Models;
 
 public partial class Slot
 {
-    public Guid SlotId { get; set; }
+    public int SlotId { get; set; }
 
     public TimeOnly StartTime { get; set; }
 

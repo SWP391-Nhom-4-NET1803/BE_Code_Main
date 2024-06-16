@@ -53,7 +53,7 @@ CREATE TABLE ClinicServices (
 CREATE TABLE ClinicStaff (
   staff_id  int IDENTITY(1, 1) NOT NULL, 
   is_owner  bit NOT NULL, 
-  user_id   int NOT NULL, 
+  user_id   int NOT NULL UNIQUE, 
   clinic_id int NULL, 
   PRIMARY KEY (staff_id));
 CREATE TABLE Customer (
@@ -61,7 +61,7 @@ CREATE TABLE Customer (
   sex         nvarchar(10) NULL, 
   birth_date  date NULL, 
   insurance   nvarchar(20) NULL, 
-  user_id     int NOT NULL, 
+  user_id     int NOT NULL UNIQUE, 
   PRIMARY KEY (customer_id));
 CREATE TABLE Media (
   media_id     uniqueidentifier DEFAULT (NEWID()) NOT NULL, 

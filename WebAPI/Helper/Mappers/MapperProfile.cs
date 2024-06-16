@@ -26,10 +26,10 @@ namespace WebAPI.Helper.Mappers
             .ForMember(dest => dest.Password, opt => opt.MapFrom(src => src.Password))
             .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.RoleId))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-            .ForMember(dest => dest.CustomerId, opt => opt.MapFrom(src => src.Customers.First().CustomerId))
-            .ForMember(dest => dest.Sex, opt => opt.MapFrom(src => src.Customers.First().Sex))
-            .ForMember(dest => dest.Birthdate, opt => opt.MapFrom(src => src.Customers.First().BirthDate))
-            .ForMember(dest => dest.Insurance, opt => opt.MapFrom(src => src.Customers.First().Insurance));
+            .ForMember(dest => dest.CustomerId, opt => opt.MapFrom(src => src.Customer.CustomerId))
+            .ForMember(dest => dest.Sex, opt => opt.MapFrom(src => src.Customer.Sex))
+            .ForMember(dest => dest.Birthdate, opt => opt.MapFrom(src => src.Customer.BirthDate))
+            .ForMember(dest => dest.Insurance, opt => opt.MapFrom(src => src.Customer.Insurance));
 
             CreateMap<User, ClinicStaffInfoModel>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.UserId))
@@ -39,8 +39,8 @@ namespace WebAPI.Helper.Mappers
             .ForMember(dest => dest.Password, opt => opt.MapFrom(src => src.Password))
             .ForMember(dest => dest.Role, opt => opt.MapFrom(src => src.RoleId))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-            .ForMember(dest => dest.StaffId, opt => opt.MapFrom(src => src.ClinicStaffs.First().StaffId))
-            .ForMember(dest => dest.IsOwner, opt => opt.MapFrom(src => src.ClinicStaffs.First().IsOwner));
+            .ForMember(dest => dest.StaffId, opt => opt.MapFrom(src => src.ClinicStaff.StaffId))
+            .ForMember(dest => dest.IsOwner, opt => opt.MapFrom(src => src.ClinicStaff.IsOwner));
 
             CreateMap<CustomerInfoModel, User>()
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
@@ -50,7 +50,7 @@ namespace WebAPI.Helper.Mappers
             .ForMember(dest => dest.Password, opt => opt.MapFrom(src => src.Password))
             .ForMember(dest => dest.RoleId, opt => opt.MapFrom(src => src.Role))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-            .ForMember(dest => dest.Customers, opt => opt.MapFrom(src => new Customer() { UserId = src.Id, CustomerId = (int)src.CustomerId!, Insurance = src.Insurance, BirthDate = src.Birthdate }));
+            .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => new Customer() { UserId = src.Id, CustomerId = (int)src.CustomerId!, Insurance = src.Insurance, BirthDate = src.Birthdate }));
 
             CreateMap<ClinicStaffInfoModel, User>()
             .ForMember(dest => dest.UserId, opt => opt.MapFrom(src => src.Id))
@@ -60,7 +60,7 @@ namespace WebAPI.Helper.Mappers
             .ForMember(dest => dest.Password, opt => opt.MapFrom(src => src.Password))
             .ForMember(dest => dest.RoleId, opt => opt.MapFrom(src => src.Role))
             .ForMember(dest => dest.Status, opt => opt.MapFrom(src => src.Status))
-            .ForMember(dest => dest.Customers, opt => opt.MapFrom(src => new ClinicStaff() { UserId = src.Id, StaffId = (int)src.StaffId!, ClinicId = src.ClinicId, IsOwner = src.IsOwner??false }));
+            .ForMember(dest => dest.Customer, opt => opt.MapFrom(src => new ClinicStaff() { UserId = src.Id, StaffId = (int)src.StaffId!, ClinicId = src.ClinicId, IsOwner = src.IsOwner??false }));
 
             CreateMap<Customer, CustomerInfoModel>()
             .ForMember(dest => dest.Id, opt => opt.MapFrom(src => src.UserId))
