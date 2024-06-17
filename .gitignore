@@ -365,3 +365,4 @@ MigrationBackup/
 FodyWeavers.xsd
 WebAPI/appsettings.json
 localConfig.json
+local_config.json
