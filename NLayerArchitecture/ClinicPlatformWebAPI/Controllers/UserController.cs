@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformServices;
-using AutoMapper;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -20,10 +19,9 @@ namespace ClinicPlatformWebAPI.Controllers
     {
         private IUserService userService;
 
-
-        public UserController(IMapper mapper)
+        public UserController(IUserService userService)
         {
-            userService = new UserService(mapper);
+            this.userService = userService;
         }
 
         [HttpGet]

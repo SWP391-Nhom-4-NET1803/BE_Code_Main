@@ -3,6 +3,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using ClinicPlatformServices;
+using ClinicPlatformServices.Contracts;
+using ClinicPlatformRepositories.Contracts;
+using ClinicPlatformRepositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,7 +78,9 @@ builder.Services.AddAuthentication(options =>
     };
 });
 
-builder.Services.AddAutoMapper(typeof(Program).Assembly);
+// Add Services
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 var app = builder.Build();
 

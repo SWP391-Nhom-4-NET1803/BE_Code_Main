@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformRepositories.Contracts
 {
-    internal interface IUserRepository: IDisposable
+    public interface IUserRepository: IDisposable
     {
         IEnumerable<UserInfoModel> GetAll();
 
@@ -27,5 +27,11 @@ namespace ClinicPlatformRepositories.Contracts
         CustomerInfoModel? GetCustomerInfo(int customerId);
 
         ClinicStaffInfoModel? GetStaffInfo(int staffId);
+
+        // Mappers
+        UserInfoModel MapCustomerModelIntoUserModel(CustomerInfoModel customer);
+        UserInfoModel MapStaffModelIntoUserModel(ClinicStaffInfoModel staff);
+        CustomerInfoModel MapUserModelIntoCustomerModel(UserInfoModel customer);
+        ClinicStaffInfoModel MapUserModelIntoStaffModel(UserInfoModel staff);
     }
 }

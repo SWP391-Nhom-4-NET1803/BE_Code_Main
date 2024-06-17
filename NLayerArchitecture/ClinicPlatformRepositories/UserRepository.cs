@@ -1,20 +1,19 @@
-﻿using AutoMapper;
-using ClinicPlatformBusinessObject;
+﻿using ClinicPlatformBusinessObject;
 using ClinicPlatformDAOs;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformRepositories.Contracts;
+using System.Globalization;
+using System.Numerics;
 
 namespace ClinicPlatformRepositories
 {
     public class UserRepository : IUserRepository
     {
         private readonly UserDAO userDAO;
-        private readonly IMapper _mapper;
         private bool disposedValue;
 
-        public UserRepository(IMapper mapper)
+        public UserRepository()
         {
-            _mapper = mapper;
             userDAO = new UserDAO();
             
         }
@@ -138,10 +137,9 @@ namespace ClinicPlatformRepositories
                 target.Username = userInfo.Username?? target.Username;
                 target.Password = userInfo.Password?? target.Password;
                 target.Fullname = userInfo.Fullname?? target.Password;
-                target.Email = userInfo.Email;
-                target.PhoneNumber = userInfo.Phone;
+                target.Email = userInfo.Email?? target.Email;
+                target.PhoneNumber = userInfo.Phone ?? target.PhoneNumber;
                 target.Status = userInfo.Status?? false;
-                target.CreationDate = DateTime.Now;
 
                 if (target.RoleId == 2)
                 {
@@ -176,7 +174,7 @@ namespace ClinicPlatformRepositories
 
             if (result != null) 
             {
-                return _mapper.Map<Customer, CustomerInfoModel>(result);
+                return MapCustomerToCustomerModel(result);
             }
 
             return null;
@@ -188,7 +186,7 @@ namespace ClinicPlatformRepositories
 
             if (result != null)
             {
-                return _mapper.Map<ClinicStaff, ClinicStaffInfoModel>(result);
+                return MapClinicStaffToClinicStaffModel(result);
             }
 
             return null;
@@ -217,6 +215,123 @@ namespace ClinicPlatformRepositories
             GC.SuppressFinalize(this);
         }
 
-        
+        private CustomerInfoModel MapCustomerToCustomerModel(Customer user)
+        {
+            return new CustomerInfoModel()
+            {
+                Id = user.UserId,
+                CustomerId = user.CustomerId,
+                Username = user.User.Username,
+                Password = user.User.Password,
+                Fullname = user.User.Fullname,
+                Email = user.User.Email,
+                Phone = user.User.PhoneNumber,
+                Birthdate = user.BirthDate,
+                Insurance = user.Insurance,
+                Sex = user.Sex,
+                Role = user.User.RoleId,
+                JoinedDate = user.User.CreationDate,
+                Status = user.User.Status
+            };
+        }
+
+        private ClinicStaffInfoModel MapClinicStaffToClinicStaffModel(ClinicStaff user)
+        {
+            return new ClinicStaffInfoModel()
+            {
+                Id = user.UserId,
+                StaffId = user.StaffId,
+                Username = user.User.Username,
+                Password = user.User.Password,
+                Fullname = user.User.Fullname,
+                Email = user.User.Email,
+                Phone = user.User.PhoneNumber,
+                IsOwner = user.IsOwner,
+                ClinicId = user.ClinicId,
+                ClinicName = user.Clinic?.Name,
+                Role = user.User.RoleId,
+                JoinedDate = user.User.CreationDate,
+                Status = user.User.Status
+            };
+        }
+
+
+        UserInfoModel IUserRepository.MapCustomerModelIntoUserModel(CustomerInfoModel customer)
+        {
+            return new UserInfoModel()
+            {
+                Id = customer.Id,
+                CustomerId = customer.CustomerId,
+                Username = customer.Username,
+                Password = customer.Password,
+                Role = customer.Role,
+                Fullname = customer.Fullname,
+                Email = customer.Email,
+                Phone = customer.Phone,
+                Insurance = customer.Insurance,
+                Birthdate = customer.Birthdate,
+                Sex = customer.Sex,
+                JoinedDate = customer.JoinedDate,
+                Status = customer.Status,
+            };
+        }
+
+        public UserInfoModel MapStaffModelIntoUserModel(ClinicStaffInfoModel staff)
+        {
+            return new UserInfoModel()
+            {
+                Id = staff.Id,
+                ClinicStaffId = staff.StaffId,
+                Username = staff.Username,
+                Password = staff.Password,
+                Role = staff.Role,
+                Fullname = staff.Fullname,
+                Email = staff.Email,
+                Phone = staff.Phone,
+                ClinicId = staff.ClinicId,
+                IsOwner = staff.IsOwner ?? false,
+                JoinedDate = staff.JoinedDate,
+                Status = staff.Status,
+            };
+        }
+
+        public CustomerInfoModel MapUserModelIntoCustomerModel(UserInfoModel customer)
+        {
+            return new CustomerInfoModel()
+            {
+                Id = customer.Id,
+                CustomerId = customer.CustomerId,
+                Username = customer.Username,
+                Password = customer.Password,
+                Role = customer.Role,
+                Fullname = customer.Fullname,
+                Email = customer.Email,
+                Phone = customer.Phone,
+                Insurance = customer.Insurance,
+                Birthdate = customer.Birthdate,
+                Sex = customer.Sex,
+                JoinedDate = customer.JoinedDate,
+                Status = customer.Status,
+            };
+        }
+
+        public ClinicStaffInfoModel MapUserModelIntoStaffModel(UserInfoModel staff)
+        {
+            return new ClinicStaffInfoModel()
+            {
+                Id = staff.Id,
+                StaffId = staff.ClinicStaffId ?? 0,
+                Username = staff.Username,
+                Password = staff.Password,
+                Role = staff.Role,
+                Fullname = staff.Fullname,
+                Email = staff.Email,
+                Phone = staff.Phone,
+                ClinicId = staff.ClinicId,
+                IsOwner = staff.IsOwner,
+                JoinedDate = staff.JoinedDate,
+                Status = staff.Status,
+            };
+        }
     }
 }

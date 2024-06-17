@@ -1,28 +1,26 @@
-﻿using AutoMapper;
-using ClinicPlatformDTOs.RoleModels;
+﻿using ClinicPlatformDTOs.RoleModels;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformRepositories;
+using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformServices.Contracts;
 using Microsoft.IdentityModel.Tokens;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace ClinicPlatformServices
 {
     public class UserService: IUserService
     {
-        private readonly UserRepository _userRepository;
-        private readonly IMapper _mapper;
+        private readonly IUserRepository _userRepository;
         private bool disposedValue;
 
-        public UserService(IMapper mapper)
+        public UserService()
         {
-            _userRepository = new UserRepository(mapper);
-            _mapper = mapper;
+            _userRepository = new UserRepository();
+        }
+
+        public UserService(IUserRepository userRepository)
+        {
+            _userRepository = userRepository;
         }
 
         public IEnumerable<UserInfoModel> GetUsers()
@@ -103,7 +101,7 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            info = _mapper.Map<UserInfoModel, ClinicStaffInfoModel>(result!);
+            info = _userRepository.MapUserModelIntoStaffModel(result!);
             message = $"Username and Password matched to user with Id {info.Id}";
             return true;
         }
@@ -119,11 +117,19 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            info = _mapper.Map<UserInfoModel, CustomerInfoModel>(result!);
+            info = _userRepository.MapUserModelIntoCustomerModel(result!);
             message = $"Username and Password matched to user with Id {info.Id}";
             return true;
         }
 
+        /// <summary>
+        ///  Basically three in one with extra sauce!
+        /// </summary>
+        /// <param name="information"></param>
+        /// <param name="role"></param>
+        /// <param name="message"></param>
+        /// <param name="IsAdmin"></param>
+        /// <returns></returns>
         public bool RegisterAccount(UserRegistrationModel information, RoleModel.Roles role, out string message, bool IsAdmin = false)
         {
 
@@ -144,14 +150,14 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            if (role == RoleModel.Roles.Admin)
+            if (role == RoleModel.Roles.Admin || IsAdmin)
             {
                 UserInfoModel registerInfo = new UserInfoModel()
                 {
                     Username = information.Username,
                     Password = information.Password,
                     Email = information.Email,
-                    Role = IsAdmin ? 1 : 3,
+                    Role = 1,
                 };
 
                 UserInfoModel? newUser = _userRepository.AddUser(registerInfo);
@@ -253,7 +259,15 @@ namespace ClinicPlatformServices
 
         public bool UpdateUserInformation(UserInfoModel information, out string message)
         {
-            throw new NotImplementedException();
+
+            if (_userRepository.UpdateUser(information) != null)
+            {
+                message = "Update user information successfully";
+                return true;
+            }
+
+            message = "Update user information failed";
+            return false;
         }
 
         public bool checkAccountAvailability(string? username, string? email, out string message)
@@ -377,5 +391,8 @@ namespace ClinicPlatformServices
 
             return Regex.Match(password!, "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,30}$").Success;
         }
+
+        // Mappers
+        
     }
 }
