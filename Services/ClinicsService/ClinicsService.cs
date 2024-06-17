@@ -27,9 +27,9 @@ namespace Services.ClinicsService
         {
             ClinicStaff? owner = _unitOfWork.UserRepository.GetStaffInfo((int)clinic.OwnerId!);
 
-            if (owner == null)
+            if (owner == null || owner.IsOwner == false)
             {
-                message = "lmao";
+                message = "You are unauthorized to create a clinic.";
                 return false;
             }
 
@@ -44,24 +44,27 @@ namespace Services.ClinicsService
                 Status = true,
                 Owner = owner.User
             };
-
+            
             // Add clinic services
-            foreach (var serviceId in clinic.ClinicServices!)
+            if(clinic.ClinicServices != null)
             {
-                var service = _unitOfWork._context.Services.Find(serviceId);
-                if (service != null)
+                foreach (var serviceId in clinic.ClinicServices!)
                 {
-                    newClinic.ClinicServices.Add(new ClinicService
+                    var service = _unitOfWork._context.Services.Find(serviceId);
+                    if (service != null)
                     {
-                        ServiceId = service.ServiceId,
-                        Clinic = newClinic,
-                        Service = service
-                    });
-                }
-                else
-                {
-                    message = $"Service with ID {serviceId} does not exist";
-                    return false;
+                        newClinic.ClinicServices.Add(new ClinicService
+                        {
+                            ServiceId = service.ServiceId,
+                            Clinic = newClinic,
+                            Service = service
+                        });
+                    }
+                    else
+                    {
+                        message = $"Service with ID {serviceId} does not exist";
+                        return false;
+                    }
                 }
             }
 
@@ -111,7 +114,9 @@ namespace Services.ClinicsService
 
         public bool UpdateClinicInformation(Clinic clinic, out string message)
         {
-            throw new NotImplementedException("Not now, we must stay focus.");
+            _unitOfWork.ClinicRepository.Update(clinic);
+            message = string.Empty;
+            return true;
         }
 
         protected virtual void Dispose(bool disposing)

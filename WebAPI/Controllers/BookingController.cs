@@ -68,7 +68,7 @@ namespace WebAPI.Controllers
 
         }
 
-        [HttpGet("/schedule/staff")]
+        [HttpGet("schedule/staff")]
         //[JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
         public ActionResult<IHttpResponseModel<IEnumerable<BookingModel>>> GetStaffBooking([FromQuery] int staffId)
         {
@@ -109,7 +109,7 @@ namespace WebAPI.Controllers
             return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Failed", Detail = "Don't try to seek for something that you shouldn't know about." });
         }
 
-        [HttpGet("/schedule/customer")]
+        [HttpGet("schedule/customer")]
         //[JwtTokenAuthorization(RoleModel.Roles.Customer)]
         public ActionResult<IHttpResponseModel<IEnumerable<BookingModel>>> GetCustomerBooking([FromQuery] int customerId)
         {

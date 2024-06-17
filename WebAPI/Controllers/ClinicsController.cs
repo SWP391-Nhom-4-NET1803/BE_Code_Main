@@ -5,10 +5,12 @@ using Core.HttpModels.ObjectModels.BookingModels;
 using Core.HttpModels.ObjectModels.ClinicModels;
 using Core.HttpModels.ObjectModels.RegistrationModels;
 using Core.HttpModels.ObjectModels.RoleModels;
+using Core.HttpModels.ObjectModels.SlotModels;
 using Core.HttpModels.ObjectModels.UserModel;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Repositories;
 using Repositories.Models;
 using Services.BookingService;
@@ -36,10 +38,23 @@ namespace WebAPI.Controllers
 
         [HttpPost]
         [Route("register-clinic")]
-        //[JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
+        [JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
         public async Task<IActionResult> RegisterClinic([FromBody] ClinicRegistrationModel requestObject)
         {
             var clinicsService = HttpContext.RequestServices.GetService<IClinicsService>()!;
+
+            var invoker = (User?) HttpContext.Items["user"];
+            
+            if (invoker == null)
+            {
+                return Unauthorized(new HttpResponseModel()
+                {
+                    StatusCode = 401,
+                    Message = "Unauthorized",
+                });
+            }
+
+            requestObject.OwnerId = invoker.UserId;
 
             if (clinicsService.CreateClinic(requestObject, out var message))
             {
@@ -183,7 +198,7 @@ namespace WebAPI.Controllers
 
         [HttpPost]
         [Route("register-owner")]
-        //[AllowAnonymous]
+        [AllowAnonymous]
         public ActionResult<IHttpResponseModel<object>> RegisterClinicOwner([FromBody] UserRegistrationModel requestObject)
         {
             var userService = HttpContext.RequestServices.GetService<IUserService>()!;
@@ -215,14 +230,14 @@ namespace WebAPI.Controllers
         //[JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
         public ActionResult<IHttpResponseModel<object>> RegisterDentist([FromBody] UserRegistrationModel requestObject)
         {
-
+            // Check for invoker 
             User invoker = (User)HttpContext.Items["user"]!;
 
             var userService = HttpContext.RequestServices.GetService<UserService>()!;
 
-            ClinicStaff owner = userService.GetClinicStaffInfoById(invoker.UserId)!; // Getting the clinic owner information (just get the clinic ID)
+            ClinicStaff? owner = userService.GetClinicStaffInfoById(invoker.UserId); // Getting the invoker information (just for the clinic ID)
 
-            if (!owner.IsOwner)
+            if (owner == null || !owner.IsOwner)
             {
                 return BadRequest(new HttpResponseModel() { StatusCode = 401, Message = "Unauthorized", Detail = "You don't have access for this command." });
             }
@@ -251,10 +266,23 @@ namespace WebAPI.Controllers
             return Ok(new HttpResponseModel() { StatusCode = 200, Message = "User account creation is succeed" });
         }
 
-        [HttpGet("clinic-book")]
-        //[JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
+        [HttpGet("clinic-schedule")]
+        [JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
         public ActionResult<IHttpResponseModel<List<BookingModel>>> GetClinicBooking([FromQuery] int clinicId)
         {
+            // Check for invoker 
+            User invoker = (User)HttpContext.Items["user"]!;
+
+            var userService = HttpContext.RequestServices.GetService<IUserService>()!;
+
+            ClinicStaff? invokerInfo = userService.GetClinicStaffInfoById(invoker.UserId); // Getting the invoker information (just for the clinic ID)
+
+            if (invokerInfo == null || !invokerInfo.IsOwner || invokerInfo.ClinicId != clinicId)
+            {
+                return BadRequest(new HttpResponseModel() { StatusCode = 401, Message = "Unauthorized", Detail = "You don't have access for this command." });
+            }
+
+            // Doing more items
             var clinicService = HttpContext.RequestServices.GetService<IClinicsService>()!;
             var bookingService = HttpContext.RequestServices.GetService<IBookingService>()!;
 
@@ -268,15 +296,23 @@ namespace WebAPI.Controllers
             return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Succed", Content = appointments });
         }
 
-        [HttpGet("{id}/staffs")]
+        [HttpGet("staffs")]
         //[JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
-        public ActionResult<IHttpResponseModel<List<ClinicStaffInfoModel>>> GetAllStaffInfo([FromQuery] int id)
+        public ActionResult<IHttpResponseModel<List<ClinicStaffInfoModel>>> GetAllStaffInfo(int clinicId)
         {
-            var user = (User)HttpContext.Items["user"]!;
+            // Check for invoker 
+            User invoker = (User)HttpContext.Items["user"]!;
 
             var userService = HttpContext.RequestServices.GetService<IUserService>()!;
 
-            var staff = userService.GetAllClinicStaffInfo(id);
+            ClinicStaff? owner = userService.GetClinicStaffInfoById(invoker.UserId); // Getting the invoker information (just for the clinic ID)
+
+            if (owner == null || !owner.IsOwner)
+            {
+                return BadRequest(new HttpResponseModel() { StatusCode = 401, Message = "Unauthorized", Detail = "You don't have access for this command." });
+            }
+
+            var staff = userService.GetAllClinicStaffInfo(clinicId);
 
             if (staff == null)
             {
@@ -289,8 +325,8 @@ namespace WebAPI.Controllers
             return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Succeed",Content = staffInfo });
         }
 
-        [HttpGet("{id}/staff")]
-        //[JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
+        [HttpGet("staff")]
+        [JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
         public ActionResult<IHttpResponseModel<ClinicStaffInfoModel>> GetStaffInfo([FromQuery] int staffId)
         {
             var userService = HttpContext.RequestServices.GetService<IUserService>()!;
@@ -298,19 +334,27 @@ namespace WebAPI.Controllers
             // validating invoker
             var invoker = (User)HttpContext.Items["user"]!;
 
-            if (!userService.IsClinicOwner(invoker))
-            {
+            var invokerInfo = userService.GetClinicStaffInfoById(invoker.UserId);
 
+            if (invokerInfo == null || !invokerInfo.IsOwner)
+            {
+                return Unauthorized(new HttpResponseModel()
+                {
+                    StatusCode = 401,
+                    Message = "Unauthorized"
+                });
             }
 
+            ClinicStaff? staff = userService.GetClinicStaffInfoById(staffId);
 
-            
-
-            var staff = userService.GetFromStaffId(staffId);
-
-            if (staff == null)
+            if (staff == null || staff.ClinicId != invokerInfo.ClinicId)
             {
-                return NotFound(new HttpResponseModel() { StatusCode = 404, Message = "User info not found" });
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Failed",
+                    Detail = "User Information not found or is not accessible"
+                });
             }
 
             var staffInfo = _mapper.Map<ClinicStaff, ClinicStaffInfoModel>(staff);
@@ -323,6 +367,38 @@ namespace WebAPI.Controllers
             };
 
             return Ok(response);
+        }
+
+        [HttpPost("slots/create")]
+        //[JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
+        public ActionResult<HttpResponseModel> CreateNewClinicSlot([FromBody]ClinicSlotInfoModel slot)
+        {
+            var bookingService = HttpContext.RequestServices.GetService<IBookingService>()!;
+
+            if (!bookingService.CreateClinicSlot(slot, out var message))
+            {
+                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Failed", Detail = message });
+            }
+            _unitOfWork.Save();
+
+            return Ok(new HttpResponseModel() {StatusCode=200, Message="success" });
+        }
+
+        [HttpPost("slots/all")]
+        //[JwtTokenAuthorization(RoleModel.Roles.Customer, RoleModel.Roles.ClinicStaff)]
+        public ActionResult<HttpResponseModel> GetAllClinicSlots([FromQuery] int clinicId)
+        {
+            var bookingService = HttpContext.RequestServices.GetService<IBookingService>()!;
+
+            var slots = bookingService.GetClinicSlot(clinicId);
+
+            var mappedSlot = new List<ClinicSlotInfoModel>();
+
+            foreach (var slot in slots)
+            {
+                mappedSlot.Add(_mapper.Map<ScheduledSlot, ClinicSlotInfoModel>(slot));
+            }
+            return (new HttpResponseModel() { StatusCode = 200, Message = "success", Content = mappedSlot });
         }
 
         // =================================== Simple REST API =====================================
@@ -363,23 +439,57 @@ namespace WebAPI.Controllers
         }
 
         [HttpPut("{id}")]
-        public ActionResult<IHttpResponseModel<ClinicInformationModel>> Put(int id)
+        [JwtTokenAuthorization(RoleModel.Roles.ClinicStaff, RoleModel.Roles.Admin)]
+        public ActionResult<IHttpResponseModel<ClinicInformationModel>> Put(int id,[FromBody]ClinicRegistrationModel info)
         {
+
+            var invoker = (User?) HttpContext.Items["user"]!;
+
+            var userService = HttpContext.RequestServices.GetService<IUserService>()!;
             var clinicsService = HttpContext.RequestServices.GetService<IClinicsService>()!;
 
-            var clinicInfo = clinicsService.GetClinicInformation(id);
+            if (invoker.RoleId == 3)
+            {
+                return Unauthorized(new HttpResponseModel() { StatusCode = 401, Message = "Unauthorized"});
+            }
 
+            if (invoker.RoleId == 2)
+            {
+                ClinicStaff? staffInfo = userService.GetClinicStaffInfoById(invoker.UserId);
+
+                if (staffInfo == null || staffInfo.ClinicId != id || !staffInfo.IsOwner) 
+                {
+                    return Unauthorized(new HttpResponseModel() { StatusCode = 401, Message = "Unauthorized" });
+                }
+            }
+
+            var clinicInfo = clinicsService.GetClinicInformation(id);
             if (clinicInfo == null)
             {
                 return NotFound(new HttpResponseModel() { StatusCode = 404, Message = "Clinic not found", Detail = "No clinic found with provided ID" });
+            }
+            else
+            {
+                var open = info.OpenHour.IsNullOrEmpty() ? clinicInfo.OpenHour : TimeOnly.Parse(info.OpenHour);
+                var close = info.CloseHour.IsNullOrEmpty() ? clinicInfo.CloseHour : TimeOnly.Parse(info.CloseHour);
+                Clinic newInfo = new Clinic()
+                {
+                    ClinicId = clinicInfo.ClinicId,
+                    Name = info.Name ?? clinicInfo.Address,
+                    Email = info.Email ?? clinicInfo.Address,
+                    Address = info.Address ?? clinicInfo.Address,
+                    OpenHour =  open,
+                    CloseHour = close,
+                    Description = clinicInfo.Description ?? clinicInfo.Description,
+                };
+                clinicsService.UpdateClinicInformation(newInfo, out var message);
+                _unitOfWork.Save();
             }
 
             var response = new HttpResponseModel() { StatusCode = 200, Message = "Clinic found", Content = _mapper.Map<Clinic, ClinicInformationModel>(clinicInfo) };
 
             return Ok(response);
         }
-
-        
 
         [HttpDelete("{id}")]
         public ActionResult<IHttpResponseModel<object>> DeleteClinic(int id)

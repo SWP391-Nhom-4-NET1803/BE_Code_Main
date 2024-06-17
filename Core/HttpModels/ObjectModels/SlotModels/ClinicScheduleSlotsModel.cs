@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace Core.HttpModels.ObjectModels.ClinicModels
+namespace Core.HttpModels.ObjectModels.SlotModels
 {
     public class ClinicScheduleSlotsModel
     {
