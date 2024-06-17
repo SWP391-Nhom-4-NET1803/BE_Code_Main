@@ -6,13 +6,13 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDTOs.ClinicModels
 {
-    public class ClinicServiceModel
+    public class ClinicServiceInfoModel
     {
-        public int Id { get; set; }
-        public string? Name { get; set; }
-        public string? Description { get; set; }
-        public float Price { get; set; }
+        public Guid ClinicServiceId { get; set; }
+        public string? Description { get; set; } = null;
+        public float? Price { get; set; } = null;
         public int ClinicId { get; set; }
         public int ServiceId { get; set; }
+        public string? Name { get; set; } = null;
     }
 }
