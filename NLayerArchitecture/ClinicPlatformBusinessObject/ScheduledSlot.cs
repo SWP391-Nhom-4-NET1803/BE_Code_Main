@@ -13,7 +13,7 @@ public partial class ScheduledSlot
 
     public int ClinicId { get; set; }
 
-    public Guid SlotId { get; set; }
+    public int SlotId { get; set; }
 
     public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
 
