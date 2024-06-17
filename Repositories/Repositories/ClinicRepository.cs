@@ -28,31 +28,40 @@ namespace Repositories.Repositories
             return true;
         }
 
-        public Clinic? getClinicOwnedBy(int user_id)
+        public void CreateClinicSlot(ScheduledSlot slot)
+        {
+            context.ScheduledSlots.Add(slot);
+        }
+
+        public Clinic? GetClinicOwnedBy(int user_id)
         {
             return dbSet.Where(clinic => clinic.OwnerId == user_id).FirstOrDefault();
         }
 
-        public Clinic? getClinicWithName(string name)
+        public Clinic? GetClinicWithName(string name)
         {
             return dbSet.Where(clinic => clinic.Name == name).FirstOrDefault();
         }
 
-        public IEnumerable<Clinic> getClinicStartWith(string prefix)
+        public IEnumerable<Clinic> GetClinicStartWith(string prefix)
         {
             return this.GetAll(filter: x => x.Name.StartsWith(prefix), orderBy: query => query.OrderBy(clinic => clinic.Name));
         }
 
-        
         // Still testing
-        public IEnumerable<Clinic> getClinicWithService(List<Service> services)
+        public IEnumerable<Clinic> GetClinicWithService(List<Service> services)
         {
-            return this.GetAll(filter: x => services.All(requestedService => x.ClinicServices.All( x => x.Service == requestedService)), orderBy: query => query.OrderBy(student => student.Name));
+            return this.GetAll(filter: x => services.All(requestedService => x.ClinicServices.All(x => x.Service == requestedService)), orderBy: query => query.OrderBy(student => student.Name));
         }
 
-        public IEnumerable<Clinic> getClinicWorkInTimeRange(TimeOnly start, TimeOnly end)
+        public IEnumerable<Clinic> GetClinicWorkInTimeRange(TimeOnly start, TimeOnly end)
         {
             return this.GetAll(filter: x => x.OpenHour.CompareTo(start) >= 0 && x.CloseHour.CompareTo(end) <= 0, orderBy: query => query.OrderBy(clinic => clinic.OpenHour));
+        }
+
+        public IEnumerable<ScheduledSlot> GetAllClinicSlot(int clinicId)
+        {
+            return context.ScheduledSlots.Where(x => x.ClinicId == clinicId).Include(x => x.Slot);
         }
     }
 }

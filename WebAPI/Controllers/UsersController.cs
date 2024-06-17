@@ -221,7 +221,7 @@ namespace WebAPI.Controllers
         /// <returns>A User Info Model thats contains basic user information</returns>
         [HttpGet("customer")]
         [JwtTokenAuthorization(RoleModel.Roles.Customer)]
-        public ActionResult<CustomerInfoModel> GetCustomer(int id)
+        public ActionResult<CustomerInfoModel> GetCustomer()
         {
             var user = (User)HttpContext.Items["user"]!;
 
@@ -252,8 +252,47 @@ namespace WebAPI.Controllers
             }
         }
 
+        /// <summary>
+        ///  Get user detailed information based on the validated token.
+        ///     
+        ///  Required user to logged (as customer role) in if 
+        /// </summary>
+        /// <returns>A User Info Model thats contains basic user information</returns>
+        [HttpGet("clinic-staff")]
+        [JwtTokenAuthorization(RoleModel.Roles.ClinicStaff)]
+        public ActionResult<CustomerInfoModel> GetClinicStaff()
+        {
+            var user = (User)HttpContext.Items["user"]!;
+
+            if (user == null)
+            {
+                return Unauthorized(new HttpResponseModel()
+                {
+                    StatusCode = 401,
+                    Message = "Unauthorized"
+                });
+            }
+            else
+            {
+                var userService = HttpContext.RequestServices.GetService<IUserService>()!;
+
+                var clinicStaff = userService.GetClinicStaffInfoById(user.UserId)!;
+
+                var customerInfo = _mapper.Map<ClinicStaff, ClinicStaffInfoModel>(clinicStaff);
+
+                HttpResponseModel response = new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Success",
+                    Content = customerInfo
+                };
+
+                return Ok(response);
+            }
+        }
+
         [HttpDelete("{id}")]
-        //[JwtTokenAuthorization]
+        [JwtTokenAuthorization(RoleModel.Roles.Admin)]
         public IActionResult DeleteUser(int id)
         {
             try

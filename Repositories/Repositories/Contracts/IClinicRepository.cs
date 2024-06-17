@@ -12,14 +12,18 @@ namespace Repositories.Repositories.Contracts
     {
         bool CheckClinicAvailability(string clinicName, out string message);
 
-        Clinic? getClinicWithName(string name);
+        Clinic? GetClinicWithName(string name);
 
-        Clinic? getClinicOwnedBy(int user_id);
+        Clinic? GetClinicOwnedBy(int user_id);
 
-        IEnumerable<Clinic> getClinicStartWith(string prefix);
+        public void CreateClinicSlot(ScheduledSlot slot);
 
-        IEnumerable<Clinic> getClinicWorkInTimeRange(TimeOnly start, TimeOnly end);
+        IEnumerable<Clinic> GetClinicStartWith(string prefix);
 
-        IEnumerable<Clinic> getClinicWithService(List<Service> services);
+        IEnumerable<Clinic> GetClinicWorkInTimeRange(TimeOnly start, TimeOnly end);
+
+        IEnumerable<Clinic> GetClinicWithService(List<Service> services);
+
+        public IEnumerable<ScheduledSlot> GetAllClinicSlot(int clinicId);
     }
 }

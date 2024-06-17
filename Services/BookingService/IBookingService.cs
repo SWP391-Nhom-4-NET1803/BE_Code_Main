@@ -1,4 +1,5 @@
 ﻿using Core.HttpModels.ObjectModels.BookingModels;
+using Core.HttpModels.ObjectModels.SlotModels;
 using Repositories.Models;
 using System;
 using System.Collections.Generic;
@@ -16,13 +17,19 @@ namespace Services.BookingService
 
         Boolean CreateOneTimeAppointment(BookingRegistrationModel bookInfo, out string message);
 
+        Boolean CreateClinicSlot(ClinicSlotInfoModel slot, out string message);
+
+        Boolean CreateMultipleClinicSlot(IEnumerable<ClinicSlotInfoModel> slot, out string message);
+
         IEnumerable<ScheduledSlot> GetFreeSlotOnDay(DateOnly date, int clinicId);
 
         IEnumerable<ScheduledSlot> GetAllSlotForDay(DateOnly date, int clinicId);
 
         IEnumerable<ScheduledSlot> GetSlotForWeekDay(int weekday, int clinicId);
 
-        IEnumerable<ScheduledSlot> GetSlotFreeInRange(DateOnly start, DateOnly end, int clinicId);
+        IEnumerable<ScheduledSlot> GetClinicSlot(int clinicId);
+
+        //IEnumerable<ScheduledSlot> GetSlotFreeInRange(DateOnly start, DateOnly end, int clinicId);
 
         IEnumerable<Booking> getClinicBooking(int clinicId, bool onlyFuture);
     }

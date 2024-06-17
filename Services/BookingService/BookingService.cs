@@ -1,4 +1,5 @@
 ﻿using Core.HttpModels.ObjectModels.BookingModels;
+using Core.HttpModels.ObjectModels.SlotModels;
 using Microsoft.EntityFrameworkCore;
 using Repositories;
 using Repositories.Models;
@@ -99,7 +100,7 @@ namespace Services.BookingService
 
             if (dentalClinicInfo == null)
             {
-                message = $"No clinic found for {bookInfo.ClinicId}.";
+                message = $"No clinic found for id {bookInfo.ClinicId}.";
                 return false;
             }
 
@@ -160,7 +161,8 @@ namespace Services.BookingService
 
         public IEnumerable<ScheduledSlot> GetFreeSlotOnDay(DateOnly date, int clinicId)
         {
-            return _unitOfWork._context.ScheduledSlots.Include(x => x.Bookings.Where(y => y.AppointmentDate == date))
+            return _unitOfWork._context.ScheduledSlots
+                .Include(x => x.Bookings.Where(y => y.AppointmentDate == date))
                 .Where(x => x.ClinicId == clinicId && x.DateOfWeek == (int)date.DayOfWeek && x.Bookings.Count < x.MaxAppointments)
                 .ToList();
         }
@@ -188,14 +190,111 @@ namespace Services.BookingService
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<ScheduledSlot> GetSlotFreeInRange(DateOnly start, DateOnly end, int clinicId)
-        {
-            throw new NotImplementedException();
-        }
-
         public IEnumerable<Booking> getClinicBooking(int clinicId, bool onlyFuture)
         {
             return _unitOfWork.BookingRepository.getClinicBooking(clinicId, onlyFuture);
+        }
+
+        public bool CreateClinicSlot(ClinicSlotInfoModel slot, out string message)
+        {
+            var SlotInfo = _unitOfWork._context.Slots.Where(x => x.SlotId == slot.SlotId).FirstOrDefault();
+
+            var ClinicInfo = _unitOfWork.ClinicRepository.GetById(slot.ClinicId);
+
+            if (SlotInfo == null)
+            {
+                message = $"Unknown selected based slot for id {slot.SlotId}";
+                return false;
+            }
+
+            if (ClinicInfo == null)
+            {
+                message = $"Unknown clinic for id {slot.ClinicId}";
+                return false;
+            }
+
+            var ExistSlotInfo = _unitOfWork._context.ScheduledSlots
+                .Where(x => x.ClinicId == slot.ClinicId && x.DateOfWeek == slot.Weekday && x.SlotId == slot.SlotId)
+                .FirstOrDefault();
+
+            if (ExistSlotInfo != null) 
+            {
+                message = $"Slot existed with Id {ExistSlotInfo.ScheduleSlotId}";
+                return false;
+            }
+
+            // Getting byte instead of int.
+            byte[] intBytes = BitConverter.GetBytes(slot.Weekday);
+
+
+            for (var x = 0; x < intBytes.Count(); x++) { Console.WriteLine($"{x}: {intBytes[x]}"); }
+            
+            if (BitConverter.IsLittleEndian) Array.Reverse(intBytes);
+
+            ScheduledSlot newClinicSlot = new ScheduledSlot()
+            {
+                ClinicId = slot.ClinicId,
+                SlotId = slot.SlotId,
+                DateOfWeek = (byte)slot.Weekday,
+                MaxAppointments = slot.MaxAppointment
+            };
+
+            _unitOfWork.ClinicRepository.CreateClinicSlot(newClinicSlot);
+            message = "Success";
+            return true;
+        }
+
+        public bool CreateMultipleClinicSlot(IEnumerable<ClinicSlotInfoModel> slots, out string message)
+        {
+            foreach (var slot in slots)
+            {
+                var SlotInfo = _unitOfWork._context.Slots.Where(x => x.SlotId == slot.SlotId).FirstOrDefault();
+
+                var ClinicInfo = _unitOfWork.ClinicRepository.GetById(slot.ClinicId);
+
+                if (SlotInfo == null)
+                {
+                    message = $"Unknown selected based slot for id {slot.SlotId}";
+                    return false;
+                }
+
+                if (ClinicInfo == null)
+                {
+                    message = $"Unknown clinic for id {slot.ClinicId}";
+                    return false;
+                }
+
+                var ExistSlotInfo = _unitOfWork._context.ScheduledSlots
+                    .Where(x => x.ClinicId == slot.ClinicId && x.DateOfWeek == slot.Weekday && x.SlotId == slot.SlotId)
+                    .FirstOrDefault();
+
+                if (ExistSlotInfo != null)
+                {
+                    message = $"Slot existed with Id {ExistSlotInfo.ScheduleSlotId}";
+                    return false;
+                }
+
+                // Getting byte instead of int.
+                byte[] intBytes = BitConverter.GetBytes(slot.Weekday);
+
+                if (BitConverter.IsLittleEndian) Array.Reverse(intBytes);
+
+                ScheduledSlot newClinicSlot = new ScheduledSlot()
+                {
+                    ClinicId = slot.ClinicId,
+                    SlotId = slot.SlotId,
+                    DateOfWeek = intBytes[0],
+                    MaxAppointments = slot.MaxAppointment
+                };
+                _unitOfWork.ClinicRepository.CreateClinicSlot(newClinicSlot);
+            }
+            message = "Success";
+            return true;
+        }
+
+        public IEnumerable<ScheduledSlot> GetClinicSlot(int clinicId)
+        {
+            return _unitOfWork._context.ScheduledSlots.Where(x => x.ClinicId == clinicId).Include(x => x.Slot).ToList();
         }
     }
 }

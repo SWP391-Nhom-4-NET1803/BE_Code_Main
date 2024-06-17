@@ -11,7 +11,6 @@ namespace WebAPI.Controllers
 {
     [Route("api/payment")]
     [ApiController]
-    [JwtTokenAuthorization]
     public class PaymentController : ControllerBase
     {
         

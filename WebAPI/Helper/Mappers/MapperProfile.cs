@@ -1,6 +1,7 @@
 ﻿using AutoMapper;
 using Core.HttpModels.ObjectModels.BookingModels;
 using Core.HttpModels.ObjectModels.ClinicModels;
+using Core.HttpModels.ObjectModels.SlotModels;
 using Core.HttpModels.ObjectModels.UserModel;
 using Repositories.Models;
 
@@ -128,6 +129,12 @@ namespace WebAPI.Helper.Mappers
                 .ForMember(dest => dest.timeSlotId, opt => opt.MapFrom(src => src.ScheduleSlotId))
                 .ForMember(dest => dest.ExpectedEndTime, opt => opt.MapFrom(src => src.ScheduleSlot.Slot.EndTime));
 
+                CreateMap<ScheduledSlot, ClinicSlotInfoModel>()
+                .ForMember(dest => dest.ClinicSlotId, opt => opt.MapFrom(src => src.ScheduleSlotId))
+                .ForMember(dest => dest.MaxAppointment, opt => opt.MapFrom(src => src.MaxAppointments))
+                .ForMember(dest => dest.Weekday, opt => opt.MapFrom(src => src.DateOfWeek))
+                .ForMember(dest => dest.start, opt => opt.MapFrom(src => src.Slot.StartTime))
+                .ForMember(dest => dest.end, opt => opt.MapFrom(src => src.Slot.EndTime));
         }
     }
 }
