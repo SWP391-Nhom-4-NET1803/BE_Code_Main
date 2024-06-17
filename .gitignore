@@ -363,6 +363,8 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-WebAPI/appsettings.json
-localConfig.json
+
 local_config.json
+NLayerArchitecture/ClinicPlatformWebAPI/appsettings.json
+WebAPI/appsettings.json
+
