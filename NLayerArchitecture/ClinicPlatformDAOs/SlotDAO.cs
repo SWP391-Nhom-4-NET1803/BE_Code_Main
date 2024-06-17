@@ -1,90 +1,67 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.UserModels;
-using ClinicPlatformDAOs.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace ClinicPlatformDAOs
 {
-    public class UserDAO : IFilterQuery<User>, IDisposable
+    public class SlotDAO : IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public UserDAO()
+        public SlotDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public UserDAO(DentalClinicPlatformContext context)
+        public SlotDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public User AddUser(User user)
+        public Slot AddSlot(Slot Slot)
         {
-            _context.Add(user);
+            _context.Add(Slot);
             this.SaveChanges();
-            return user;
+
+            return Slot;
         }
 
-        public User? GetUser(int id)
+        public Slot? GetSlot(int SlotId)
         {
-            return _context.Users
-                .Include(x => x.ClinicStaff)
-                .Include(x => x.Customer)
-                .Include(x => x.Role)
-                .Where(x => x.UserId == id)
-                .FirstOrDefault();
+            return _context.Slots.Where(x => x.SlotId == SlotId).FirstOrDefault();
         }
 
-        public IEnumerable<User> GetAllUsers()
+        public IEnumerable<Slot> GetAllSlot()
         {
-            return _context.Users.Include(x => x.ClinicStaff).Include(x => x.Customer).Include(x => x.Role).ToList();
+            return _context.Slots.ToList();
         }
 
-        public Customer? GetCustomerByCustomerId(int customerId)
+        public Slot UpdateSlot(Slot Slot)
         {
-            return _context.Customers
-                .Include(x => x.User)
-                .Where(x => x.CustomerId == customerId)
-                .FirstOrDefault();
-        }
+            Slot? SlotInfo = GetSlot(Slot.SlotId);
 
-        public ClinicStaff? GetStaffByStaffId(int staffId)
-        {
-            return _context.ClinicStaffs
-                .Include(x => x.User)
-                .Where(x => x.StaffId == staffId)
-                .FirstOrDefault();
-        }
-
-        public User UpdateUser(User user)
-        {
-            User? userInfo = GetUser(user.UserId);
-
-            if (userInfo != null)
+            if (SlotInfo != null)
             {
-                _context.Users.Update(user);
+                _context.Slots.Update(Slot);
                 SaveChanges();
             }
 
-            return user;
+            return Slot;
         }
 
-        public void DeleteUser(int userId)
+        public void DeleteSlot(int SlotId)
         {
-            User? user = GetUser(userId);
+            Slot? Slot = GetSlot(SlotId);
 
-            if (user != null)
+            if (Slot != null)
             {
-                _context.Users.Remove(user);
+                _context.Slots.Remove(Slot);
                 this.SaveChanges();
             }
         }
@@ -94,15 +71,14 @@ namespace ClinicPlatformDAOs
             this._context.SaveChanges();
         }
 
-        public virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    this._context.Dispose();
+                    _context.Dispose();
                 }
-
                 disposedValue = true;
             }
         }
@@ -113,9 +89,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<User> Filter(Expression<Func<User, bool>> filter, Func<IQueryable<User>, IOrderedQueryable<User>>? orderBy = null, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        public IEnumerable<Slot> Filter(Expression<Func<Slot, bool>> filter, Func<IQueryable<Slot>, IOrderedQueryable<Slot>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<User> query = _context.Users;
+            IQueryable<Slot> query = _context.Slots;
 
             if (filter != null)
             {

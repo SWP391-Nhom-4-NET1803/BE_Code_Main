@@ -1,90 +1,68 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformDAOs.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace ClinicPlatformDAOs
 {
-    public class UserDAO : IFilterQuery<User>, IDisposable
+    public class BookingDAO : IFilterQuery<Booking>, IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public UserDAO()
+        public BookingDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public UserDAO(DentalClinicPlatformContext context)
+        public BookingDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public User AddUser(User user)
+        public Booking AddBooking(Booking booking)
         {
-            _context.Add(user);
+            _context.Add(booking);
             this.SaveChanges();
-            return user;
+
+            return booking;
         }
 
-        public User? GetUser(int id)
+        public Booking? GetBooking(Guid BookId)
         {
-            return _context.Users
-                .Include(x => x.ClinicStaff)
-                .Include(x => x.Customer)
-                .Include(x => x.Role)
-                .Where(x => x.UserId == id)
-                .FirstOrDefault();
+            return _context.Bookings.Where(x => x.BookId == BookId).FirstOrDefault();
         }
 
-        public IEnumerable<User> GetAllUsers()
+        public IEnumerable<Booking> GetAllBookings(Guid BookId)
         {
-            return _context.Users.Include(x => x.ClinicStaff).Include(x => x.Customer).Include(x => x.Role).ToList();
+            return _context.Bookings.ToList();
         }
 
-        public Customer? GetCustomerByCustomerId(int customerId)
+        public Booking UpdateBooking(Booking booking)
         {
-            return _context.Customers
-                .Include(x => x.User)
-                .Where(x => x.CustomerId == customerId)
-                .FirstOrDefault();
-        }
+            Booking? bookingInfo = GetBooking(booking.BookId);
 
-        public ClinicStaff? GetStaffByStaffId(int staffId)
-        {
-            return _context.ClinicStaffs
-                .Include(x => x.User)
-                .Where(x => x.StaffId == staffId)
-                .FirstOrDefault();
-        }
-
-        public User UpdateUser(User user)
-        {
-            User? userInfo = GetUser(user.UserId);
-
-            if (userInfo != null)
+            if (bookingInfo != null)
             {
-                _context.Users.Update(user);
+                _context.Bookings.Update(booking);
                 SaveChanges();
             }
 
-            return user;
+            return booking;
         }
 
-        public void DeleteUser(int userId)
+        public void DeleteBooking(Guid bookId)
         {
-            User? user = GetUser(userId);
+            Booking? booking = GetBooking(bookId);
 
-            if (user != null)
+            if (booking != null)
             {
-                _context.Users.Remove(user);
+                _context.Bookings.Remove(booking);
                 this.SaveChanges();
             }
         }
@@ -94,15 +72,32 @@ namespace ClinicPlatformDAOs
             this._context.SaveChanges();
         }
 
-        public virtual void Dispose(bool disposing)
+        /// <summary>
+        ///     Please consider using this when you are too tired to actually implement good structuring.
+        /// </summary>
+        /// <param name="BookId"></param>
+        /// <returns></returns>
+        public Booking? GetFullBookingDetail(Guid BookId)
+        {
+            return _context.Bookings.Where(x => x.BookId == BookId)
+                .Include(x => x.Clinic)
+                .Include(x => x.Customer)
+                .Include(x => x.Dentist)
+                .Include(x => x.ScheduleSlot)
+                    .ThenInclude(y => y.Slot)
+                .Include(x => x.BookingService)
+                    .ThenInclude(y => y.Service)
+                .FirstOrDefault();
+        }
+
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    this._context.Dispose();
+                   _context.Dispose();
                 }
-
                 disposedValue = true;
             }
         }
@@ -113,9 +108,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<User> Filter(Expression<Func<User, bool>> filter, Func<IQueryable<User>, IOrderedQueryable<User>>? orderBy = null, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        IEnumerable<Booking> IFilterQuery<Booking>.Filter(Expression<Func<Booking, bool>> filter, Func<IQueryable<Booking>, IOrderedQueryable<Booking>>? orderBy, string includeProperties, int? pageSize, int? pageIndex)
         {
-            IQueryable<User> query = _context.Users;
+            IQueryable<Booking> query = _context.Bookings;
 
             if (filter != null)
             {

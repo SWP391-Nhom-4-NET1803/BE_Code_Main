@@ -1,90 +1,69 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformDAOs.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace ClinicPlatformDAOs
 {
-    public class UserDAO : IFilterQuery<User>, IDisposable
+    public class ClinicDAO: IFilterQuery<Clinic>, IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public UserDAO()
+        public ClinicDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public UserDAO(DentalClinicPlatformContext context)
+        public ClinicDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public User AddUser(User user)
+        public Clinic AddClinic(Clinic clinic)
         {
-            _context.Add(user);
-            this.SaveChanges();
-            return user;
+            this._context.Add(clinic);
+            SaveChanges();
+            return clinic;
         }
 
-        public User? GetUser(int id)
+        public Clinic? GetClinic(int id) 
         {
-            return _context.Users
-                .Include(x => x.ClinicStaff)
-                .Include(x => x.Customer)
-                .Include(x => x.Role)
-                .Where(x => x.UserId == id)
+            return _context.Clinics
+                .Where(x => x.ClinicId == id)
                 .FirstOrDefault();
         }
 
-        public IEnumerable<User> GetAllUsers()
+        public IEnumerable<Clinic> GetAllClinic()
         {
-            return _context.Users.Include(x => x.ClinicStaff).Include(x => x.Customer).Include(x => x.Role).ToList();
+            return _context.Clinics.ToList();
         }
 
-        public Customer? GetCustomerByCustomerId(int customerId)
+        public Clinic UpdateClinic(Clinic clinic)
         {
-            return _context.Customers
-                .Include(x => x.User)
-                .Where(x => x.CustomerId == customerId)
-                .FirstOrDefault();
-        }
+            Clinic? clinicInfo = GetClinic(clinic.ClinicId);
 
-        public ClinicStaff? GetStaffByStaffId(int staffId)
-        {
-            return _context.ClinicStaffs
-                .Include(x => x.User)
-                .Where(x => x.StaffId == staffId)
-                .FirstOrDefault();
-        }
-
-        public User UpdateUser(User user)
-        {
-            User? userInfo = GetUser(user.UserId);
-
-            if (userInfo != null)
+            if (clinicInfo != null)
             {
-                _context.Users.Update(user);
+                _context.Clinics.Update(clinic);
                 SaveChanges();
             }
 
-            return user;
+            return clinic;
         }
 
-        public void DeleteUser(int userId)
+        public void DeleteClinic(int userId)
         {
-            User? user = GetUser(userId);
+            Clinic? clinic = GetClinic(userId);
 
-            if (user != null)
+            if (clinic != null)
             {
-                _context.Users.Remove(user);
+                _context.Clinics.Remove(clinic);
                 this.SaveChanges();
             }
         }
@@ -94,7 +73,7 @@ namespace ClinicPlatformDAOs
             this._context.SaveChanges();
         }
 
-        public virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
@@ -102,20 +81,20 @@ namespace ClinicPlatformDAOs
                 {
                     this._context.Dispose();
                 }
-
                 disposedValue = true;
             }
         }
 
         public void Dispose()
         {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<User> Filter(Expression<Func<User, bool>> filter, Func<IQueryable<User>, IOrderedQueryable<User>>? orderBy = null, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        public IEnumerable<Clinic> Filter(Expression<Func<Clinic, bool>> filter, Func<IQueryable<Clinic>, IOrderedQueryable<Clinic>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<User> query = _context.Users;
+            IQueryable<Clinic> query = _context.Clinics;
 
             if (filter != null)
             {

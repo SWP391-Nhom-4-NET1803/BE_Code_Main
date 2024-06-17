@@ -1,90 +1,68 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformDAOs.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace ClinicPlatformDAOs
 {
-    public class UserDAO : IFilterQuery<User>, IDisposable
+    public class ClinicServiceDAO: IFilterQuery<ClinicService>, IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public UserDAO()
+        public ClinicServiceDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public UserDAO(DentalClinicPlatformContext context)
+        public ClinicServiceDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public User AddUser(User user)
+        public ClinicService AddClinicService(ClinicService ClinicService)
         {
-            _context.Add(user);
+            _context.Add(ClinicService);
             this.SaveChanges();
-            return user;
+
+            return ClinicService;
         }
 
-        public User? GetUser(int id)
+        public ClinicService? GetClinicService(Guid serviceId)
         {
-            return _context.Users
-                .Include(x => x.ClinicStaff)
-                .Include(x => x.Customer)
-                .Include(x => x.Role)
-                .Where(x => x.UserId == id)
-                .FirstOrDefault();
+            return _context.ClinicServices.Where(x => x.ClinicServiceId == serviceId).FirstOrDefault();
         }
 
-        public IEnumerable<User> GetAllUsers()
+        public IEnumerable<ClinicService> GetAllClinicService()
         {
-            return _context.Users.Include(x => x.ClinicStaff).Include(x => x.Customer).Include(x => x.Role).ToList();
+            return _context.ClinicServices.ToList();
         }
 
-        public Customer? GetCustomerByCustomerId(int customerId)
+        public ClinicService UpdateClinicService(ClinicService clinicService)
         {
-            return _context.Customers
-                .Include(x => x.User)
-                .Where(x => x.CustomerId == customerId)
-                .FirstOrDefault();
-        }
+            ClinicService? ClinicServiceInfo = GetClinicService(clinicService.ClinicServiceId);
 
-        public ClinicStaff? GetStaffByStaffId(int staffId)
-        {
-            return _context.ClinicStaffs
-                .Include(x => x.User)
-                .Where(x => x.StaffId == staffId)
-                .FirstOrDefault();
-        }
-
-        public User UpdateUser(User user)
-        {
-            User? userInfo = GetUser(user.UserId);
-
-            if (userInfo != null)
+            if (ClinicServiceInfo != null)
             {
-                _context.Users.Update(user);
+                _context.ClinicServices.Update(clinicService);
                 SaveChanges();
             }
 
-            return user;
+            return clinicService;
         }
 
-        public void DeleteUser(int userId)
+        public void DeleteClinicService(Guid serviceId)
         {
-            User? user = GetUser(userId);
+            ClinicService? clinicService = GetClinicService(serviceId);
 
-            if (user != null)
+            if (clinicService != null)
             {
-                _context.Users.Remove(user);
+                _context.ClinicServices.Remove(clinicService);
                 this.SaveChanges();
             }
         }
@@ -94,15 +72,14 @@ namespace ClinicPlatformDAOs
             this._context.SaveChanges();
         }
 
-        public virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    this._context.Dispose();
+                    _context.Dispose();
                 }
-
                 disposedValue = true;
             }
         }
@@ -113,9 +90,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<User> Filter(Expression<Func<User, bool>> filter, Func<IQueryable<User>, IOrderedQueryable<User>>? orderBy = null, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        public IEnumerable<ClinicService> Filter(Expression<Func<ClinicService, bool>> filter, Func<IQueryable<ClinicService>, IOrderedQueryable<ClinicService>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<User> query = _context.Users;
+            IQueryable<ClinicService> query = _context.ClinicServices;
 
             if (filter != null)
             {

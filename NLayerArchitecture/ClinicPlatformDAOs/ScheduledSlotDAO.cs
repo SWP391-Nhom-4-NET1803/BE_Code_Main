@@ -1,90 +1,67 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.UserModels;
-using ClinicPlatformDAOs.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace ClinicPlatformDAOs
 {
-    public class UserDAO : IFilterQuery<User>, IDisposable
+    public class ScheduledSlotDAO: IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public UserDAO()
+        public ScheduledSlotDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public UserDAO(DentalClinicPlatformContext context)
+        public ScheduledSlotDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public User AddUser(User user)
+        public ScheduledSlot AddScheduledSlot(ScheduledSlot ScheduledSlot)
         {
-            _context.Add(user);
+            _context.Add(ScheduledSlot);
             this.SaveChanges();
-            return user;
+
+            return ScheduledSlot;
         }
 
-        public User? GetUser(int id)
+        public ScheduledSlot? GetScheduledSlot(Guid ScheduledSlotId)
         {
-            return _context.Users
-                .Include(x => x.ClinicStaff)
-                .Include(x => x.Customer)
-                .Include(x => x.Role)
-                .Where(x => x.UserId == id)
-                .FirstOrDefault();
+            return _context.ScheduledSlots.Where(x => x.ScheduleSlotId == ScheduledSlotId).FirstOrDefault();
         }
 
-        public IEnumerable<User> GetAllUsers()
+        public IEnumerable<ScheduledSlot> GetAllScheduledSlot()
         {
-            return _context.Users.Include(x => x.ClinicStaff).Include(x => x.Customer).Include(x => x.Role).ToList();
+            return _context.ScheduledSlots.ToList();
         }
 
-        public Customer? GetCustomerByCustomerId(int customerId)
+        public ScheduledSlot UpdateScheduledSlot(ScheduledSlot ScheduledSlot)
         {
-            return _context.Customers
-                .Include(x => x.User)
-                .Where(x => x.CustomerId == customerId)
-                .FirstOrDefault();
-        }
+            ScheduledSlot? ScheduledSlotInfo = GetScheduledSlot(ScheduledSlot.ScheduleSlotId);
 
-        public ClinicStaff? GetStaffByStaffId(int staffId)
-        {
-            return _context.ClinicStaffs
-                .Include(x => x.User)
-                .Where(x => x.StaffId == staffId)
-                .FirstOrDefault();
-        }
-
-        public User UpdateUser(User user)
-        {
-            User? userInfo = GetUser(user.UserId);
-
-            if (userInfo != null)
+            if (ScheduledSlotInfo != null)
             {
-                _context.Users.Update(user);
+                _context.ScheduledSlots.Update(ScheduledSlot);
                 SaveChanges();
             }
 
-            return user;
+            return ScheduledSlot;
         }
 
-        public void DeleteUser(int userId)
+        public void DeleteScheduledSlot(Guid ScheduledSlotId)
         {
-            User? user = GetUser(userId);
+            ScheduledSlot? ScheduledSlot = GetScheduledSlot(ScheduledSlotId);
 
-            if (user != null)
+            if (ScheduledSlot != null)
             {
-                _context.Users.Remove(user);
+                _context.ScheduledSlots.Remove(ScheduledSlot);
                 this.SaveChanges();
             }
         }
@@ -94,15 +71,14 @@ namespace ClinicPlatformDAOs
             this._context.SaveChanges();
         }
 
-        public virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    this._context.Dispose();
+                    _context.Dispose();
                 }
-
                 disposedValue = true;
             }
         }
@@ -113,9 +89,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<User> Filter(Expression<Func<User, bool>> filter, Func<IQueryable<User>, IOrderedQueryable<User>>? orderBy = null, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        public IEnumerable<ScheduledSlot> Filter(Expression<Func<ScheduledSlot, bool>> filter, Func<IQueryable<ScheduledSlot>, IOrderedQueryable<ScheduledSlot>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<User> query = _context.Users;
+            IQueryable<ScheduledSlot> query = _context.ScheduledSlots;
 
             if (filter != null)
             {

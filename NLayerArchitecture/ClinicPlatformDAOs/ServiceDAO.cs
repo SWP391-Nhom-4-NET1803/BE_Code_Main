@@ -1,90 +1,67 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.UserModels;
-using ClinicPlatformDAOs.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace ClinicPlatformDAOs
 {
-    public class UserDAO : IFilterQuery<User>, IDisposable
+    public class ServiceDAO: IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public UserDAO()
+        public ServiceDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public UserDAO(DentalClinicPlatformContext context)
+        public ServiceDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public User AddUser(User user)
+        public Service AddService(Service Service)
         {
-            _context.Add(user);
+            _context.Add(Service);
             this.SaveChanges();
-            return user;
+
+            return Service;
         }
 
-        public User? GetUser(int id)
+        public Service? GetService(int serviceId)
         {
-            return _context.Users
-                .Include(x => x.ClinicStaff)
-                .Include(x => x.Customer)
-                .Include(x => x.Role)
-                .Where(x => x.UserId == id)
-                .FirstOrDefault();
+            return _context.Services.Where(x => x.ServiceId == serviceId).FirstOrDefault();
         }
 
-        public IEnumerable<User> GetAllUsers()
+        public IEnumerable<Service> GetAllService()
         {
-            return _context.Users.Include(x => x.ClinicStaff).Include(x => x.Customer).Include(x => x.Role).ToList();
+            return _context.Services.ToList();
         }
 
-        public Customer? GetCustomerByCustomerId(int customerId)
+        public Service UpdateService(Service Service)
         {
-            return _context.Customers
-                .Include(x => x.User)
-                .Where(x => x.CustomerId == customerId)
-                .FirstOrDefault();
-        }
+            Service? ServiceInfo = GetService(Service.ServiceId);
 
-        public ClinicStaff? GetStaffByStaffId(int staffId)
-        {
-            return _context.ClinicStaffs
-                .Include(x => x.User)
-                .Where(x => x.StaffId == staffId)
-                .FirstOrDefault();
-        }
-
-        public User UpdateUser(User user)
-        {
-            User? userInfo = GetUser(user.UserId);
-
-            if (userInfo != null)
+            if (ServiceInfo != null)
             {
-                _context.Users.Update(user);
+                _context.Services.Update(Service);
                 SaveChanges();
             }
 
-            return user;
+            return Service;
         }
 
-        public void DeleteUser(int userId)
+        public void DeleteService(int serviceId)
         {
-            User? user = GetUser(userId);
+            Service? Service = GetService(serviceId);
 
-            if (user != null)
+            if (Service != null)
             {
-                _context.Users.Remove(user);
+                _context.Services.Remove(Service);
                 this.SaveChanges();
             }
         }
@@ -94,15 +71,14 @@ namespace ClinicPlatformDAOs
             this._context.SaveChanges();
         }
 
-        public virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    this._context.Dispose();
+                    _context.Dispose();
                 }
-
                 disposedValue = true;
             }
         }
@@ -113,9 +89,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<User> Filter(Expression<Func<User, bool>> filter, Func<IQueryable<User>, IOrderedQueryable<User>>? orderBy = null, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        public IEnumerable<Service> Filter(Expression<Func<Service, bool>> filter, Func<IQueryable<Service>, IOrderedQueryable<Service>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<User> query = _context.Users;
+            IQueryable<Service> query = _context.Services;
 
             if (filter != null)
             {
@@ -146,3 +122,4 @@ namespace ClinicPlatformDAOs
         }
     }
 }
+
