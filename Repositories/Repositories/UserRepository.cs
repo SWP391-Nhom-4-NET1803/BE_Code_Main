@@ -59,12 +59,12 @@ namespace Repositories.Repositories
 
         public IEnumerable<ClinicStaff> GetAllClinicStaff(int clinic_id)
         {
-            return context.ClinicStaffs.Where(staff => staff.ClinicId == clinic_id).ToList();
+            return context.ClinicStaffs.Where(staff => staff.ClinicId == clinic_id).Include(x => x.User).ToList();
         }
 
         public IEnumerable<ClinicStaff> GetAllClinicStaff(string clinic_name)
         {
-            return context.ClinicStaffs.Include("Clinic").Where(x => x.Clinic!.Name == clinic_name).ToList();
+            return context.ClinicStaffs.Where(x => x.Clinic!.Name == clinic_name).Include(x => x.Clinic).ToList();
         }
         public bool ExistUser(int id, out User? info)
         {

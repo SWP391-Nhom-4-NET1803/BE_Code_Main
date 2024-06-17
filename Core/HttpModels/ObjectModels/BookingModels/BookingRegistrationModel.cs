@@ -13,7 +13,7 @@ namespace Core.HttpModels.ObjectModels.BookingModels
         public int CustomerId { get; set; }
         public int DentistId { get; set; }
         public int ClinicId { get; set; }
-        public int? ServiceId { get; set; } = null;
+        public Guid? ServiceId { get; set; } = null;
         public int RepeatCount { get; set; } = 0;
         public bool IsRecurring { get; set; } = false;
     }

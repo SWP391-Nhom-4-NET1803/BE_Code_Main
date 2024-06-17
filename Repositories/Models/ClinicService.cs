@@ -5,7 +5,7 @@ namespace Repositories.Models;
 
 public partial class ClinicService
 {
-    public int ClinicServiceId { get; set; }
+    public Guid ClinicServiceId { get; set; }
 
     public long? Price { get; set; }
 

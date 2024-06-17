@@ -91,33 +91,34 @@ namespace Services.BookingService
         {
             var customerInfo = _unitOfWork._context.Customers.Include(x => x.User).Where(x => x.CustomerId == bookInfo.CustomerId).FirstOrDefault();
 
-            var dentistInfo = _unitOfWork._context.ClinicStaffs.Include(x => x.User).Where(x => x.StaffId == bookInfo.DentistId).FirstOrDefault();
+            var dentistInfo = _unitOfWork._context.ClinicStaffs.Include(x => x.User).Where(x => x.StaffId == bookInfo.DentistId && x.ClinicId == bookInfo.ClinicId).FirstOrDefault();
 
             var dentalClinicInfo = _unitOfWork._context.Clinics.Where(x => x.ClinicId == bookInfo.ClinicId).FirstOrDefault();
 
             var slotInfo = _unitOfWork._context.ScheduledSlots.Include(x => x.Slot).Where(x => x.ScheduleSlotId == bookInfo.TimeSlotId && x.ClinicId == bookInfo.ClinicId).FirstOrDefault();
 
+            if (dentalClinicInfo == null)
+            {
+                message = $"No clinic found for {bookInfo.ClinicId}.";
+                return false;
+            }
+
             if (customerInfo == null)
             {
-                message = "Customer information not found!";
+                message = $"No customer with CustomerId {bookInfo.CustomerId} exist.";
                 return false;
             }
 
             if (dentistInfo == null)
             {
-                message = "Dentist information not found!";
+                message = $"No dentist with ClinicStaffId {bookInfo.DentistId} exist for clinic {dentalClinicInfo.Name} with Id {bookInfo.ClinicId}.";
                 return false;
             }
 
-            if (dentalClinicInfo == null)
-            {
-                message = "Clinic information not found!";
-                return false;
-            }
 
             if (slotInfo == null)
             {
-                message = "Slot information not found!";
+                message = $"Slot information not found with provided ID {bookInfo.TimeSlotId} for clinc {dentalClinicInfo.Name} with Id {bookInfo.ClinicId}";
                 return false;
             }
 
@@ -131,7 +132,7 @@ namespace Services.BookingService
 
             var newBook = new Booking()
             {
-                BookingType = "Khám t?ng quát",
+                BookingType = "Khám tổng quát",
                 AppointmentDate = bookInfo.AppointmentDate,
                 ClinicId = dentalClinicInfo.ClinicId,
                 CustomerId = customerInfo.CustomerId,
@@ -141,7 +142,7 @@ namespace Services.BookingService
                 Status = false
             };
 
-            _unitOfWork._context.Bookings.Add(newBook);
+            _unitOfWork.BookingRepository.Add(newBook);
 
             message = "Suceed";
             return true;

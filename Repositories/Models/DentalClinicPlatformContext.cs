@@ -67,13 +67,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         return connectionString;
     }
-
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Booking>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__Booking__490D1AE14C4CB033");
+            entity.HasKey(e => e.BookId).HasName("PK__Booking__490D1AE149B99149");
 
             entity.ToTable("Booking");
 
@@ -121,7 +119,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Certification>(entity =>
         {
-            entity.HasKey(e => e.CertificationId).HasName("PK__Certific__185D5AEC69C4D16D");
+            entity.HasKey(e => e.CertificationId).HasName("PK__Certific__185D5AEC87256830");
 
             entity.ToTable("Certification");
 
@@ -151,17 +149,17 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Clinic>(entity =>
         {
-            entity.HasKey(e => e.ClinicId).HasName("PK__Clinic__A0C8D19BB2584EBF");
+            entity.HasKey(e => e.ClinicId).HasName("PK__Clinic__A0C8D19BA47F9527");
 
             entity.ToTable("Clinic");
 
-            entity.HasIndex(e => e.Name, "UQ__Clinic__72E12F1B76636C56").IsUnique();
+            entity.HasIndex(e => e.Name, "UQ__Clinic__72E12F1B33C4720F").IsUnique();
 
-            entity.HasIndex(e => e.Address, "UQ__Clinic__751C8E54DB095C3D").IsUnique();
+            entity.HasIndex(e => e.Address, "UQ__Clinic__751C8E54861C1681").IsUnique();
 
-            entity.HasIndex(e => e.Email, "UQ__Clinic__AB6E616460DE48A6").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__Clinic__AB6E6164A6EF7587").IsUnique();
 
-            entity.HasIndex(e => e.Phone, "UQ__Clinic__B43B145F20B24831").IsUnique();
+            entity.HasIndex(e => e.Phone, "UQ__Clinic__B43B145F0C2A8E67").IsUnique();
 
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
             entity.Property(e => e.Address)
@@ -193,9 +191,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<ClinicService>(entity =>
         {
-            entity.HasKey(e => e.ClinicServiceId).HasName("PK__ClinicSe__916E631C3393BB35");
+            entity.HasKey(e => e.ClinicServiceId).HasName("PK__ClinicSe__916E631C766C370E");
 
-            entity.Property(e => e.ClinicServiceId).HasColumnName("clinic_service_id");
+            entity.Property(e => e.ClinicServiceId)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("clinic_service_id");
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
             entity.Property(e => e.Description)
                 .HasMaxLength(255)
@@ -216,9 +216,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<ClinicStaff>(entity =>
         {
-            entity.HasKey(e => e.StaffId).HasName("PK__ClinicSt__1963DD9C582335C0");
+            entity.HasKey(e => e.StaffId).HasName("PK__ClinicSt__1963DD9CCFC6DFEF");
 
             entity.ToTable("ClinicStaff");
+
+            entity.HasIndex(e => e.UserId, "UQ__ClinicSt__B9BE370ED6685BCF").IsUnique();
 
             entity.Property(e => e.StaffId).HasColumnName("staff_id");
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
@@ -229,17 +231,19 @@ public partial class DentalClinicPlatformContext : DbContext
                 .HasForeignKey(d => d.ClinicId)
                 .HasConstraintName("FKClinicStaf705438");
 
-            entity.HasOne(d => d.User).WithMany(p => p.ClinicStaffs)
-                .HasForeignKey(d => d.UserId)
+            entity.HasOne(d => d.User).WithOne(p => p.ClinicStaff)
+                .HasForeignKey<ClinicStaff>(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FKClinicStaf352227");
         });
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__CD65CB852EBDD61D");
+            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__CD65CB857000F047");
 
             entity.ToTable("Customer");
+
+            entity.HasIndex(e => e.UserId, "UQ__Customer__B9BE370E681BCBC4").IsUnique();
 
             entity.Property(e => e.CustomerId).HasColumnName("customer_id");
             entity.Property(e => e.BirthDate).HasColumnName("birth_date");
@@ -251,15 +255,15 @@ public partial class DentalClinicPlatformContext : DbContext
                 .HasColumnName("sex");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.User).WithMany(p => p.Customers)
-                .HasForeignKey(d => d.UserId)
+            entity.HasOne(d => d.User).WithOne(p => p.Customer)
+                .HasForeignKey<Customer>(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FKCustomer199874");
         });
 
         modelBuilder.Entity<MediaType>(entity =>
         {
-            entity.HasKey(e => e.TypeId).HasName("PK__MediaTyp__2C000598DEDB7314");
+            entity.HasKey(e => e.TypeId).HasName("PK__MediaTyp__2C000598B963200C");
 
             entity.ToTable("MediaType");
 
@@ -271,7 +275,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Medium>(entity =>
         {
-            entity.HasKey(e => e.MediaId).HasName("PK__Media__D0A840F4DE87E96B");
+            entity.HasKey(e => e.MediaId).HasName("PK__Media__D0A840F4CAFAC8AF");
 
             entity.Property(e => e.MediaId)
                 .HasDefaultValueSql("(newid())")
@@ -297,9 +301,9 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Message>(entity =>
         {
-            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE6EC1FD666");
+            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE6D36967EB");
 
-            entity.HasIndex(e => e.Sender, "UQ__Messages__C605FA9637FED96E").IsUnique();
+            entity.HasIndex(e => e.Sender, "UQ__Messages__C605FA96FF1189D5").IsUnique();
 
             entity.Property(e => e.MessageId)
                 .HasDefaultValueSql("(newid())")
@@ -327,7 +331,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__Payment__ED1FC9EA28F5E2CD");
+            entity.HasKey(e => e.PaymentId).HasName("PK__Payment__ED1FC9EA3609E98E");
 
             entity.ToTable("Payment");
 
@@ -354,7 +358,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<PaymentType>(entity =>
         {
-            entity.HasKey(e => e.TypeId).HasName("PK__PaymentT__2C000598A58FB67E");
+            entity.HasKey(e => e.TypeId).HasName("PK__PaymentT__2C000598D82B15CE");
 
             entity.ToTable("PaymentType");
 
@@ -372,11 +376,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Role>(entity =>
         {
-            entity.HasKey(e => e.RoleId).HasName("PK__Role__760965CC0F658391");
+            entity.HasKey(e => e.RoleId).HasName("PK__Role__760965CCABB55355");
 
             entity.ToTable("Role");
 
-            entity.HasIndex(e => e.RoleName, "UQ__Role__783254B115B44730").IsUnique();
+            entity.HasIndex(e => e.RoleName, "UQ__Role__783254B1FB28251B").IsUnique();
 
             entity.Property(e => e.RoleId).HasColumnName("role_id");
             entity.Property(e => e.RoleDescription)
@@ -389,7 +393,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<ScheduledSlot>(entity =>
         {
-            entity.HasKey(e => e.ScheduleSlotId).HasName("PK__Schedule__54B44F59C0E42BB3");
+            entity.HasKey(e => e.ScheduleSlotId).HasName("PK__Schedule__54B44F590C80BA59");
 
             entity.ToTable("ScheduledSlot");
 
@@ -414,11 +418,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Service>(entity =>
         {
-            entity.HasKey(e => e.ServiceId).HasName("PK__Service__3E0DB8AF7563BB7D");
+            entity.HasKey(e => e.ServiceId).HasName("PK__Service__3E0DB8AF133591B0");
 
             entity.ToTable("Service");
 
-            entity.HasIndex(e => e.ServiceName, "UQ__Service__4A8EDF39E523D381").IsUnique();
+            entity.HasIndex(e => e.ServiceName, "UQ__Service__4A8EDF3937B6F334").IsUnique();
 
             entity.Property(e => e.ServiceId).HasColumnName("service_id");
             entity.Property(e => e.ServiceName)
@@ -428,26 +432,24 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Slot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__Slot__971A01BBEC8001B8");
+            entity.HasKey(e => e.SlotId).HasName("PK__Slot__971A01BB644AD1B7");
 
             entity.ToTable("Slot");
 
-            entity.Property(e => e.SlotId)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("slot_id");
+            entity.Property(e => e.SlotId).HasColumnName("slot_id");
             entity.Property(e => e.EndTime).HasColumnName("end_time");
             entity.Property(e => e.StartTime).HasColumnName("start_time");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__User__B9BE370F5045B76D");
+            entity.HasKey(e => e.UserId).HasName("PK__User__B9BE370F964C90D9");
 
             entity.ToTable("User");
 
-            entity.HasIndex(e => e.Email, "UQ__User__AB6E6164EF4BD5B3").IsUnique();
+            entity.HasIndex(e => e.Email, "UQ__User__AB6E61646839208A").IsUnique();
 
-            entity.HasIndex(e => e.Username, "UQ__User__F3DBC57287241589").IsUnique();
+            entity.HasIndex(e => e.Username, "UQ__User__F3DBC572862AE419").IsUnique();
 
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.CreationDate)

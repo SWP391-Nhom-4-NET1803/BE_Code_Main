@@ -17,7 +17,7 @@ namespace Services.ClinicsService
 
         Clinic? GetClinicInformation(int clinicId);
 
-        public ClinicService GetServiceInfo(int serviceId);
+        public ClinicService GetServiceInfo(Guid serviceId);
 
         IEnumerable<RepoClinicService> GetClinicServices(int clinicId);
 

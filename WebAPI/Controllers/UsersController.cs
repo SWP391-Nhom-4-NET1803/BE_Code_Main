@@ -143,7 +143,7 @@ namespace WebAPI.Controllers
         {
             var user = (User)HttpContext.Items["user"]!;
 
-            if (user == null)
+            if (user == null || user.UserId != id)
             {
                 return Unauthorized(new HttpResponseModel()
                 {

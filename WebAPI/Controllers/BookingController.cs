@@ -39,7 +39,7 @@ namespace WebAPI.Controllers
 
             if (booking.SelectedService != null)
             {
-                service.Add(HttpClinicService.GetServiceInfo((int) booking.SelectedService));
+                service.Add(HttpClinicService.GetServiceInfo((Guid)booking.SelectedService));
 
             }
 
