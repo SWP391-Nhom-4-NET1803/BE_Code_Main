@@ -75,7 +75,7 @@ namespace ClinicPlatformServices
         {
             var tempt = userRepository.GetUser(userId);
 
-            if (tempt == null)
+            if (tempt == null || tempt.Role != 2)
             {
                 return null;
             }
@@ -87,7 +87,8 @@ namespace ClinicPlatformServices
         {
             var tempt = userRepository.GetUser(userId);
 
-            if (tempt == null)
+            
+            if (tempt == null || tempt.Role != 3)
             {
                 return null;
             }
@@ -253,7 +254,7 @@ namespace ClinicPlatformServices
             }
             catch (Exception ex)
             {
-                message = ex.Message;
+                message = ex.InnerException?.Message ?? ex.Message;
                 return false;
             }
         }
@@ -283,7 +284,7 @@ namespace ClinicPlatformServices
             }
             catch (Exception ex)
             {
-                message = ex.Message;
+                message = ex.InnerException?.Message ?? ex.Message;
                 return false;
             }
         }

@@ -64,6 +64,7 @@ namespace ClinicPlatformRepositories
                     Status = result.Status,
                     Role = result.RoleId,
                     RoleName = result.Role.RoleName,
+                    JoinedDate = result.CreationDate,
 
                     CustomerId = result.Customer?.CustomerId,
                     Sex = result.Customer?.Sex,

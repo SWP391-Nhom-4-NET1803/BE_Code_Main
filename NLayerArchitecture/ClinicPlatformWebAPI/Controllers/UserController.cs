@@ -70,7 +70,7 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             CustomerInfoModel? customer = userService.GetCustomerInformationWithUserID(userId);
 
-            if (customer != null)
+            if (customer == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -94,7 +94,7 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             ClinicStaffInfoModel? clinicStaff = userService.GetClinicStaffInformationWithUserId(userId);
 
-            if (clinicStaff != null)
+            if (clinicStaff == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -111,6 +111,78 @@ namespace ClinicPlatformWebAPI.Controllers
                 Message = "Success",
                 Content = clinicStaff
             });
+        }
+
+        [HttpPost("register/customer")]
+        [AllowAnonymous]
+        public ActionResult<HttpResponseModel> RegisterCustomer([FromBody] UserRegistrationModel userInfo)
+        {
+
+            var ResponseBody = new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "OK",
+                Detail = "User created successfully!",
+            };
+
+            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.Customer, out var message))
+            {
+                ResponseBody.StatusCode = 400;
+                ResponseBody.Message = "Register account failed";
+                ResponseBody.Detail = message;
+
+                return BadRequest(ResponseBody);
+            }
+
+            return Ok(ResponseBody);
+        }
+
+        [HttpPost("register/clinic-staff")]
+        public ActionResult<HttpResponseModel> RegisterClinicStaff([FromBody] UserRegistrationModel userInfo)
+        {
+
+            var ResponseBody = new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "OK",
+                Detail = "User created successfully!",
+            };
+
+            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.ClinicStaff, out var message))
+            {
+                ResponseBody.StatusCode = 400;
+                ResponseBody.Message = "Update failed";
+                ResponseBody.Detail = message;
+
+                return BadRequest(ResponseBody);
+            }
+
+            return Ok(ResponseBody);
+        }
+
+        [HttpPost("register/clinic-owner")]
+        [AllowAnonymous]
+        public ActionResult<HttpResponseModel> RegisterClinicOwner([FromBody] UserRegistrationModel userInfo)
+        {
+            userInfo.ClinicOwner = true;
+            userInfo.Clinic = null;
+            var ResponseBody = new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "OK",
+                Detail = "User created successfully!",
+            };
+
+            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.ClinicStaff, out var message))
+            {
+                ResponseBody.StatusCode = 400;
+                ResponseBody.Message = "Register account failed";
+                ResponseBody.Detail = message;
+
+                return BadRequest(ResponseBody);
+            }
+
+            return Ok(ResponseBody);
         }
 
         [HttpPut("{id}")]
@@ -206,11 +278,12 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
+
         [HttpPut("password/change")]
         [AllowAnonymous]
         public ActionResult<HttpResponseModel> UpdateUserPassword([FromBody] PasswordResetModel resetInfo)
         {
-            if (userService.UpdatePasswordForUserWithId(resetInfo.userId, resetInfo.OldPassword, resetInfo.NewPassword, out var message))
+            if (!userService.UpdatePasswordForUserWithId(resetInfo.userId, resetInfo.OldPassword, resetInfo.NewPassword, out var message))
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -228,82 +301,11 @@ namespace ClinicPlatformWebAPI.Controllers
 
         }
 
-        [HttpPost("register/customer")]
-        [AllowAnonymous]
-        public ActionResult<HttpResponseModel> RegisterCustomer([FromBody] UserRegistrationModel userInfo)
-        {
-
-            var ResponseBody = new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
-            };
-
-            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.Customer, out var message))
-            {
-                ResponseBody.StatusCode = 400;
-                ResponseBody.Message = "Register account failed";
-                ResponseBody.Detail = message;
-
-                return BadRequest(ResponseBody);
-            }
-
-            return Ok(ResponseBody);
-        }
-
-        [HttpPost("register/clinic-staff")]
-        public ActionResult<HttpResponseModel> RegisterClinicStaff([FromBody] UserRegistrationModel userInfo)
-        {
-
-            var ResponseBody = new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
-            };
-
-            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.ClinicStaff, out var message))
-            {
-                ResponseBody.StatusCode = 400;
-                ResponseBody.Message = "Update failed";
-                ResponseBody.Detail = message;
-
-                return BadRequest(ResponseBody);
-            }
-
-            return Ok(ResponseBody) ;
-        }
-
-        [HttpPost("register/clinic-owner")]
-        [AllowAnonymous]
-        public ActionResult<HttpResponseModel> RegisterClinicOwner([FromBody] UserRegistrationModel userInfo)
-        {
-            userInfo.ClinicOwner = true;
-            var ResponseBody = new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
-            };
-
-            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.ClinicStaff, out var message))
-            {
-                ResponseBody.StatusCode = 400;
-                ResponseBody.Message = "Register account failed";
-                ResponseBody.Detail = message;
-
-                return BadRequest(ResponseBody);
-            }
-
-            return Ok(ResponseBody);
-        }
-
         [HttpPost("password/reset")]
         [AllowAnonymous]
-        public ActionResult<HttpResponseModel> RegisterClinicOwner([FromBody] string Email)
+        public ActionResult<HttpResponseModel> ResetPassword([FromBody] PasswordResetRequestModel requestBody)
         {
-            if (userService.GetUserInformationWithEmail(Email) == null)
+            if (userService.GetUserInformationWithEmail(requestBody.Email) == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
