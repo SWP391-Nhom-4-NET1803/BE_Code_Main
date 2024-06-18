@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformRepositories
 {
-    internal class ClinicServiceRepository : IClinicServiceRepository
+    public class ClinicServiceRepository : IClinicServiceRepository
     {
         private readonly ClinicServiceDAO clinicServiceDAO;
         private readonly ServiceDAO serviceDAO;

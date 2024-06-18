@@ -7,6 +7,7 @@ using ClinicPlatformServices;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformRepositories;
+using ClinicPlatformBusinessObject;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,7 +81,11 @@ builder.Services.AddAuthentication(options =>
 
 // Add Services
 builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
+builder.Services.AddScoped<IClinicServiceRepository, ClinicServiceRepository>();
+
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IClinicService, PlatformClinicService>();
 
 var app = builder.Build();
 
