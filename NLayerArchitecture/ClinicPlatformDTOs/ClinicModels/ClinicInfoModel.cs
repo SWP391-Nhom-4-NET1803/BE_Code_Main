@@ -15,11 +15,12 @@ namespace ClinicPlatformDTOs.ClinicModels
         public string? Address { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
-        public string? OpenHour { get; set; }
-        public string? CloseHour { get; set; }
+        public TimeOnly? OpenHour { get; set; }
+        public TimeOnly? CloseHour { get; set; }
         public IEnumerable<ClinicServiceInfoModel> ClinicServices { get; set; } = [];
         public IEnumerable<ClinicSlotInfoModel> ClinicSlots { get; set; } = [];
         public IEnumerable<ClinicStaffInfoModel> ClinicStaff { get; set; } = [];
-        public bool Status { get; set; } = false;
+        public int? OwnerId;
+        public bool? Status { get; set; }
     }
 }

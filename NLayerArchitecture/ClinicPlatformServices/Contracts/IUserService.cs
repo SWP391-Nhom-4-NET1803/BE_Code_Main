@@ -17,6 +17,12 @@ namespace ClinicPlatformServices.Contracts
 
         ClinicStaffInfoModel? GetClinicStaffInformation(int staffId);
 
+        public ClinicStaffInfoModel? GetClinicStaffInformationWithUserId(int userId);
+
+        public CustomerInfoModel? GetCustomerInformationWithUserID(int userId);
+
+        UserInfoModel? GetUserInformationWithEmail(string email);
+
         bool RegisterCustomerAccount(UserRegistrationModel information, out string message);
 
         bool RegisterClinicStaffAccount(UserRegistrationModel information, out string message);
@@ -38,6 +44,8 @@ namespace ClinicPlatformServices.Contracts
         bool loginAsAdmin(string username, string password, out UserInfoModel? info, out string message);
 
         bool ExistUser(int id);
+
+        bool UpdatePasswordForUserWithId(int userId, string oldPassword, string newPassword, out string message);
 
         bool ActivateUser(int id, out string message);
 
