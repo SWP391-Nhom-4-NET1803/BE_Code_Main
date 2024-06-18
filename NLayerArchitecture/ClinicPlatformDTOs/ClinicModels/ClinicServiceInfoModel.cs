@@ -10,9 +10,9 @@ namespace ClinicPlatformDTOs.ClinicModels
     {
         public Guid ClinicServiceId { get; set; }
         public string? Description { get; set; } = null;
-        public float? Price { get; set; } = null;
-        public int ClinicId { get; set; }
-        public int ServiceId { get; set; }
+        public long? Price { get; set; } = null;
+        public int? ClinicId { get; set; }
+        public int? ServiceId { get; set; }
         public string? Name { get; set; } = null;
     }
 }

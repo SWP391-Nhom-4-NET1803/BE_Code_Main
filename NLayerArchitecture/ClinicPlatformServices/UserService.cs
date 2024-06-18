@@ -49,7 +49,7 @@ namespace ClinicPlatformServices
             }
         }
 
-        public bool checkLogin(string username, string password, out UserInfoModel? user)
+        public bool CheckLogin(string username, string password, out UserInfoModel? user)
         {
             user = GetWithUsernameAndPassword(username, password);
 
@@ -107,7 +107,7 @@ namespace ClinicPlatformServices
             return SearchResult.FirstOrDefault();
         }
 
-        public bool loginAsAdmin(string username, string password, out UserInfoModel? info, out string message)
+        public bool LoginAsAdmin(string username, string password, out UserInfoModel? info, out string message)
         {
             info = GetWithUsernameAndPassword(username, password);
 
@@ -121,7 +121,7 @@ namespace ClinicPlatformServices
             return true;
         }
 
-        public bool loginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message)
+        public bool LoginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message)
         {
             var result = GetWithUsernameAndPassword(username, password);
 
@@ -137,7 +137,7 @@ namespace ClinicPlatformServices
             return true;
         }
 
-        public bool loginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message)
+        public bool LoginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message)
         {
             var result = GetWithUsernameAndPassword(username, password);
 
@@ -164,7 +164,7 @@ namespace ClinicPlatformServices
         public bool RegisterAccount(UserRegistrationModel information, RoleModel.Roles role, out string message, bool IsAdmin = false)
         {
 
-            if (!checkAccountAvailability(information.Username, information.Email, out message))
+            if (!CheckAccountAvailability(information.Username, information.Email, out message))
             {
                 return false;
             }
@@ -335,7 +335,7 @@ namespace ClinicPlatformServices
             return false;
         }
 
-        public bool checkAccountAvailability(string? username, string? email, out string message)
+        public bool CheckAccountAvailability(string? username, string? email, out string message)
         {
             if (username == null || email == null)
             {

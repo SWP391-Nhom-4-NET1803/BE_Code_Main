@@ -10,6 +10,6 @@
         public string? OpenHour { get; set; }
         public string? CloseHour { get; set; }
         public List<int>? ClinicServices { get; set; }
-        public List<string>? Certifications { get; set; }
+        public List<string>? Attachments { get; set; }
     }
 }

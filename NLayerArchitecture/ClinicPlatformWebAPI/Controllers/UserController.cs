@@ -92,9 +92,9 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpGet("staff/{userId}")]
         public ActionResult<IHttpResponseModel<ClinicStaffInfoModel>> GetClinicStaffInformation(int userId)
         {
-            ClinicStaffInfoModel? customer = userService.GetClinicStaffInformationWithUserId(userId);
+            ClinicStaffInfoModel? clinicStaff = userService.GetClinicStaffInformationWithUserId(userId);
 
-            if (customer != null)
+            if (clinicStaff != null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -109,7 +109,7 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 StatusCode = 200,
                 Message = "Success",
-                Content = customer
+                Content = clinicStaff
             });
         }
 
