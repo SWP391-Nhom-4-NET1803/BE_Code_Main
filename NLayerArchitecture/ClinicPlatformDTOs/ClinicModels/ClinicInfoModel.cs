@@ -20,7 +20,7 @@ namespace ClinicPlatformDTOs.ClinicModels
         public IEnumerable<ClinicServiceInfoModel> ClinicServices { get; set; } = [];
         public IEnumerable<ClinicSlotInfoModel> ClinicSlots { get; set; } = [];
         public IEnumerable<ClinicStaffInfoModel> ClinicStaff { get; set; } = [];
-        public int? OwnerId;
+        public int? OwnerId { get; set; }
         public bool? Status { get; set; }
     }
 }

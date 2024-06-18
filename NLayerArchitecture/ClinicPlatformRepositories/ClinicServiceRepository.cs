@@ -45,7 +45,7 @@ namespace ClinicPlatformRepositories
             return service;
         }
 
-        public ClinicServiceInfoModel? CreateClinicService(ClinicServiceInfoModel clinicServiceInfo)
+        public ClinicServiceInfoModel? AddClinicService(ClinicServiceInfoModel clinicServiceInfo)
         {
             Service? baseService = serviceDAO.GetAllService()
                 .Where(x => x.ServiceId == clinicServiceInfo.ServiceId)
@@ -91,6 +91,20 @@ namespace ClinicPlatformRepositories
                        Price = service.Price,
                        ClinicId = clinicId,
                        Description= service.Description,
+                       Name = baseService.ServiceName
+                   };
+        }
+
+        public IEnumerable<ClinicServiceInfoModel> GetAll()
+        {
+            return from service in clinicServiceDAO.GetAllClinicService()
+                   join baseService in serviceDAO.GetAllService() on service.ServiceId equals baseService.ServiceId
+                   select new ClinicServiceInfoModel()
+                   {
+                       ClinicServiceId = service.ClinicServiceId,
+                       Price = service.Price,
+                       ClinicId = service.ClinicId,
+                       Description = service.Description,
                        Name = baseService.ServiceName
                    };
         }
