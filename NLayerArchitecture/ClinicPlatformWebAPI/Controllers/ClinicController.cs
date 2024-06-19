@@ -1,5 +1,4 @@
 ﻿using ClinicPlatformDTOs.ClinicModels;
-using ClinicPlatformDTOs.ClinicModels.Registration;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.Models;
