@@ -21,6 +21,8 @@ namespace ClinicPlatformServices.Contracts
 
         IEnumerable<ClinicSlotInfoModel> GetClinicSlotInRange(int clinicId, TimeOnly start, TimeOnly end);
 
+        bool RegisterClinicSlot(ClinicSlotRegistrationModel slotInfo, out string message);
+
         bool AddNewClinicSlot(ClinicSlotInfoModel slotInfo, out string message);
 
         bool UpdateClinicSlot(ClinicSlotInfoModel slotInfo, out string message);

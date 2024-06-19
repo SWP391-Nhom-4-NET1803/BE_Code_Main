@@ -8,7 +8,10 @@ namespace ClinicPlatformDTOs.SlotModels
 {
     public class ClinicSlotRegistrationModel
     {
-        public int slotId { get; set; }
-        public int maxAppointment { get; set; } = 1;
+        public int ClinicId { get; set; }
+        public int SlotId { get; set; }
+        public int MaxAppointment { get; set; } = 1;
+
+        public int Weekday { get; set; }
     }
 }
