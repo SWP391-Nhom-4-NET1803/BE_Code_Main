@@ -69,16 +69,6 @@ namespace ClinicPlatformRepositories
 
         }
 
-        public void DeleteBaseService(int serviceId)
-        {
-            serviceDAO.DeleteService(serviceId);
-        }
-
-        public void DeleteClinicService(Guid clinicServiceId)
-        {
-            clinicServiceDAO.DeleteClinicService(clinicServiceId);
-        }
-
         public IEnumerable<ClinicServiceInfoModel> GetAll(int clinicId)
         {
             // I was crying on the floor laughing because of this.
@@ -184,6 +174,16 @@ namespace ClinicPlatformRepositories
             }
 
             return null;
+        }
+
+        public void DeleteBaseService(int serviceId)
+        {
+            serviceDAO.DeleteService(serviceId);
+        }
+
+        public void DeleteClinicService(Guid clinicServiceId)
+        {
+            clinicServiceDAO.DeleteClinicService(clinicServiceId);
         }
 
         protected virtual void Dispose(bool disposing)

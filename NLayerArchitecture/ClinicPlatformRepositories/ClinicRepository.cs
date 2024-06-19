@@ -26,7 +26,7 @@ namespace ClinicPlatformRepositories
                 Phone = clinicInfo.Phone!,
                 OpenHour = (TimeOnly)clinicInfo.OpenHour!,
                 CloseHour = (TimeOnly)clinicInfo.CloseHour!,
-                OwnerId = clinicInfo.OwnerId ?? throw new Exception("How did you forgot to set the clinic owner"),
+                OwnerId = (int) clinicInfo.OwnerId!,
                 Status = clinicInfo.Status ?? false,
             };
 
@@ -46,13 +46,17 @@ namespace ClinicPlatformRepositories
             if (target != null)
             {
                 target.Name = clinicInfo.Name ?? target.Name;
+                target.Address = clinicInfo.Address ?? target.Address;
+                target.Description = clinicInfo.Description ?? target.Description;
+                target.Phone = clinicInfo.Phone ?? target.Phone;
+                target.OpenHour = clinicInfo.OpenHour ?? target.OpenHour;
                 target.OwnerId = clinicInfo.OwnerId ?? target.OwnerId;
                 target.Status = clinicInfo.Status ?? target.Status;
 
                 clinicDAO.UpdateClinic(target);
                 SaveChanges();
 
-                return clinicInfo;
+                return MapFromClinicToClinicModel(target);
             }
 
             return null;
@@ -104,14 +108,13 @@ namespace ClinicPlatformRepositories
 
         public void DeleteClinic(int clinicId)
         {
-            throw new NotImplementedException();
+            clinicDAO.DeleteClinic(clinicId);
         }
 
         public void SaveChanges()
         {
-            throw new NotImplementedException();
+            clinicDAO.SaveChanges();
         }
-
 
         protected virtual void Dispose(bool disposing)
         {

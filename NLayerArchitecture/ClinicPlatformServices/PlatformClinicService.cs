@@ -109,15 +109,6 @@ namespace ClinicPlatformServices
                 return false;
             };
 
-            foreach (var clinicService in clinicInfo.ClinicServices)
-            {
-                if (clinicServiceRepository.UpdateClinicService(clinicService) == null)
-                {
-                    message = $"Error while trying to update clinic service information!\n Update invoked for {clinicService.Name} ({clinicService.ClinicServiceId})";
-                    return false;
-                }
-            }   
-
             message = $"Updated clinic {clinicInfo.Name} information!";
             return true;
         }
@@ -128,7 +119,7 @@ namespace ClinicPlatformServices
 
             if (allClinicServices.Any(x => x.ClinicId == clinicService.ClinicId && x.ServiceId == clinicService.ServiceId))
             {
-                message = "You already added this ";
+                message = $"Clinic {clinicService.ClinicId} already have this service.";
                 return false;
             }
 
@@ -142,13 +133,46 @@ namespace ClinicPlatformServices
             return true;
         }
 
+        public bool UpdateClinicService(ClinicServiceInfoModel clinicService, out string message)
+        {
+            if (clinicServiceRepository.UpdateClinicService(clinicService) == null)
+            {
+                message = $"Error while trying to update clinic service information!\n Update invoked for {clinicService.Name} ({clinicService.ClinicServiceId})";
+                return false;
+            }
+            message = $"Updated successfully for {clinicService.ServiceId} of {clinicService.ClinicId}";
+            return true;
+        }
+
         public bool AddClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)
         {
-            
-
             foreach (var clinicService in clinicServices)
             {
                 if (!AddClinicService(clinicService, out message))
+                {
+                    return false;
+                }
+            }
+
+            message = $"Updated clinic service information!";
+            return true;
+        }
+
+        public ClinicServiceInfoModel? GetClinicServiceWithId(Guid id)
+        {
+            return clinicServiceRepository.GetClinicServie(id);
+        }
+
+        public IEnumerable<ClinicServiceInfoModel> GetClinicServiceWithPirce(int id, long minimum, long maximum)
+        {
+            return clinicServiceRepository.GetAll().Where(x => x.ServiceId == id && minimum < x.Price && x.Price < maximum);
+        }
+
+        public bool UpdateClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)
+        {
+            foreach (var clinicService in clinicServices)
+            {
+                if (!UpdateClinicService(clinicService, out message))
                 {
                     return false;
                 }
@@ -162,6 +186,31 @@ namespace ClinicPlatformServices
         {
             clinicRepository.DeleteClinic(clinicId);
 
+            return true;
+        }
+
+        public bool DeleteClinicServices(Guid clinicServiceId, out string message)
+        {
+            clinicServiceRepository.DeleteClinicService(clinicServiceId);
+
+            if (clinicServiceRepository.GetClinicServie(clinicServiceId) != null)
+            {
+                message = $"Delete service {clinicServiceId} failed.";
+                return false;
+            }
+
+            message = $"Deleted service {clinicServiceId}.";
+            return true;
+        }
+
+        public bool DeleteClinicServices(IEnumerable<Guid> clinicServiceId, out string message)
+        {
+            foreach (var id in clinicServiceId)
+            {
+                clinicServiceRepository.DeleteClinicService(id);
+            }
+
+            message = $"Deleted {clinicServiceId.Count()} service";
             return true;
         }
 

@@ -17,9 +17,6 @@ namespace ClinicPlatformDTOs.ClinicModels
         public string? Email { get; set; }
         public TimeOnly? OpenHour { get; set; }
         public TimeOnly? CloseHour { get; set; }
-        public IEnumerable<ClinicServiceInfoModel> ClinicServices { get; set; } = [];
-        public IEnumerable<ClinicScheduledSlotInfoModel> ClinicSlots { get; set; } = [];
-        public IEnumerable<ClinicStaffInfoModel> ClinicStaff { get; set; } = [];
         public int? OwnerId { get; set; }
         public bool? Status { get; set; }
     }
