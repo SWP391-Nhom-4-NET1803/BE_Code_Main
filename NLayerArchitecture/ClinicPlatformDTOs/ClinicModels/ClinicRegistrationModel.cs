@@ -1,4 +1,6 @@
-﻿namespace ClinicPlatformDTOs.ClinicModels.Registration
+﻿using ClinicPlatformDTOs.SlotModels;
+
+namespace ClinicPlatformDTOs.ClinicModels
 {
     public class ClinicRegistrationModel
     {
