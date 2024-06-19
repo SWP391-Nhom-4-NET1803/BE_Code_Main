@@ -79,6 +79,7 @@ namespace ClinicPlatformRepositories
 
         public bool AddClinicSlot(ClinicSlotInfoModel slot)
         {
+            slot.ClinicSlotId = null;
             return clinicSlotDAO.AddScheduledSlot(MapClinicSlotModelToScheduleSlot(slot)) != null;
         }
 
@@ -176,7 +177,7 @@ namespace ClinicPlatformRepositories
         {
             return new ScheduledSlot()
             {
-                ScheduleSlotId = (Guid)slotInfo.ClinicSlotId!,
+                ScheduleSlotId = slotInfo.ClinicSlotId ?? Guid.NewGuid(),
                 SlotId = (int)slotInfo.SlotId!,
                 ClinicId = slotInfo.ClinicId ?? 0,
                 DateOfWeek = (byte)slotInfo.Weekday!,

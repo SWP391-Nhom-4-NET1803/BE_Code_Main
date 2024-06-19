@@ -1,4 +1,5 @@
 ﻿using ClinicPlatformDTOs.ClinicModels;
+using ClinicPlatformDTOs.SlotModels;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.Models;
@@ -13,11 +14,13 @@ namespace ClinicPlatformWebAPI.Controllers
     {
         private readonly IClinicService clinicService;
         private readonly IUserService userService;
+        private readonly IScheduleService scheduleService;
 
-        public ClinicController(IClinicService clinicService, IUserService userService)
+        public ClinicController(IClinicService clinicService, IUserService userService, IScheduleService scheduleService)
         {
             this.clinicService = clinicService;
             this.userService = userService;
+            this.scheduleService = scheduleService;
         }
 
         [HttpGet("{id}")]
@@ -302,6 +305,104 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 200,
                 Message = "Service removed",
             });
+        }
+
+        [HttpGet("{id}/schedule")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicSlotInfoModel>>> GetClinicSlot(int id)
+        {
+            if (clinicService.GetClinicWithId(id) != null)
+            {
+                return Ok( new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Success",
+                    Content = scheduleService.GetAllClinicSlot(id)
+                });
+            }
+
+            return BadRequest(new HttpResponseModel()
+            {
+                StatusCode = 400,
+                Message = "Failed getting clinic info",
+                Detail = $"There are no clinic with Id {id} exist."
+            });
+        }
+
+        [HttpPost("schedule")]
+        public ActionResult<HttpResponseModel> AddClinicSlot([FromBody] ClinicSlotInfoModel slotInfo)
+        {
+            if ( slotInfo.ClinicId == null|| clinicService.GetClinicWithId((int)slotInfo.ClinicId) == null)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Failed adding clinic slot.",
+                    Detail = $"Can not find clinic information for id {slotInfo.ClinicId}"
+                });
+            }
+
+            if (scheduleService.AddNewClinicSlot(slotInfo, out var message))
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Success",
+                    Detail = message,
+                });
+            }
+            else
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Failed adding clinic slot.",
+                    Detail = message
+                });
+            }
+        }
+
+        [HttpPut("schedule")]
+        public ActionResult<HttpResponseModel> UpdateClinicSlot([FromBody] ClinicSlotInfoModel slotInfo)
+        {
+            if (scheduleService.UpdateClinicSlot(slotInfo, out var message))
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Success",
+                    Detail = message,
+                });
+            }
+            else
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Failed updating slot info.",
+                    Detail = message
+                });
+            }
+        }
+
+        [HttpDelete("schedule")]
+        public ActionResult<HttpResponseModel> DeleteClinicSlot(Guid slotId)
+        {
+            if (scheduleService.DeleteClinicSlot(slotId))
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Success"
+                });
+            }
+            else
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Slot deletion failed",
+                });
+            }
         }
     }
 }
