@@ -10,34 +10,34 @@ namespace ClinicPlatformServices
 {
     public class UserService: IUserService
     {
-        private readonly IUserRepository _userRepository;
+        private readonly IUserRepository userRepository;
         private bool disposedValue;
 
         public UserService()
         {
-            _userRepository = new UserRepository();
+            userRepository = new UserRepository();
         }
 
-        public UserService(IUserRepository userRepository)
+        public UserService(IUserRepository repository)
         {
-            _userRepository = userRepository;
+            userRepository = repository;
         }
 
         public IEnumerable<UserInfoModel> GetUsers()
         {
-            return _userRepository.GetAll();
+            return userRepository.GetAll();
         }
 
         public UserInfoModel? GetWithUsernameAndPassword(string username, string password)
         {
-            return _userRepository.GetAll().Where(x => x.Username == username && x.Password == password).FirstOrDefault();
+            return userRepository.GetAll().Where(x => x.Username == username && x.Password == password).FirstOrDefault();
         }
 
         public bool DeleteUser(int id, out string message)
         {
             try 
             {
-                _userRepository.DeleteUser(id);
+                userRepository.DeleteUser(id);
                 message = "Delete user information Sucessfully";
                 return true;
             }
@@ -49,7 +49,7 @@ namespace ClinicPlatformServices
             }
         }
 
-        public bool checkLogin(string username, string password, out UserInfoModel? user)
+        public bool CheckLogin(string username, string password, out UserInfoModel? user)
         {
             user = GetWithUsernameAndPassword(username, password);
 
@@ -63,20 +63,52 @@ namespace ClinicPlatformServices
 
         public ClinicStaffInfoModel? GetClinicStaffInformation(int staffId)
         {
-            return _userRepository.GetStaffInfo(staffId);
+            return userRepository.GetStaffInfo(staffId);
         }
 
         public CustomerInfoModel? GetCustomerInformation(int customerId)
         {
-            return _userRepository.GetCustomerInfo(customerId);
+            return userRepository.GetCustomerInfo(customerId);
+        }
+
+        public ClinicStaffInfoModel? GetClinicStaffInformationWithUserId(int userId)
+        {
+            var tempt = userRepository.GetUser(userId);
+
+            if (tempt == null || tempt.Role != 2)
+            {
+                return null;
+            }
+
+            return userRepository.MapUserModelIntoStaffModel(tempt);
+        }
+
+        public CustomerInfoModel? GetCustomerInformationWithUserID(int userId)
+        {
+            var tempt = userRepository.GetUser(userId);
+
+            
+            if (tempt == null || tempt.Role != 3)
+            {
+                return null;
+            }
+
+            return userRepository.MapUserModelIntoCustomerModel(tempt);
         }
 
         public UserInfoModel? GetUserInformation(int userId)
         {
-           return _userRepository.GetUser(userId);
+           return userRepository.GetUser(userId);
         }
 
-        public bool loginAsAdmin(string username, string password, out UserInfoModel? info, out string message)
+        public UserInfoModel? GetUserInformationWithEmail(string email)
+        {
+            var SearchResult = userRepository.GetAll().Where(user => user.Email == email).ToList();
+
+            return SearchResult.FirstOrDefault();
+        }
+
+        public bool LoginAsAdmin(string username, string password, out UserInfoModel? info, out string message)
         {
             info = GetWithUsernameAndPassword(username, password);
 
@@ -90,7 +122,7 @@ namespace ClinicPlatformServices
             return true;
         }
 
-        public bool loginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message)
+        public bool LoginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message)
         {
             var result = GetWithUsernameAndPassword(username, password);
 
@@ -101,12 +133,12 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            info = _userRepository.MapUserModelIntoStaffModel(result!);
+            info = userRepository.MapUserModelIntoStaffModel(result!);
             message = $"Username and Password matched to user with Id {info.Id}";
             return true;
         }
 
-        public bool loginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message)
+        public bool LoginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message)
         {
             var result = GetWithUsernameAndPassword(username, password);
 
@@ -117,23 +149,23 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            info = _userRepository.MapUserModelIntoCustomerModel(result!);
+            info = userRepository.MapUserModelIntoCustomerModel(result!);
             message = $"Username and Password matched to user with Id {info.Id}";
             return true;
         }
 
         /// <summary>
-        ///  Basically three in one with extra sauce!
+        ///     Basically three method in one but with extra sauce!
         /// </summary>
         /// <param name="information"></param>
-        /// <param name="role"></param>
+        /// <param name="role">User actual Role, will be override if IsAdmin is true</param>
         /// <param name="message"></param>
-        /// <param name="IsAdmin"></param>
-        /// <returns></returns>
+        /// <param name="IsAdmin">Granting the registing user an admin if true regardless of their role</param>
+        /// <returns><see cref="true"/> if register sucessfully or <see cref="false"/> if failed.</returns>
         public bool RegisterAccount(UserRegistrationModel information, RoleModel.Roles role, out string message, bool IsAdmin = false)
         {
 
-            if (!checkAccountAvailability(information.Username, information.Email, out message))
+            if (!CheckAccountAvailability(information.Username, information.Email, out message))
             {
                 return false;
             }
@@ -160,7 +192,7 @@ namespace ClinicPlatformServices
                     Role = 1,
                 };
 
-                UserInfoModel? newUser = _userRepository.AddUser(registerInfo);
+                UserInfoModel? newUser = userRepository.AddUser(registerInfo);
 
                 if (newUser == null)
                 {
@@ -210,7 +242,7 @@ namespace ClinicPlatformServices
                     IsOwner = information.ClinicOwner
                 };
 
-                var result = _userRepository.AddUser(registerInfo);
+                var result = userRepository.AddUser(registerInfo);
 
                 if (result == null)
                 {
@@ -222,7 +254,7 @@ namespace ClinicPlatformServices
             }
             catch (Exception ex)
             {
-                message = ex.Message;
+                message = ex.InnerException?.Message ?? ex.Message;
                 return false;
             }
         }
@@ -240,7 +272,7 @@ namespace ClinicPlatformServices
                     Role = 3,
                 };
 
-                var result = _userRepository.AddUser(registerInfo);
+                var result = userRepository.AddUser(registerInfo);
 
                 if (result == null)
                 {
@@ -252,7 +284,7 @@ namespace ClinicPlatformServices
             }
             catch (Exception ex)
             {
-                message = ex.Message;
+                message = ex.InnerException?.Message ?? ex.Message;
                 return false;
             }
         }
@@ -260,7 +292,7 @@ namespace ClinicPlatformServices
         public bool UpdateUserInformation(UserInfoModel information, out string message)
         {
 
-            if (_userRepository.UpdateUser(information) != null)
+            if (userRepository.UpdateUser(information) != null)
             {
                 message = "Update user information successfully";
                 return true;
@@ -270,7 +302,41 @@ namespace ClinicPlatformServices
             return false;
         }
 
-        public bool checkAccountAvailability(string? username, string? email, out string message)
+        public bool UpdatePasswordForUserWithId(int userId, string oldPassword, string newPassword, out string message)
+        {
+            if (!CheckValidPassword(newPassword))
+            {
+                message = "New password must have minium length of 8 characters and maximum of 30 starting with an alphabet character and required to contains one uppercase, lowercase and one digit.";
+                return false;
+            }
+
+            UserInfoModel? userInfo = GetUserInformation(userId);
+
+
+            if (userInfo != null)
+            {
+                if (userInfo.Password != oldPassword)
+                {
+                    message = "Invalid user id or password provided.";
+                    return false;
+                }
+
+                userInfo.Password = newPassword;
+
+                if (!UpdateUserInformation(userInfo, out message))
+                {
+                    return false;
+                }
+
+                message = "Update user password successfully";
+                return true;
+            }
+
+            message = $"User does not exist for Id {userId}";
+            return false;
+        }
+
+        public bool CheckAccountAvailability(string? username, string? email, out string message)
         {
             if (username == null || email == null)
             {
@@ -278,7 +344,7 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            var AllUserInfo = _userRepository.GetAll();
+            var AllUserInfo = userRepository.GetAll();
 
             if (AllUserInfo.Where(x => x.Username == username).Any())
             {
@@ -298,7 +364,7 @@ namespace ClinicPlatformServices
 
         public bool ExistUser(int id)
         {
-            return _userRepository.GetUser(id) == null;
+            return userRepository.GetUser(id) == null;
 
         }
 
@@ -358,7 +424,7 @@ namespace ClinicPlatformServices
             {
                 if (disposing)
                 {
-                    _userRepository.Dispose();
+                    userRepository.Dispose();
                 }
                 disposedValue = true;
             }

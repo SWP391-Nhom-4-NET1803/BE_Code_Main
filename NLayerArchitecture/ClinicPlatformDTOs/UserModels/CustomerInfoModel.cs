@@ -16,7 +16,7 @@ namespace ClinicPlatformDTOs.UserModels
         public string? Phone { get; set; }
         public string? Fullname { get; set; }
         public int? Role { get; set; }
-        public string? Status { get; set; }
+        public bool? Status { get; set; }
         public DateOnly? Birthdate { get; set; } = null;
         public string? Sex { get; set; }
         public string? Insurance { get; set; }

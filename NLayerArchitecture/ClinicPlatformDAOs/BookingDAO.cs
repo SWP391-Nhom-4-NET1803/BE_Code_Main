@@ -86,7 +86,6 @@ namespace ClinicPlatformDAOs
                 .Include(x => x.ScheduleSlot)
                     .ThenInclude(y => y.Slot)
                 .Include(x => x.BookingService)
-                    .ThenInclude(y => y.Service)
                 .FirstOrDefault();
         }
 

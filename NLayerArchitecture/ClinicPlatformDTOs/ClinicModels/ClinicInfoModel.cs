@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDTOs.ClinicModels
 {
-    public class ClinicInformationModel
+    public class ClinicInfoModel
     {
         public int Id { get; set; }
         public string? Name { get; set; }
@@ -15,10 +15,9 @@ namespace ClinicPlatformDTOs.ClinicModels
         public string? Address { get; set; }
         public string? Phone { get; set; }
         public string? Email { get; set; }
-        public string? OpenHour { get; set; }
-        public string? CloseHour { get; set; }
-        public List<ClinicServiceModel> ClinicServices { get; set; } = [];
-        public List<ClinicStaffInfoModel> ClinicStaff { get; set; } = [];
-        public bool Status { get; set; } = false;
+        public TimeOnly? OpenHour { get; set; }
+        public TimeOnly? CloseHour { get; set; }
+        public int? OwnerId { get; set; }
+        public bool? Status { get; set; }
     }
 }

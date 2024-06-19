@@ -17,6 +17,12 @@ namespace ClinicPlatformServices.Contracts
 
         ClinicStaffInfoModel? GetClinicStaffInformation(int staffId);
 
+        public ClinicStaffInfoModel? GetClinicStaffInformationWithUserId(int userId);
+
+        public CustomerInfoModel? GetCustomerInformationWithUserID(int userId);
+
+        UserInfoModel? GetUserInformationWithEmail(string email);
+
         bool RegisterCustomerAccount(UserRegistrationModel information, out string message);
 
         bool RegisterClinicStaffAccount(UserRegistrationModel information, out string message);
@@ -29,21 +35,23 @@ namespace ClinicPlatformServices.Contracts
 
 
         // Other business logics
-        bool checkLogin(string username, string password, out UserInfoModel? user);
+        bool CheckLogin(string username, string password, out UserInfoModel? user);
         
-        bool loginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message);
+        bool LoginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message);
 
-        bool loginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message);
+        bool LoginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message);
 
-        bool loginAsAdmin(string username, string password, out UserInfoModel? info, out string message);
+        bool LoginAsAdmin(string username, string password, out UserInfoModel? info, out string message);
 
         bool ExistUser(int id);
+
+        bool UpdatePasswordForUserWithId(int userId, string oldPassword, string newPassword, out string message);
 
         bool ActivateUser(int id, out string message);
 
         bool InactivateUser(int id,out string message);
 
         // Utils
-        bool checkAccountAvailability(string username, string email, out string message);
+        bool CheckAccountAvailability(string username, string email, out string message);
     }
 }
