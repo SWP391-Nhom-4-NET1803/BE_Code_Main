@@ -1,6 +1,5 @@
 ﻿using ClinicPlatformBusinessObject;
 using ClinicPlatformDTOs.ClinicModels;
-using ClinicPlatformDTOs.ClinicModels.Registration;
 using ClinicPlatformDTOs.Comparator;
 using ClinicPlatformRepositories;
 using ClinicPlatformRepositories.Contracts;

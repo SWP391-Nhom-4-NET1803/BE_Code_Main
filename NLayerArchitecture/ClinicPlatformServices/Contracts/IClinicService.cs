@@ -1,5 +1,4 @@
 ﻿using ClinicPlatformDTOs.ClinicModels;
-using ClinicPlatformDTOs.ClinicModels.Registration;
 
 namespace ClinicPlatformServices.Contracts
 {

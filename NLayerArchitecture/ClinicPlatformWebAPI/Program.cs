@@ -8,6 +8,7 @@ using ClinicPlatformServices.Contracts;
 using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformRepositories;
 using ClinicPlatformBusinessObject;
+using ClinicPlatformDAOs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -80,12 +81,16 @@ builder.Services.AddAuthentication(options =>
 });
 
 // Add Services
+builder.Services.AddDbContext<DentalClinicPlatformContext>();
+
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
 builder.Services.AddScoped<IClinicServiceRepository, ClinicServiceRepository>();
+builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClinicService, PlatformClinicService>();
+builder.Services.AddScoped<IScheduleService, ScheduleService>();
 
 var app = builder.Build();
 
