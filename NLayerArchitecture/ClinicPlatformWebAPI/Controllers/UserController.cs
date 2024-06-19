@@ -14,7 +14,7 @@ using ClinicPlatformDTOs.RoleModels;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/user")]
     [ApiController]
     public class UserController : ControllerBase
     {

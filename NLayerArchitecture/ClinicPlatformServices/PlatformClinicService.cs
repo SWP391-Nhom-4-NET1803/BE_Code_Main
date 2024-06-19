@@ -1,6 +1,7 @@
 ﻿using ClinicPlatformBusinessObject;
 using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformDTOs.ClinicModels.Registration;
+using ClinicPlatformDTOs.Comparator;
 using ClinicPlatformRepositories;
 using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformServices.Contracts;
@@ -117,19 +118,25 @@ namespace ClinicPlatformServices
         {
             var allClinicServices = clinicServiceRepository.GetAll();
 
-            if (allClinicServices.Any(x => x.ClinicId == clinicService.ClinicId && x.ServiceId == clinicService.ServiceId))
+            if (allClinicServices.Contains(clinicService, new ClinicServiceComparer()))
             {
                 message = $"Clinic {clinicService.ClinicId} already have this service.";
                 return false;
             }
 
-            if (clinicServiceRepository.AddClinicService(clinicService) == null)
+            if (allClinicServices.Any(x => x.ServiceId == clinicService.ServiceId))
             {
-                message = $"Error while trying to update clinic service information!\n Update invoked for {clinicService.Name} ({clinicService.ClinicServiceId})";
+                message = $"No service with Id {clinicService.ServiceId} exist.";
                 return false;
             }
 
-            message = "Success";
+            if (clinicServiceRepository.AddClinicService(clinicService) == null)
+            {
+                message = $"Error while adding service {clinicService.ClinicId}.";
+                return false;
+            }
+
+            message = "";
             return true;
         }
 
@@ -137,24 +144,35 @@ namespace ClinicPlatformServices
         {
             if (clinicServiceRepository.UpdateClinicService(clinicService) == null)
             {
-                message = $"Error while trying to update clinic service information!\n Update invoked for {clinicService.Name} ({clinicService.ClinicServiceId})";
+                message = $"Error while updating information for {clinicService.ClinicServiceId}.";
                 return false;
             }
-            message = $"Updated successfully for {clinicService.ServiceId} of {clinicService.ClinicId}";
+            message = $"Success.";
             return true;
         }
 
         public bool AddClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)
         {
+            int countPassed = 0;
+            int countFailed = 0;
+
+            message = $"Found {clinicServices.Count()} service addition requests. ";
+
             foreach (var clinicService in clinicServices)
             {
-                if (!AddClinicService(clinicService, out message))
+                if (!AddClinicService(clinicService, out var tempt_message))
                 {
-                    return false;
+                    countFailed++;
+                    message += $"Failed while adding {clinicService.ServiceId}: {tempt_message} ";
+                }
+                else
+                {
+                    countPassed++;
+                    message += $"Successfully added {clinicService.ServiceId}. ";
                 }
             }
 
-            message = $"Updated clinic service information!";
+            message += $"Finished batch! {countPassed}/{clinicServices.Count()}. {countFailed} Failed add attempt!";
             return true;
         }
 
@@ -170,21 +188,37 @@ namespace ClinicPlatformServices
 
         public bool UpdateClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)
         {
+            int countPassed = 0;
+            int countFailed = 0;
+
+            message = $"Found {clinicServices.Count()} service update requests. ";
+
             foreach (var clinicService in clinicServices)
             {
-                if (!UpdateClinicService(clinicService, out message))
+                if (!UpdateClinicService(clinicService, out var tempt_message))
                 {
-                    return false;
+                    countFailed++;
+                    message += $"Failed while updating {clinicService.ServiceId}: {tempt_message} ";
+                }
+                else
+                {
+                    countPassed++;
+                    message += $"Successfully updating {clinicService.ServiceId}. ";
                 }
             }
 
-            message = $"Updated clinic service information!";
+            message += $"Finished batch! {countPassed}/{clinicServices.Count()}. {countFailed} Failed add attempt!";
             return true;
         }
 
         public bool DeleteClinic(int clinicId)
         {
             clinicRepository.DeleteClinic(clinicId);
+
+            if (clinicRepository.GetClinic(clinicId) != null)
+            {
+                return false;
+            }
 
             return true;
         }
@@ -195,7 +229,7 @@ namespace ClinicPlatformServices
 
             if (clinicServiceRepository.GetClinicServie(clinicServiceId) != null)
             {
-                message = $"Delete service {clinicServiceId} failed.";
+                message = $"Can not delete {clinicServiceId}.";
                 return false;
             }
 

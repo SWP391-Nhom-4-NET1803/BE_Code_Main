@@ -128,6 +128,71 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
+        [HttpPut("activate/{id}")]
+        public ActionResult<HttpResponseModel> ActivateClinic(int id)
+        {
+
+            if (!clinicService.ActivateClinic(id, out var message))
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Clinic activision failed",
+                    Detail = message
+                });
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Detail = $"Clinic {id} has been activated."
+            });
+        }
+
+        [HttpPut("deactivate/{id}")]
+        public ActionResult<HttpResponseModel> InactivateClinic(int id)
+        {
+
+            if (!clinicService.InactivateClinic(id, out var message))
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Clinic deactivation failed",
+                    Detail = message
+                });
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Detail = $"Clinic {id} has been deactivated."
+            });
+        }
+
+        [HttpDelete("{id}")]
+        public ActionResult<HttpResponseModel> RemoveClinic(int id)
+        {
+
+            if (!clinicService.DeleteClinic(id))
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Clinic removal failed",
+                });
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Detail = $"Clinic {id} has been removed."
+            });
+        }
+
         [HttpPost("service/add")]
         public ActionResult<HttpResponseModel> AddClinicService([FromBody] ClinicServiceInfoModel serviceInfo)
         {
@@ -151,20 +216,76 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
-        [HttpDelete("deactivate")]
-        public ActionResult<HttpResponseModel> InactivateClinic()
+        [HttpPost("service/add-batch")]
+        public ActionResult<HttpResponseModel> AddClinicServices([FromBody] IEnumerable<ClinicServiceInfoModel> serviceInfo)
         {
-            try
-
-            return Ok(new HttpResponseModel()
+            if (!clinicService.AddClinicServices(serviceInfo, out var message))
             {
-
-            })
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Bad Request",
+                    Detail = message,
+                });
+            }
+            else
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Service added sucessfully",
+                    Detail = message,
+                });
+            }
         }
 
+        [HttpPut("service/update")]
+        public ActionResult<HttpResponseModel> UpdateClinicService([FromBody] ClinicServiceInfoModel serviceInfo)
+        {
+            if (!clinicService.UpdateClinicService(serviceInfo, out var message))
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Failed while updating services",
+                    Detail = message,
+                });
+            }
+            else
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Service added sucessfully",
+                    Detail = $"Updated service information!",
+                });
+            }
+        }
 
+        [HttpPut("service/update-batch")]
+        public ActionResult<HttpResponseModel> UpdateClinicServices([FromBody] IEnumerable<ClinicServiceInfoModel> serviceInfo)
+        {
+            if (!clinicService.UpdateClinicServices(serviceInfo, out var message))
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Bad Request",
+                    Detail = message,
+                });
+            }
+            else
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Service added sucessfully",
+                    Detail = $"Updated information for {serviceInfo.Count()} services!",
+                });
+            }
+        }
 
-        [HttpDelete("service/deactivate")]
+        [HttpDelete("service/delete")]
         public ActionResult<HttpResponseModel> InactivateService(Guid clinicServiceId)
         {
             if (clinicService.DeleteClinicServices(clinicServiceId, out var message))

@@ -95,7 +95,8 @@ namespace ClinicPlatformRepositories
                        Price = service.Price,
                        ClinicId = service.ClinicId,
                        Description = service.Description,
-                       Name = baseService.ServiceName
+                       Name = baseService.ServiceName,
+                       ServiceId = baseService.ServiceId
                    };
         }
 

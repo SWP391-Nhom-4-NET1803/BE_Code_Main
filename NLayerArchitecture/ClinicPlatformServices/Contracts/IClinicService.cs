@@ -27,6 +27,8 @@ namespace ClinicPlatformServices.Contracts
 
         public bool AddClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message);
 
+        public bool UpdateClinicService(ClinicServiceInfoModel clinicService, out string message);
+
         public bool UpdateClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message);
 
         bool DeleteClinic(int clinicId);
