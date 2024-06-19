@@ -53,7 +53,7 @@ namespace ClinicPlatformRepositories
 
             if (result != null)
             {
-                UserInfoModel mapped = new UserInfoModel()
+                UserInfoModel mapped = new()
                 {
                     Id = result.UserId,
                     Username = result.Username, 
@@ -64,6 +64,7 @@ namespace ClinicPlatformRepositories
                     Status = result.Status,
                     Role = result.RoleId,
                     RoleName = result.Role.RoleName,
+                    JoinedDate = result.CreationDate,
 
                     CustomerId = result.Customer?.CustomerId,
                     Sex = result.Customer?.Sex,
@@ -82,7 +83,7 @@ namespace ClinicPlatformRepositories
 
         public UserInfoModel? AddUser(UserInfoModel userInfo)
         {
-            User user = new User()
+            User user = new()
             {
                 Username = userInfo.Username!,
                 Password = userInfo.Password!,
@@ -256,7 +257,7 @@ namespace ClinicPlatformRepositories
         }
 
 
-        UserInfoModel IUserRepository.MapCustomerModelIntoUserModel(CustomerInfoModel customer)
+        public UserInfoModel MapCustomerModelIntoUserModel(CustomerInfoModel customer)
         {
             return new UserInfoModel()
             {

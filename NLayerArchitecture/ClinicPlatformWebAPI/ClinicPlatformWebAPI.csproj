@@ -20,7 +20,6 @@
   <ItemGroup>
     <Folder Include="Helpers\Authorization\Policy\" />
     <Folder Include="Middlewares\Authorization\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 
   <ItemGroup>

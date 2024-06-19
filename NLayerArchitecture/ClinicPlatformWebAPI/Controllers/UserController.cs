@@ -10,10 +10,11 @@ using ClinicPlatformServices;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
+using ClinicPlatformDTOs.RoleModels;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
-    [Route("api/[controller]")]
+    [Route("api/user")]
     [ApiController]
     public class UserController : ControllerBase
     {
@@ -41,31 +42,151 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("{id}")]
-        [AllowAnonymous]
         public ActionResult<IHttpResponseModel<UserInfoModel>> GetUser(int id)
         {
             var user = userService.GetUserInformation(id);
 
+            if (user != null)
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Get user info sucess",
+                    Content = user
+                });
+            }
+            
+            return NotFound(new HttpResponseModel()
+            {
+                StatusCode = 404,
+                Message = "Get user info failed",
+                Detail = $"Unknown user with id {id}"
+            });
+            
+        }
+
+        [HttpGet("customer/{userId}")]
+        public ActionResult<IHttpResponseModel<CustomerInfoModel>> GetCustomerInformation(int userId)
+        {
+            CustomerInfoModel? customer = userService.GetCustomerInformationWithUserID(userId);
+
+            if (customer == null)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "User not found",
+                    Detail = $"User does not exist for id {userId}!"
+                });
+
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = customer
+            });
+        }
+
+        [HttpGet("staff/{userId}")]
+        public ActionResult<IHttpResponseModel<ClinicStaffInfoModel>> GetClinicStaffInformation(int userId)
+        {
+            ClinicStaffInfoModel? clinicStaff = userService.GetClinicStaffInformationWithUserId(userId);
+
+            if (clinicStaff == null)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "User not found",
+                    Detail = $"User does not exist for id {userId}!"
+                });
+
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = clinicStaff
+            });
+        }
+
+        [HttpPost("register/customer")]
+        [AllowAnonymous]
+        public ActionResult<HttpResponseModel> RegisterCustomer([FromBody] UserRegistrationModel userInfo)
+        {
+
             var ResponseBody = new HttpResponseModel()
             {
                 StatusCode = 200,
-                Message = "Get user info sucess",
-                Content = user
+                Message = "OK",
+                Detail = "User created successfully!",
             };
 
-            if (user == null)
+            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.Customer, out var message))
             {
-                ResponseBody.StatusCode = 404;
-                ResponseBody.Message = "Get user info failed";
-                ResponseBody.Detail = $"Unknown user with id {id}";
-                return NotFound(ResponseBody);
+                ResponseBody.StatusCode = 400;
+                ResponseBody.Message = "Register account failed";
+                ResponseBody.Detail = message;
+
+                return BadRequest(ResponseBody);
+            }
+
+            return Ok(ResponseBody);
+        }
+
+        [HttpPost("register/clinic-staff")]
+        public ActionResult<HttpResponseModel> RegisterClinicStaff([FromBody] UserRegistrationModel userInfo)
+        {
+
+            var ResponseBody = new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "OK",
+                Detail = "User created successfully!",
+            };
+
+            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.ClinicStaff, out var message))
+            {
+                ResponseBody.StatusCode = 400;
+                ResponseBody.Message = "Update failed";
+                ResponseBody.Detail = message;
+
+                return BadRequest(ResponseBody);
+            }
+
+            return Ok(ResponseBody);
+        }
+
+        [HttpPost("register/clinic-owner")]
+        [AllowAnonymous]
+        public ActionResult<HttpResponseModel> RegisterClinicOwner([FromBody] UserRegistrationModel userInfo)
+        {
+            userInfo.ClinicOwner = true;
+            userInfo.Clinic = null;
+            var ResponseBody = new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "OK",
+                Detail = "User created successfully!",
+            };
+
+            if (!userService.RegisterAccount(userInfo, RoleModel.Roles.ClinicStaff, out var message))
+            {
+                ResponseBody.StatusCode = 400;
+                ResponseBody.Message = "Register account failed";
+                ResponseBody.Detail = message;
+
+                return BadRequest(ResponseBody);
             }
 
             return Ok(ResponseBody);
         }
 
         [HttpPut("{id}")]
-        public ActionResult<HttpResponseModel> PutUser(int id,[FromBody] UserInfoModel user)
+        public ActionResult<HttpResponseModel> UpdateUser(int id,[FromBody] UserInfoModel user)
         {
             if (id != user.Id)
             {
@@ -114,75 +235,92 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpPost("register/customer")]
-        [AllowAnonymous]
-        public ActionResult<HttpResponseModel> RegisterCustomer([FromBody] UserRegistrationModel userInfo)
+        [HttpPut("activate/{id}")]
+        public ActionResult<HttpResponseModel> ActivateUserAccount(int id)
         {
 
-            var ResponseBody = new HttpResponseModel()
+            if (!userService.ActivateUser(id, out var message))
             {
-                StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
-            };
-
-            if (!userService.RegisterCustomerAccount(userInfo, out var message))
-            {
-                ResponseBody.StatusCode = 400;
-                ResponseBody.Message = "Register account failed";
-                ResponseBody.Detail = message;
-
-                return BadRequest(ResponseBody);
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Activition failed",
+                    Detail = message,
+                });
             }
 
-            return Ok(ResponseBody);
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Activation success",
+                Detail = $"Activated user account for user {id}",
+            });
         }
 
-        [HttpPost("register/clinic-staff")]
-        public ActionResult<HttpResponseModel> RegisterClinicStaff([FromBody] UserRegistrationModel userInfo)
+        [HttpPut("inactivate/{id}")]
+        public ActionResult<HttpResponseModel> InactivateUserAccount(int id)
         {
 
-            var ResponseBody = new HttpResponseModel()
+            if (!userService.InactivateUser(id, out var message))
             {
-                StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
-            };
-
-            if (!userService.RegisterClinicStaffAccount(userInfo, out var message))
-            {
-                ResponseBody.StatusCode = 400;
-                ResponseBody.Message = "Update failed";
-                ResponseBody.Detail = message;
-
-                return BadRequest(ResponseBody);
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Deactivation failed",
+                    Detail = message,
+                });
             }
 
-            return Ok(ResponseBody) ;
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Deactivation success",
+            });
         }
 
-        [HttpPost("register/clinic-owner")]
+
+        [HttpPut("password/change")]
         [AllowAnonymous]
-        public ActionResult<HttpResponseModel> RegisterClinicOwner([FromBody] UserRegistrationModel userInfo)
+        public ActionResult<HttpResponseModel> UpdateUserPassword([FromBody] PasswordResetModel resetInfo)
         {
-            userInfo.ClinicOwner = true;
-            var ResponseBody = new HttpResponseModel()
+            if (!userService.UpdatePasswordForUserWithId(resetInfo.userId, resetInfo.OldPassword, resetInfo.NewPassword, out var message))
             {
-                StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
-            };
-
-            if (!userService.RegisterClinicStaffAccount(userInfo, out var message))
-            {
-                ResponseBody.StatusCode = 400;
-                ResponseBody.Message = "Update failed";
-                ResponseBody.Detail = message;
-
-                return BadRequest(ResponseBody);
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Update failed",
+                    Detail = message
+                });
             }
 
-            return Ok(ResponseBody);
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Update sucessfully",
+            });
+
+        }
+
+        [HttpPost("password/reset")]
+        [AllowAnonymous]
+        public ActionResult<HttpResponseModel> ResetPassword([FromBody] PasswordResetRequestModel requestBody)
+        {
+            if (userService.GetUserInformationWithEmail(requestBody.Email) == null)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Invalid Request",
+                    Detail = "This email is not used to register an account"
+                });
+            }
+
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Request Approved",
+                });
+
         }
 
         [HttpDelete("{id}")]
