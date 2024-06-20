@@ -154,6 +154,11 @@ namespace ClinicPlatformServices
             return clinicServiceRepository.GetAll().Where(x => x.Name == name).FirstOrDefault();
         }
 
+        public ClinicServiceInfoModel? GetClinicServiceOfType(int clinicId, int serviceId)
+        {
+            return clinicServiceRepository.GetAll().Where(x => x.ClinicId == clinicId && x.ServiceId == serviceId).FirstOrDefault();
+        }
+
         public bool UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message)
         {
             if (clinicRepository.UpdateClinic(clinicInfo) == null)
@@ -168,7 +173,7 @@ namespace ClinicPlatformServices
 
         public bool AddClinicService(ClinicServiceInfoModel clinicService, out string message)
         {
-            var allClinicServices = clinicServiceRepository.GetAll();
+            var allClinicServices = clinicServiceRepository.GetAllBaseService();
 
             message = $"Adding {clinicService.Name} for {clinicService.ClinicId}: ";
 
@@ -179,68 +184,22 @@ namespace ClinicPlatformServices
             }
             ClinicInfoModel? clinic = clinicRepository.GetClinic((int)clinicService.ClinicId!);
 
-            message += $"Adding {clinicService.Name} for {clinicService.ClinicId}: ";
-
-            if (clinicServiceRepository.AddClinicService(clinicService))
-            {
-                message += "Sucess. ";
-                return true;
-            }
-            else
+            if (clinic == null)
             {
                 message += $"Failed{(clinic == null ? " (Cannot find clinic information)" : "")}. ";
                 return false;
             }
-        }
-
-        public bool AddClinicService(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)
-        {
-
-            message = $"Adding {clinicServices.Count()} requested service! ";
-
-            var available = clinicServiceRepository.GetAllBaseService();
-
-            foreach (var service in clinicServices)
+            else if (clinic != null && GetClinicServiceOfType(clinic.Id, (int) clinicService.ServiceId!) != null)
             {
-                if (available.Any(x => x.ServiceId == service.ServiceId))
-                {
-
-                    ClinicInfoModel? clinic = clinicRepository.GetClinic((int) service.ClinicId!);
-
-                    message += $"Adding {service.Name} for {service.ClinicId}: ";
-
-                    if (clinicServiceRepository.AddClinicService(service))
-                    {
-                        message += "Sucess. ";
-                    }
-                    else
-                    {
-                        message += "Failed. ";
-                        message += clinic == null ? " (Cannot find clinic information)" : "";
-                    }
-                }
-                else
-                {
-                    message += $" No base service exist with Id {service.ServiceId}";
-                }
-                
+                message += "Failed (Clinic already registered this service). ";
+                return false;
             }
-
-            return true;
-        }
-
-        public bool UpdateClinicService(ClinicServiceInfoModel clinicService, out string message)
-        {
-            if (clinicServiceRepository.UpdateClinicService(clinicService))
+            else
             {
-                message = $"Success.";
-                return true;
+                message += "Sucess.";
+                return clinicServiceRepository.AddClinicService(clinicService);
             }
-
-            message = $"Error while updating information for {clinicService.ClinicServiceId}.";
-            return false;
         }
-
         public bool AddClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)
         {
             int countPassed = 0;
@@ -265,6 +224,20 @@ namespace ClinicPlatformServices
             message += $"Finished batch! {countPassed}/{clinicServices.Count()}. {countFailed} Failed add attempt!";
             return true;
         }
+        
+
+        public bool UpdateClinicService(ClinicServiceInfoModel clinicService, out string message)
+        {
+            if (clinicServiceRepository.UpdateClinicService(clinicService))
+            {
+                message = $"Success.";
+                return true;
+            }
+
+            message = $"Error while updating information for {clinicService.ClinicServiceId}.";
+            return false;
+        }
+
 
         public ClinicServiceInfoModel? GetClinicServiceWithId(Guid id)
         {

@@ -76,6 +76,9 @@ namespace ClinicPlatformRepositories
         public ClinicSlotInfoModel? GetClinicSlot(Guid slotId)
         {
             var result = clinicSlotDAO.GetScheduledSlot(slotId);
+
+            result.Slot = slotDAO.GetSlot(result.SlotId)!;
+
             return result != null ? MapScheduleSlotToClinicSlotModel(result) : null; 
         }
 
@@ -150,6 +153,8 @@ namespace ClinicPlatformRepositories
                 ClinicId = ScheduleSlot.ClinicId,
                 SlotId = ScheduleSlot.SlotId,
                 Weekday = ScheduleSlot.DateOfWeek,
+                StartTime = ScheduleSlot.Slot.StartTime,
+                EndTime = ScheduleSlot.Slot.EndTime,
             };
         }
 

@@ -259,7 +259,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     StatusCode = 200,
                     Message = "Service added sucessfully",
-                    Detail = $"Information updated for clinic {serviceInfo.ClinicId}",
+                    Detail = $"{message}",
                 });
             }
         }

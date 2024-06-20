@@ -34,12 +34,12 @@ namespace ClinicPlatformDAOs
 
         public ScheduledSlot? GetScheduledSlot(Guid ScheduledSlotId)
         {
-            return _context.ScheduledSlots.Where(x => x.ScheduleSlotId == ScheduledSlotId).FirstOrDefault();
+            return _context.ScheduledSlots.Where(x => x.ScheduleSlotId == ScheduledSlotId).Include(x => x.Slot).FirstOrDefault();
         }
 
         public IEnumerable<ScheduledSlot> GetAllScheduledSlot()
         {
-            return _context.ScheduledSlots.ToList();
+            return _context.ScheduledSlots.Include(x=>x.Slot).ToList();
         }
 
         public ScheduledSlot UpdateScheduledSlot(ScheduledSlot ScheduledSlot)
