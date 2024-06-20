@@ -303,9 +303,9 @@ namespace ClinicPlatformWebAPI.Controllers
 
         [HttpPost("password/reset")]
         [AllowAnonymous]
-        public ActionResult<HttpResponseModel> ResetPassword([FromBody] PasswordResetRequestModel requestBody)
+        public ActionResult<HttpResponseModel> ResetPassword([FromQuery] string email)
         {
-            if (userService.GetUserInformationWithEmail(requestBody.Email) == null)
+            if (userService.GetUserInformationWithEmail(email) == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -320,7 +320,6 @@ namespace ClinicPlatformWebAPI.Controllers
                     StatusCode = 200,
                     Message = "Request Approved",
                 });
-
         }
 
         [HttpDelete("{id}")]

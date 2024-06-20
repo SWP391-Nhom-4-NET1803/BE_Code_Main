@@ -25,12 +25,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public Booking AddBooking(Booking booking)
+        public bool AddBooking(Booking booking)
         {
             _context.Add(booking);
             this.SaveChanges();
 
-            return booking;
+            return true;
         }
 
         public Booking? GetBooking(Guid BookId)
@@ -38,12 +38,12 @@ namespace ClinicPlatformDAOs
             return _context.Bookings.Where(x => x.BookId == BookId).FirstOrDefault();
         }
 
-        public IEnumerable<Booking> GetAllBookings(Guid BookId)
+        public IEnumerable<Booking> GetAll()
         {
             return _context.Bookings.ToList();
         }
 
-        public Booking UpdateBooking(Booking booking)
+        public bool UpdateBooking(Booking booking)
         {
             Booking? bookingInfo = GetBooking(booking.BookId);
 
@@ -51,12 +51,14 @@ namespace ClinicPlatformDAOs
             {
                 _context.Bookings.Update(booking);
                 SaveChanges();
+
+                return true;
             }
 
-            return booking;
+            return false;
         }
 
-        public void DeleteBooking(Guid bookId)
+        public bool DeleteBooking(Guid bookId)
         {
             Booking? booking = GetBooking(bookId);
 
@@ -64,7 +66,11 @@ namespace ClinicPlatformDAOs
             {
                 _context.Bookings.Remove(booking);
                 this.SaveChanges();
+
+                return true;
             }
+
+            return false;
         }
 
         public void SaveChanges()
