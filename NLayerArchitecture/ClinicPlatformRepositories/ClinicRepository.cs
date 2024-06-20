@@ -54,7 +54,6 @@ namespace ClinicPlatformRepositories
                 target.Status = clinicInfo.Status ?? target.Status;
 
                 clinicDAO.UpdateClinic(target);
-                SaveChanges();
 
                 return MapFromClinicToClinicModel(target);
             }

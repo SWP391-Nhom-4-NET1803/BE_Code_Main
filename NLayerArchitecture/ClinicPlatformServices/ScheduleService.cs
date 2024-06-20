@@ -122,12 +122,12 @@ namespace ClinicPlatformServices
 
         public IEnumerable<ClinicSlotInfoModel> GetClinicSlotInRange(TimeOnly start, TimeOnly end)
         {
-            return scheduleRepository.GetAllClinicSlot().Where(x => x.start < start && end < x.end);
+            return scheduleRepository.GetAllClinicSlot().Where(x => x.StartTime < start && end < x.EndTime);
         }
 
         public IEnumerable<ClinicSlotInfoModel> GetClinicSlotInRange(int clinicId, TimeOnly start, TimeOnly end)
         {
-            return scheduleRepository.GetAllClinicSlot().Where(x => x.start < start && end < x.end && x.ClinicId == clinicId);
+            return scheduleRepository.GetAllClinicSlot().Where(x => x.StartTime < start && end < x.EndTime && x.ClinicId == clinicId);
         }
 
         public bool UpdateClinicSlot(ClinicSlotInfoModel slotInfo, out string message)
@@ -175,7 +175,7 @@ namespace ClinicPlatformServices
 
             if (slotInfo.EndTime < slotInfo.StartTime)
             {
-                message = $"The end time is before start time! ({slotInfo.StartTime} > {slotInfo.EndTime})";
+                message = $"The EndTime time is before StartTime! ({slotInfo.StartTime} > {slotInfo.EndTime})";
                 return false;
             }
 
