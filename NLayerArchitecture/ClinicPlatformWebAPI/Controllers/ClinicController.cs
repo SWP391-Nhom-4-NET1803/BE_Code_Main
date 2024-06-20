@@ -5,6 +5,8 @@ using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.IdentityModel.Tokens;
+using System.Globalization;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -46,6 +48,47 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
+        [HttpGet("search")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> SearchClinic([FromQuery] string? name=null, [FromQuery] TimeOnly? open=null, [FromQuery] TimeOnly? close=null , string? service = null, int page_size=10, int page = 1)
+        {
+            IEnumerable<ClinicInfoModel> result = clinicService.GetAll();;
+
+            if (service != null)
+            {
+                int? real = clinicService.GetClinicServiceWithName(service)?.ServiceId;
+
+                if (real != null)
+                {
+                    Console.WriteLine("real");
+                    result = clinicService.GetClinicHasService((int) real);
+                }
+            }
+
+            if (name != null)
+            {
+                result = result
+                    .Where(x => !x.Name.IsNullOrEmpty() && x.Name!.StartsWith(name, true, CultureInfo.InvariantCulture));
+            }
+
+            if (open != null)
+            {
+                result = result
+                    .Where(x => x.OpenHour >= open);
+            }
+
+            if (close != null)
+            {
+                result = result
+                    .Where(x => x.CloseHour <= close);
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                Message = "Success",
+                Content = result.Skip(Math.Abs(page - 1) * page_size).Take(page_size)
+            });
+        }
+
         [HttpPost("register")]
         public ActionResult<HttpResponseModel> RegisterClinic([FromBody] ClinicRegistrationModel info)
         {
@@ -53,14 +96,17 @@ namespace ClinicPlatformWebAPI.Controllers
 
             if (userInfo == null || userInfo.IsOwner == false)
             {
+                string errorReason = "Error while getting user information: ";
+
+                errorReason += (userInfo != null ? $"No user with {info.OwnerId} exis. " : "");
+                errorReason += (!userInfo?.IsOwner ?? false ? "User is not a clinic owner" : "");
+
+                return BadRequest(new HttpResponseModel()
                 {
-                    return BadRequest(new HttpResponseModel()
-                    {
-                        StatusCode = 400,
-                        Message = "Failed to create new clinic",
-                        Detail = $"Error while getting user information: {(userInfo != null ? "User is not a clinic owner" : $"No user with {info.OwnerId} exis.")}"
-                    });
-                }
+                    StatusCode = 400,
+                    Message = "Failed to create new clinic",
+                    Detail = $"{errorReason}"
+                });
             }
 
             if (!clinicService.RegisterClinic(info, out var message))
@@ -177,8 +223,8 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpDelete("{id}")]
         public ActionResult<HttpResponseModel> RemoveClinic(int id)
         {
-
-            if (!clinicService.DeleteClinic(id))
+            
+            if (!clinicService.DeleteClinic(id)) // Please consider using status or flags instead.
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -329,9 +375,9 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPost("schedule")]
-        public ActionResult<HttpResponseModel> AddClinicSlot([FromBody] ClinicSlotInfoModel slotInfo)
+        public ActionResult<HttpResponseModel> AddClinicSlot([FromBody] ClinicSlotRegistrationModel slotInfo)
         {
-            if ( slotInfo.ClinicId == null|| clinicService.GetClinicWithId((int)slotInfo.ClinicId) == null)
+            if (clinicService.GetClinicWithId((int)slotInfo.ClinicId) == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -341,7 +387,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
 
-            if (scheduleService.AddNewClinicSlot(slotInfo, out var message))
+            if (scheduleService.RegisterClinicSlot(slotInfo, out var message))
             {
                 return Ok(new HttpResponseModel()
                 {
@@ -404,5 +450,6 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
         }
+
     }
 }

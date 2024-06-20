@@ -13,7 +13,5 @@ namespace ClinicPlatformDTOs.ClinicModels
         public TimeOnly? OpenHour { get; set; }
         public TimeOnly? CloseHour { get; set; }
         public List<int>? ClinicServices { get; set; }
-        public List<ClinicSlotRegistrationModel>? ClinicSlots { get; set; }
-        //public List<string>? Attachments { get; set; }
     }
 }

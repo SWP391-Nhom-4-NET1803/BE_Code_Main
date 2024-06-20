@@ -4,10 +4,12 @@ using ClinicPlatformDTOs.Comparator;
 using ClinicPlatformRepositories;
 using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformServices.Contracts;
+using Microsoft.EntityFrameworkCore.Internal;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -30,6 +32,12 @@ namespace ClinicPlatformServices
             if (registrationInfo.OwnerId == null)
             {
                 message = "No user id was provied for this method";
+                return false;
+            }
+
+            if (GetClinicWithOwnerId((int) registrationInfo.OwnerId) != null)
+            {
+                message = "User already created clinic!";
                 return false;
             }
 
@@ -62,18 +70,46 @@ namespace ClinicPlatformServices
                                          Price = 0,
                                          ServiceId = serviceId,
                                      };
+            message = $"adding {registeredServices.Count()} services. ";
 
-            foreach( var service in registeredServices )
+            foreach (var service in registeredServices)
             {
-                if (clinicServiceRepository.AddClinicService(service) == null)
+                message += $"Adding {service.ServiceId} for clinic {service.ClinicId}: ";
+
+                if (clinicServiceRepository.AddClinicService(service))
                 {
-                    message = $"Error while trying to register clinic {service.Name} for clinic {clinicInfo.Name}.";
-                    return false;
+                    message += "Success. ";
+                }
+                else
+                {
+                    message += "Failed. ";
                 }
             }
 
             message = "Successfully create new clinic.";
             return true;
+        }
+
+        public IEnumerable<ClinicInfoModel> GetAll()
+        {
+            return clinicRepository.GetAll();
+        }
+
+        public IEnumerable<ClinicInfoModel> GetClinicPaginated(int top = 0, int page = 0)
+        {
+            var result = clinicRepository.GetAll();
+
+            if (page >= 0)
+            {
+                result = result.Skip((int) (top * page));
+            }
+
+            if (top > 0)
+            {
+                result = result.Take((int) top).ToList();
+            }
+
+            return result;
         }
 
         public ClinicInfoModel? GetClinicWithId(int id)
@@ -98,7 +134,24 @@ namespace ClinicPlatformServices
 
         public IEnumerable<ClinicInfoModel> GetClinicHasService(int serviceId)
         {
-            throw new NotImplementedException();
+            var allService = clinicServiceRepository.GetAll().Where(x => x.ServiceId == serviceId).OrderBy(x => x.Price);
+
+            var result = (from service in allService select GetClinicWithId((int) service.ClinicId!))
+                .GroupBy(x => x.Id)
+                .Select(x => x.First());
+            return result;
+        }
+
+        public IEnumerable<ClinicInfoModel> GetClinicHasServices(IEnumerable<int> serviceId)
+        {
+            var allService = clinicServiceRepository.GetAll().Where(x => serviceId.Contains((int) x.ServiceId!));
+
+            return (from service in allService select GetClinicWithId((int)service.ClinicId!)).Distinct();
+        }
+
+        public ClinicServiceInfoModel? GetClinicServiceWithName(string name)
+        {
+            return clinicServiceRepository.GetAll().Where(x => x.Name == name).FirstOrDefault();
         }
 
         public bool UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message)
@@ -117,37 +170,75 @@ namespace ClinicPlatformServices
         {
             var allClinicServices = clinicServiceRepository.GetAll();
 
-            if (allClinicServices.Contains(clinicService, new ClinicServiceComparer()))
+            message = $"Adding {clinicService.Name} for {clinicService.ClinicId}: ";
+
+            if (!allClinicServices.Any(x => x.ServiceId == clinicService.ServiceId))
             {
-                message = $"Clinic {clinicService.ClinicId} already have this service.";
+                message += $" No base clinicService exist with Id {clinicService.ServiceId}";
                 return false;
             }
+            ClinicInfoModel? clinic = clinicRepository.GetClinic((int)clinicService.ClinicId!);
 
-            if (allClinicServices.Any(x => x.ServiceId == clinicService.ServiceId))
+            message += $"Adding {clinicService.Name} for {clinicService.ClinicId}: ";
+
+            if (clinicServiceRepository.AddClinicService(clinicService))
             {
-                message = $"No service with Id {clinicService.ServiceId} exist.";
+                message += "Sucess. ";
+                return true;
+            }
+            else
+            {
+                message += $"Failed{(clinic == null ? " (Cannot find clinic information)" : "")}. ";
                 return false;
             }
+        }
 
-            if (clinicServiceRepository.AddClinicService(clinicService) == null)
+        public bool AddClinicService(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)
+        {
+
+            message = $"Adding {clinicServices.Count()} requested service! ";
+
+            var available = clinicServiceRepository.GetAllBaseService();
+
+            foreach (var service in clinicServices)
             {
-                message = $"Error while adding service {clinicService.ClinicId}.";
-                return false;
+                if (available.Any(x => x.ServiceId == service.ServiceId))
+                {
+
+                    ClinicInfoModel? clinic = clinicRepository.GetClinic((int) service.ClinicId!);
+
+                    message += $"Adding {service.Name} for {service.ClinicId}: ";
+
+                    if (clinicServiceRepository.AddClinicService(service))
+                    {
+                        message += "Sucess. ";
+                    }
+                    else
+                    {
+                        message += "Failed. ";
+                        message += clinic == null ? " (Cannot find clinic information)" : "";
+                    }
+                }
+                else
+                {
+                    message += $" No base service exist with Id {service.ServiceId}";
+                }
+                
             }
 
-            message = "";
             return true;
         }
 
         public bool UpdateClinicService(ClinicServiceInfoModel clinicService, out string message)
         {
-            if (clinicServiceRepository.UpdateClinicService(clinicService) == null)
+            if (clinicServiceRepository.UpdateClinicService(clinicService))
             {
-                message = $"Error while updating information for {clinicService.ClinicServiceId}.";
-                return false;
+                message = $"Success.";
+                return true;
             }
-            message = $"Success.";
-            return true;
+
+            message = $"Error while updating information for {clinicService.ClinicServiceId}.";
+            return false;
         }
 
         public bool AddClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)

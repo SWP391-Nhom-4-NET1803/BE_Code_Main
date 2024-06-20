@@ -8,6 +8,12 @@ namespace ClinicPlatformServices.Contracts
 
         ClinicInfoModel? GetClinicWithId(int id);
 
+        IEnumerable<ClinicInfoModel> GetAll();
+
+        IEnumerable<ClinicInfoModel> GetClinicPaginated(int top, int page);
+
+        IEnumerable<ClinicInfoModel> GetClinicHasServices(IEnumerable<int> serviceId);
+
         IEnumerable<ClinicInfoModel> GetClinicNameStartWith(string prefix);
 
         IEnumerable<ClinicInfoModel> GetClinicWorkingInHourRange(TimeOnly start, TimeOnly end);
@@ -18,23 +24,25 @@ namespace ClinicPlatformServices.Contracts
 
         bool UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message);
 
-        public bool AddClinicService(ClinicServiceInfoModel clinicService, out string message);
+        bool AddClinicService(ClinicServiceInfoModel clinicService, out string message);
 
-        public ClinicServiceInfoModel? GetClinicServiceWithId(Guid id);
+        ClinicServiceInfoModel? GetClinicServiceWithId(Guid id);
 
-        public IEnumerable<ClinicServiceInfoModel> GetClinicServiceWithPirce(int id, long minimum, long maximum);
+        public ClinicServiceInfoModel? GetClinicServiceWithName(string name);
 
-        public bool AddClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message);
+        IEnumerable<ClinicServiceInfoModel> GetClinicServiceWithPirce(int id, long minimum, long maximum);
 
-        public bool UpdateClinicService(ClinicServiceInfoModel clinicService, out string message);
+        bool AddClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message);
 
-        public bool UpdateClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message);
+        bool UpdateClinicService(ClinicServiceInfoModel clinicService, out string message);
+
+        bool UpdateClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message);
 
         bool DeleteClinic(int clinicId);
 
-        public bool DeleteClinicServices(Guid clinicServiceId, out string message);
+        bool DeleteClinicServices(Guid clinicServiceId, out string message);
 
-        public bool DeleteClinicServices(IEnumerable<Guid> clinicServiceId, out string message);
+        bool DeleteClinicServices(IEnumerable<Guid> clinicServiceId, out string message);
 
         bool InactivateClinic(int clinicId, out string message);
 

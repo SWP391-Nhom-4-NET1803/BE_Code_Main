@@ -23,16 +23,16 @@ namespace ClinicPlatformRepositories
             this.serviceDAO = new ServiceDAO();
         }
 
-        public ClinicServiceInfoModel? CreateBaseService(ClinicServiceInfoModel service)
+        public bool AddBaseService(ClinicServiceInfoModel service)
         {
             if (service.Name.IsNullOrEmpty())
             {
-                return null;
+                return false;
             }
 
             if (serviceDAO.GetAllService().Any(x => x.ServiceName == service.Name))
             {
-                return null;
+                return false;
             }
 
             Service newService = new Service()
@@ -42,10 +42,10 @@ namespace ClinicPlatformRepositories
 
             serviceDAO.AddService(newService);
 
-            return service;
+            return true;
         }
 
-        public ClinicServiceInfoModel? AddClinicService(ClinicServiceInfoModel clinicServiceInfo)
+        public bool AddClinicService(ClinicServiceInfoModel clinicServiceInfo)
         {
             Service? baseService = serviceDAO.GetAllService()
                 .Where(x => x.ServiceId == clinicServiceInfo.ServiceId)
@@ -53,7 +53,7 @@ namespace ClinicPlatformRepositories
 
             if (baseService == null)
             {
-                return null;
+                return false;
             }
 
             ClinicService newClinicService = new ClinicService()
@@ -65,7 +65,7 @@ namespace ClinicPlatformRepositories
             };
 
             clinicServiceDAO.AddClinicService(newClinicService);
-            return clinicServiceInfo;
+            return true;
 
         }
 
@@ -143,7 +143,7 @@ namespace ClinicPlatformRepositories
             return null;
         }
 
-        public ClinicServiceInfoModel? UpdateBaseService(ClinicServiceInfoModel serviceInfo)
+        public bool UpdateBaseService(ClinicServiceInfoModel serviceInfo)
         {
             Service? service = serviceInfo.ServiceId != null ? serviceDAO.GetService((int) serviceInfo.ServiceId): null;
             
@@ -152,13 +152,13 @@ namespace ClinicPlatformRepositories
                 service.ServiceName = serviceInfo.Name ?? service.ServiceName;
 
                 serviceDAO.UpdateService(service);
-                return serviceInfo;
+                return true;
             }
 
-            return null;
+            return false;
         }
 
-        public ClinicServiceInfoModel? UpdateClinicService(ClinicServiceInfoModel serviceInfo)
+        public bool UpdateClinicService(ClinicServiceInfoModel serviceInfo)
         {
             ClinicService? clinicService = clinicServiceDAO.GetClinicService(serviceInfo.ClinicServiceId);
 
@@ -171,20 +171,24 @@ namespace ClinicPlatformRepositories
                 clinicService.ServiceId = service != null ? service.ServiceId : clinicService.ServiceId;
 
                 clinicServiceDAO.UpdateClinicService(clinicService);
-                return serviceInfo;
+                return true;
             }
 
-            return null;
+            return false;
         }
 
-        public void DeleteBaseService(int serviceId)
+        public bool DeleteBaseService(int serviceId)
         {
             serviceDAO.DeleteService(serviceId);
+
+            return serviceDAO.GetService(serviceId) != null;
         }
 
-        public void DeleteClinicService(Guid clinicServiceId)
+        public bool DeleteClinicService(Guid clinicServiceId)
         {
             clinicServiceDAO.DeleteClinicService(clinicServiceId);
+
+            return clinicServiceDAO.GetClinicService(clinicServiceId) != null;
         }
 
         protected virtual void Dispose(bool disposing)

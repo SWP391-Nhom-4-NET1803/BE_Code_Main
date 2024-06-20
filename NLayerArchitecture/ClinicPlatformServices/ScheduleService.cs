@@ -20,6 +20,17 @@ namespace ClinicPlatformServices
             this.scheduleRepository = scheduleRepository;
         }
 
+        public bool RegisterClinicSlot(ClinicSlotRegistrationModel slotInfo, out string message)
+        {
+            return AddNewClinicSlot(new ClinicSlotInfoModel()
+            {
+                ClinicId = slotInfo.ClinicId,
+                MaxAppointment = slotInfo.MaxAppointment,
+                SlotId = slotInfo.SlotId,
+                Weekday = slotInfo.Weekday
+            }, out message);
+        }
+
         public bool AddNewClinicSlot(ClinicSlotInfoModel slotInfo, out string message)
         {
             // Some shit happens when I dont do this. (State change tracking)
