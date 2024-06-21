@@ -11,6 +11,7 @@ using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using ClinicPlatformDTOs.RoleModels;
+using ClinicPlatformDTOs.AuthenticationModels;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -18,14 +19,17 @@ namespace ClinicPlatformWebAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private IUserService userService;
+        private readonly IUserService userService;
+        private readonly IAuthService authService;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IAuthService authService)
         {
             this.userService = userService;
+            this.authService = authService;
         }
 
         [HttpGet]
+        [Authorize(Roles ="2")]
         public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetUsers()
         {
             IEnumerable<UserInfoModel> user = userService.GetUsers();
@@ -42,6 +46,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("{id}")]
+        [Authorize(Roles = "3")]
         public ActionResult<IHttpResponseModel<UserInfoModel>> GetUser(int id)
         {
             var user = userService.GetUserInformation(id);
@@ -51,7 +56,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Get user info sucess",
+                    Message = "Failed",
                     Content = user
                 });
             }
@@ -59,7 +64,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return NotFound(new HttpResponseModel()
             {
                 StatusCode = 404,
-                Message = "Get user info failed",
+                Message = "Failed",
                 Detail = $"Unknown user with id {id}"
             });
             
@@ -75,7 +80,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "User not found",
+                    Message = "Failed",
                     Detail = $"User does not exist for id {userId}!"
                 });
 
@@ -99,7 +104,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "User not found",
+                    Message = "Failed",
                     Detail = $"User does not exist for id {userId}!"
                 });
 
@@ -184,6 +189,61 @@ namespace ClinicPlatformWebAPI.Controllers
 
             return Ok(ResponseBody);
         }
+
+        [HttpPost("login")]
+        [AllowAnonymous]
+        public ActionResult<IHttpResponseModel<AuthenticationTokenModel>> Login([FromBody] UserAuthenticationRequestModel loginInfo)
+        {
+            bool isValidUser = userService.CheckLogin(loginInfo.Username, loginInfo.Password, out var user);
+
+            if (isValidUser)
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Login Successfully",
+                    Content = authService.GenerateTokens(user!)
+                });
+            }
+            else
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Login Failed",
+                    Detail = "Invalid user or username"
+                });
+            }
+
+        }
+
+        [HttpPost("login-google")]
+        [AllowAnonymous]
+        public ActionResult<IHttpResponseModel<AuthenticationTokenModel>> LoginGoogle([FromBody] UserAuthenticationRequestModel loginInfo)
+        {
+            bool isValidUser = userService.CheckLogin(loginInfo.Username, loginInfo.Password, out var user);
+
+            if (isValidUser)
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Login Successfully",
+                    Content = authService.GenerateTokens(user!)
+                });
+            }
+            else
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Login Failed",
+                    Detail = "Invalid user or username"
+                });
+            }
+
+        }
+
 
         [HttpPut("{id}")]
         public ActionResult<HttpResponseModel> UpdateUser(int id,[FromBody] UserInfoModel user)
@@ -315,11 +375,13 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
 
-                return Ok(new HttpResponseModel()
-                {
-                    StatusCode = 200,
-                    Message = "Request Approved",
-                });
+            // TODO: Send email.
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Request Approved",
+            });
         }
 
         [HttpDelete("{id}")]

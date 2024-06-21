@@ -9,6 +9,9 @@ using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformRepositories;
 using ClinicPlatformBusinessObject;
 using ClinicPlatformDAOs;
+using Microsoft.AspNetCore.Authorization;
+using ClinicPlatformWebAPI.Helpers.Models;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,11 +32,16 @@ builder.Services.AddSwaggerGen(option =>
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer",
+        Reference = new OpenApiReference
+        {
+            Id = JwtBearerDefaults.AuthenticationScheme,
+            Type = ReferenceType.SecurityScheme
+        },
     });
 
     option.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
-                    {
+                     {
                         new OpenApiSecurityScheme
                         {
                         Reference = new OpenApiReference
@@ -74,9 +82,30 @@ builder.Services.AddAuthentication(options =>
         //ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ValidateIssuer = true,
-        //ValidateAudience = true,
+        ValidateAudience = false,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = async context =>
+        {
+
+            context.HandleResponse();
+
+            context.Response.StatusCode = 401;
+            var actionContext = new ActionContext(context.HttpContext, context.HttpContext.GetRouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
+
+            var result = new ObjectResult(new HttpResponseModel()
+            {
+                StatusCode = 401,
+                Message = "Unauthorized",
+                Detail = "You are not logged in or this resource is not accessible."
+            }) { StatusCode = 401};
+
+            await result.ExecuteResultAsync(actionContext);
+        }
     };
 });
 
@@ -93,6 +122,7 @@ builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClinicService, PlatformClinicService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 var app = builder.Build();
 
@@ -109,6 +139,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<AuthorizationMiddleware>();
 
 app.MapControllers();
 
