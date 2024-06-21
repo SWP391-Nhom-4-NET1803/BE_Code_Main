@@ -13,8 +13,8 @@ namespace ClinicPlatformDTOs.SlotModels
         public int? MaxAppointment { get; set; }
         public int? Weekday { get; set; }
         public int? SlotId { get; set; }
-        public TimeOnly? start { get; set; }
-        public TimeOnly? end { get; set; }
+        public TimeOnly? StartTime { get; set; }
+        public TimeOnly? EndTime { get; set; }
 
         public enum Weekdays
         {

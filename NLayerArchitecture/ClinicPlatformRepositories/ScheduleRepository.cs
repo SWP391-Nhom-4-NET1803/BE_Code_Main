@@ -18,15 +18,8 @@ namespace ClinicPlatformRepositories
         }
 
         public bool AddSlot(SlotInfoModel slot)
-        {
-            var slotInfo = MapSlotModelToSlot(slot);
-            if (slotDAO.AddSlot(slotInfo) != null)
-            {
-                return true;
-            }
-
-            return false;
-
+        { 
+            return slotDAO.AddSlot(MapSlotModelToSlot(slot));
         }
 
         public SlotInfoModel? GetSlot(int slotId)
@@ -61,9 +54,8 @@ namespace ClinicPlatformRepositories
                 {
                     slotInfo.StartTime = slot.StartTime ?? slotInfo.StartTime;
                     slotInfo.EndTime = slot.EndTime ?? slotInfo.EndTime;
-                    slotDAO.UpdateSlot(slotInfo);
 
-                    return true;
+                    return slotDAO.UpdateSlot(slotInfo);
                 }
             }
 
@@ -72,9 +64,7 @@ namespace ClinicPlatformRepositories
 
         public bool DeleteSlot(int slotId)
         {
-            slotDAO.DeleteSlot(slotId);
-
-            return true;
+            return slotDAO.DeleteSlot(slotId);
         }
 
         public bool AddClinicSlot(ClinicSlotInfoModel slot)
@@ -86,6 +76,9 @@ namespace ClinicPlatformRepositories
         public ClinicSlotInfoModel? GetClinicSlot(Guid slotId)
         {
             var result = clinicSlotDAO.GetScheduledSlot(slotId);
+
+            result.Slot = slotDAO.GetSlot(result.SlotId)!;
+
             return result != null ? MapScheduleSlotToClinicSlotModel(result) : null; 
         }
 
@@ -100,8 +93,8 @@ namespace ClinicPlatformRepositories
                        Weekday = clinicSlot.DateOfWeek,
                        ClinicId = clinicSlot.ClinicId,
                        MaxAppointment = clinicSlot.MaxAppointments,
-                       start = baseSlot.StartTime,
-                       end = baseSlot.EndTime,
+                       StartTime = baseSlot.StartTime,
+                       EndTime = baseSlot.EndTime,
                    };
         }
 
@@ -160,6 +153,8 @@ namespace ClinicPlatformRepositories
                 ClinicId = ScheduleSlot.ClinicId,
                 SlotId = ScheduleSlot.SlotId,
                 Weekday = ScheduleSlot.DateOfWeek,
+                StartTime = ScheduleSlot.Slot.StartTime,
+                EndTime = ScheduleSlot.Slot.EndTime,
             };
         }
 

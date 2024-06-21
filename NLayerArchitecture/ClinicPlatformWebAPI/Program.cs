@@ -87,10 +87,12 @@ builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
 builder.Services.AddScoped<IClinicServiceRepository, ClinicServiceRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
+builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClinicService, PlatformClinicService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<IBookingService, BookingService>();
 
 var app = builder.Build();
 
