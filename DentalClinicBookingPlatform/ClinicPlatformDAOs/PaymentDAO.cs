@@ -1,4 +1,5 @@
 ﻿using ClinicPlatformBusinessObject;
+using ClinicPlatformDAOs.Contracts;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -9,49 +10,46 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDAOs
 {
-    public class ClinicSlotDAO: IDisposable
+    internal class PaymentDAO: IFilterQuery<Payment>, IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public ClinicSlotDAO()
+        public PaymentDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public ClinicSlotDAO(DentalClinicPlatformContext context)
+        public PaymentDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public ClinicSlot AddClinicSlot(ClinicSlot ClinicSlot)
+        public bool AddPayment(Payment Payment)
         {
-            _context.Add(ClinicSlot);
+            _context.Add(Payment);
             this.SaveChanges();
 
-            return ClinicSlot;
+            return true;
         }
 
-        public ClinicSlot? GetClinicSlot(Guid ClinicSlotId)
+        public Payment? GetPayment(int paymentId)
         {
-            return _context.ClinicSlots
-                .Where(x => x.SlotId == ClinicSlotId)
-                .Include(x => x.Time)
-                .FirstOrDefault();
+            return _context.Payments.Where(x => x.Id == paymentId).FirstOrDefault();
         }
 
-        public IEnumerable<ClinicSlot> GetAllClinicSlot()
+        public IEnumerable<Payment> GetAllPayment()
         {
-            return _context.ClinicSlots.Include(x=> x.Time).ToList();
+            return _context.Payments.ToList();
         }
 
-        public bool UpdateClinicSlot(ClinicSlot ClinicSlot)
+        public bool UpdatePayment(Payment Payment)
         {
-            ClinicSlot? ClinicSlotInfo = GetClinicSlot(ClinicSlot.SlotId);
+            Payment? ServiceInfo = GetPayment(Payment.Id);
 
-            if (ClinicSlotInfo != null)
+            if (ServiceInfo != null)
             {
-                _context.ClinicSlots.Update(ClinicSlot);
+                _context.Payments.Update(Payment);
                 SaveChanges();
 
                 return true;
@@ -60,13 +58,13 @@ namespace ClinicPlatformDAOs
             return false;
         }
 
-        public bool DeleteClinicSlot(Guid ClinicSlotId)
+        public bool DeletePayment(int serviceId)
         {
-            ClinicSlot? ClinicSlot = GetClinicSlot(ClinicSlotId);
+            Payment? Payment = GetPayment(serviceId);
 
-            if (ClinicSlot != null)
+            if (Payment != null)
             {
-                _context.ClinicSlots.Remove(ClinicSlot);
+                _context.Payments.Remove(Payment);
                 this.SaveChanges();
 
                 return true;
@@ -98,9 +96,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<ClinicSlot> Filter(Expression<Func<ClinicSlot, bool>> filter, Func<IQueryable<ClinicSlot>, IOrderedQueryable<ClinicSlot>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        public IEnumerable<Payment> Filter(Expression<Func<Payment, bool>> filter, Func<IQueryable<Payment>, IOrderedQueryable<Payment>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<ClinicSlot> query = _context.ClinicSlots;
+            IQueryable<Payment> query = _context.Payments;
 
             if (filter != null)
             {
