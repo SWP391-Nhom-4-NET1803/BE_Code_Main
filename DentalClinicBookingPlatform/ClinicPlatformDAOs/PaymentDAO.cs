@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDAOs
 {
-    internal class PaymentDAO: IFilterQuery<Payment>, IDisposable
+    public class PaymentDAO: IFilterQuery<Payment>, IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
@@ -58,9 +58,9 @@ namespace ClinicPlatformDAOs
             return false;
         }
 
-        public bool DeletePayment(int serviceId)
+        public bool DeletePayment(int paymentId)
         {
-            Payment? Payment = GetPayment(serviceId);
+            Payment? Payment = GetPayment(paymentId);
 
             if (Payment != null)
             {

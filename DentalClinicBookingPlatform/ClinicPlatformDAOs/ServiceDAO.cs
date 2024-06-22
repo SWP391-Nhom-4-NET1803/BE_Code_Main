@@ -10,22 +10,22 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDAOs
 {
-    public class ClinicServiceDAO: IFilterQuery<ClinicService>, IDisposable
+    public class ServiceDAO: IFilterQuery<ClinicService>, IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public ClinicServiceDAO()
+        public ServiceDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public ClinicServiceDAO(DentalClinicPlatformContext context)
+        public ServiceDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public bool AddClinicService(ClinicService ClinicService)
+        public bool AddService(ClinicService ClinicService)
         {
             _context.Add(ClinicService);
             this.SaveChanges();
@@ -33,19 +33,19 @@ namespace ClinicPlatformDAOs
             return true;
         }
 
-        public ClinicService? GetClinicService(Guid serviceId)
+        public ClinicService? GetService(Guid serviceId)
         {
             return _context.ClinicServices.Where(x => x.Id == serviceId).FirstOrDefault();
         }
 
-        public IEnumerable<ClinicService> GetAllClinicService()
+        public IEnumerable<ClinicService> GetAll()
         {
             return _context.ClinicServices.ToList();
         }
 
-        public bool UpdateClinicService(ClinicService clinicService)
+        public bool UpdateService(ClinicService clinicService)
         {
-            ClinicService? ClinicServiceInfo = GetClinicService(clinicService.Id);
+            ClinicService? ClinicServiceInfo = GetService(clinicService.Id);
 
             if (ClinicServiceInfo != null)
             {
@@ -58,9 +58,9 @@ namespace ClinicPlatformDAOs
             return true;
         }
 
-        public void DeleteClinicService(Guid serviceId)
+        public void DeleteService(Guid serviceId)
         {
-            ClinicService? clinicService = GetClinicService(serviceId);
+            ClinicService? clinicService = GetService(serviceId);
 
             if (clinicService != null)
             {

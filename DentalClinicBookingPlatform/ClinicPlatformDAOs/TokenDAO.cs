@@ -1,5 +1,4 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs.Contracts;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,48 +9,46 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDAOs
 {
-    public class AppointmentDAO : IFilterQuery<Appointment>, IDisposable
+    internal class TokenDAO: IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public AppointmentDAO()
+        public TokenDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public AppointmentDAO(DentalClinicPlatformContext context)
+        public TokenDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public bool AddAppointments(Appointment Appointments)
+        public bool AddToken(Token Token)
         {
-            _context.Add(Appointments);
+            _context.Add(Token);
             this.SaveChanges();
 
             return true;
         }
 
-        public Appointment? GetAppointments(Guid BookId)
+        public Token? GetToken(Guid tokenId)
         {
-            return _context.Appointments.Where(x => x.Id == BookId)
-                .Include(x => x.BookedService)
-                .FirstOrDefault();
+            return _context.Tokens.Where(x => x.Id == tokenId).FirstOrDefault();
         }
 
-        public IEnumerable<Appointment> GetAll()
+        public IEnumerable<Token> GetAllToken()
         {
-            return _context.Appointments.Include(x => x.BookedService).ToList();
+            return _context.Tokens.ToList();
         }
 
-        public bool UpdateAppointments(Appointment Appointments)
+        public bool UpdateToken(Token Token)
         {
-            Appointment? AppointmentsInfo = GetAppointments(Appointments.Id);
+            Token? ServiceInfo = GetToken(Token.Id);
 
-            if (AppointmentsInfo != null)
+            if (ServiceInfo != null)
             {
-                _context.Appointments.Update(Appointments);
+                _context.Tokens.Update(Token);
                 SaveChanges();
 
                 return true;
@@ -60,13 +57,13 @@ namespace ClinicPlatformDAOs
             return false;
         }
 
-        public bool DeleteAppointments(Guid bookId)
+        public bool DeleteToken(Guid tokenId)
         {
-            Appointment? Appointments = GetAppointments(bookId);
+            Token? Token = GetToken(tokenId);
 
-            if (Appointments != null)
+            if (Token != null)
             {
-                _context.Appointments.Remove(Appointments);
+                _context.Tokens.Remove(Token);
                 this.SaveChanges();
 
                 return true;
@@ -86,7 +83,7 @@ namespace ClinicPlatformDAOs
             {
                 if (disposing)
                 {
-                   _context.Dispose();
+                    _context.Dispose();
                 }
                 disposedValue = true;
             }
@@ -98,9 +95,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        IEnumerable<Appointment> IFilterQuery<Appointment>.Filter(Expression<Func<Appointment, bool>> filter, Func<IQueryable<Appointment>, IOrderedQueryable<Appointment>>? orderBy, string includeProperties, int? pageSize, int? pageIndex)
+        public IEnumerable<Token> Filter(Expression<Func<Token, bool>> filter, Func<IQueryable<Token>, IOrderedQueryable<Token>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<Appointment> query = _context.Appointments;
+            IQueryable<Token> query = _context.Tokens;
 
             if (filter != null)
             {

@@ -1,94 +1,49 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.UserModels;
-using ClinicPlatformDAOs.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
-using Microsoft.EntityFrameworkCore;
-using System.Linq.Expressions;
-using Microsoft.EntityFrameworkCore.Query;
 
 namespace ClinicPlatformDAOs
 {
-    public class UserDAO : IFilterQuery<User>, IDisposable
+    public class DentistDAO: IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public UserDAO()
+        public DentistDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public UserDAO(DentalClinicPlatformContext context)
+        public DentistDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public bool AddUser(User user)
+        public IEnumerable<Dentist> GetAll()
         {
-            _context.Add(user);
-            this.SaveChanges();
-            return true;
+            return _context.Dentists.ToList();
         }
 
-        public User? GetUser(int id)
+        public Dentist? GetDentist(int staffId)
         {
-            return _context.Users.Where(x => x.Id == id)
+            return _context.Dentists
+                .Where(x => x.Id == staffId)
                 .FirstOrDefault();
         }
 
-        public IEnumerable<User> GetAll()
-        {
-            return _context.Users.ToList();
-        }
-
-        public bool UpdateUser(User user)
-        {
-            User? userInfo = GetUser(user.Id);
-
-            if (userInfo != null)
-            {
-                _context.Users.Update(user);
-                SaveChanges();
-
-                return true;
-            }
-
-            return false;
-        }
-
-        public bool DeleteUser(int userId)
-        {
-            User? user = GetUser(userId);
-
-            if (user != null)
-            {
-                _context.Users.Remove(user);
-                this.SaveChanges();
-
-                return true;
-            }
-
-            return false;
-        }
-
-        public void SaveChanges()
-        {
-            this._context.SaveChanges();
-        }
-
-        public virtual void Dispose(bool disposing)
+        protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                    this._context.Dispose();
+                    _context.Dispose();
                 }
-
                 disposedValue = true;
             }
         }
@@ -99,9 +54,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<User> Filter(Expression<Func<User, bool>> filter, Func<IQueryable<User>, IOrderedQueryable<User>>? orderBy = null, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        public IEnumerable<Dentist> Filter(Expression<Func<Dentist, bool>> filter, Func<IQueryable<Dentist>, IOrderedQueryable<Dentist>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<User> query = _context.Users;
+            IQueryable<Dentist> query = _context.Dentists;
 
             foreach (var includeProperty in includeProperties.Split(new char[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
             {
@@ -112,7 +67,6 @@ namespace ClinicPlatformDAOs
             {
                 query = query.Where(filter);
             }
-
 
             if (orderBy != null)
             {

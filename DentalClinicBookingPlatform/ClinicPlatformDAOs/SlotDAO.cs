@@ -37,7 +37,7 @@ namespace ClinicPlatformDAOs
             return _context.Slots.Where(x => x.Id == SlotId).FirstOrDefault();
         }
 
-        public IEnumerable<Slot> GetAllSlot()
+        public IEnumerable<Slot> GetAll()
         {
             return _context.Slots.ToList();
         }

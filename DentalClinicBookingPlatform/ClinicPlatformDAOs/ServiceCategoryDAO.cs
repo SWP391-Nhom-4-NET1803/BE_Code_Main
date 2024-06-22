@@ -37,7 +37,7 @@ namespace ClinicPlatformDAOs
             return _context.ServiceCategories.Where(x => x.Id == categoryId).FirstOrDefault();
         }
 
-        public IEnumerable<ServiceCategory> GetAllCategory()
+        public IEnumerable<ServiceCategory> GetAll()
         {
             return _context.ServiceCategories.ToList();
         }
