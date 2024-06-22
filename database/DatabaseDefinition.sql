@@ -13,7 +13,7 @@ USE DentalClinicPlatform;
 GO
 
 CREATE TABLE Appointment (
-  id                   uniqueidentifier IDENTITY(1, 1) NOT NULL, 
+  id                   uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
   appointment_type     nvarchar(10) DEFAULT 'checkup' NOT NULL CHECK(appointment_type in ('checkup', 'treatment')), 
   number               int NOT NULL, 
   [date]               date NOT NULL, 
@@ -97,7 +97,7 @@ CREATE TABLE Dentist (
   PRIMARY KEY (id));
 CREATE TABLE Payment (
   id             int IDENTITY NOT NULL, 
-  transaction_id int NULL, 
+  transaction_id nvarchar(255) NOT NULL, 
   amount         decimal(19, 0) NOT NULL, 
   title          int NULL, 
   expiration     date NOT NULL, 
