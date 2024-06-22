@@ -8,7 +8,6 @@ namespace ClinicPlatformDTOs.UserModels
 {
     public class DentistInfoViewModel
     {
-        public int Id { get; set; }
         public int StaffId { get; set; }
         public string? Username { get; set; }
         public string? Email { get; set; }
