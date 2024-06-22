@@ -1,5 +1,5 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs;
+﻿using ClinicPlatformDAOs;
+using ClinicPlatformDatabaseObject;
 using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformRepositories.Contracts;
 

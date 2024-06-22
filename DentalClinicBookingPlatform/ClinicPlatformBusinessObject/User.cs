@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformDatabaseObject;
 
 public partial class User
 {
@@ -9,11 +9,15 @@ public partial class User
 
     public string Username { get; set; } = null!;
 
-    public string Email { get; set; } = null!;
-
     public string PasswordHash { get; set; } = null!;
 
     public string Salt { get; set; } = null!;
+
+    public string Email { get; set; } = null!;
+
+    public string? Fullname { get; set; }
+
+    public string? Phone { get; set; }
 
     public DateTime CreationTime { get; set; }
 
@@ -25,7 +29,7 @@ public partial class User
 
     public virtual ICollection<Clinic> Clinics { get; set; } = new List<Clinic>();
 
-    public virtual ICollection<Customer> Customers { get; set; } = new List<Customer>();
+    public virtual Customer? Customer { get; set; }
 
     public virtual Dentist? Dentist { get; set; }
 

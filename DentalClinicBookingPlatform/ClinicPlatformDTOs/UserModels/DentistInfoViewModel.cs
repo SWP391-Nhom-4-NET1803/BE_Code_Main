@@ -6,20 +6,20 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDTOs.UserModels
 {
-    public class CustomerInfoModel
+    public class DentistInfoViewModel
     {
         public int Id { get; set; }
-        public int? CustomerId { get; set; }
+        public int StaffId { get; set; }
         public string? Username { get; set; }
-        public string? Password { get; set; }
         public string? Email { get; set; }
         public string? Phone { get; set; }
         public string? Fullname { get; set; }
-        public int? Role { get; set; }
-        public bool? Status { get; set; }
-        public DateOnly? Birthdate { get; set; } = null;
-        public string? Sex { get; set; }
-        public string? Insurance { get; set; }
+        public string? Role { get; set; }
+        public bool isRemove {  get; set; }
+        public bool isActive { get; set; }
         public DateTime? JoinedDate { get; set; }
+        public int? ClinicId { get; set; }
+        public string? ClinicName { get; set; }
+        public bool? IsOwner { get; set; }
     }
 }

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformDatabaseObject;
 
 public partial class Appointment
 {

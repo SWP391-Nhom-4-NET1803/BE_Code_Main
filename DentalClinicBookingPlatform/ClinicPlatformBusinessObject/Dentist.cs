@@ -1,15 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformDatabaseObject;
 
 public partial class Dentist
 {
     public int Id { get; set; }
-
-    public string? Fullname { get; set; }
-
-    public string? Phone { get; set; }
 
     public bool IsOwner { get; set; }
 

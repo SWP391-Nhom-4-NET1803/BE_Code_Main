@@ -66,9 +66,9 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("customer/{userId}")]
-        public ActionResult<IHttpResponseModel<CustomerInfoModel>> GetCustomerInformation(int userId)
+        public ActionResult<IHttpResponseModel<CustomerInfoViewModel>> GetCustomerInformation(int userId)
         {
-            CustomerInfoModel? customer = userService.GetCustomerInformationWithUserID(userId);
+            CustomerInfoViewModel? customer = userService.GetCustomerInformationWithUserID(userId);
 
             if (customer == null)
             {

@@ -24,7 +24,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClinicPlatformDTOs\ClinicPlatformDTOs.csproj" />
+    <ProjectReference Include="..\ClinicPlatformDTOs\ClinicPlatformObjects.csproj" />
     <ProjectReference Include="..\ClinicPlatformServices\ClinicPlatformServices.csproj" />
   </ItemGroup>
 

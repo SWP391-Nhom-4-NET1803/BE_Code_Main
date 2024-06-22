@@ -13,13 +13,13 @@ namespace ClinicPlatformServices.Contracts
         IEnumerable<UserInfoModel> GetUsers();
         UserInfoModel? GetUserInformation(int userId);
 
-        CustomerInfoModel? GetCustomerInformation(int customerId);
+        CustomerInfoViewModel? GetCustomerInformation(int customerId);
 
         ClinicStaffInfoModel? GetClinicStaffInformation(int staffId);
 
         public ClinicStaffInfoModel? GetClinicStaffInformationWithUserId(int userId);
 
-        public CustomerInfoModel? GetCustomerInformationWithUserID(int userId);
+        public CustomerInfoViewModel? GetCustomerInformationWithUserID(int userId);
 
         UserInfoModel? GetUserInformationWithEmail(string email);
 
@@ -39,7 +39,7 @@ namespace ClinicPlatformServices.Contracts
         
         bool LoginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message);
 
-        bool LoginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message);
+        bool LoginAsCustomer(string username, string password, out CustomerInfoViewModel? info, out string message);
 
         bool LoginAsAdmin(string username, string password, out UserInfoModel? info, out string message);
 

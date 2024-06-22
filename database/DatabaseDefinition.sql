@@ -77,20 +77,14 @@ EXEC sp_addextendedproperty
   @LEVEL1TYPE = N'Table', @LEVEL1NAME = N'ClinicSlot', 
   @LEVEL2TYPE = N'Column', @LEVEL2NAME = N'weekday';
 CREATE TABLE Customer (
-  id             int IDENTITY(1, 1) NOT NULL, 
-  fullname       nvarchar(255) NULL, 
-  insurance      nvarchar(20) NULL, 
-  phone          nvarchar(10) NULL, 
-  birthdate      date NULL, 
-  sex            nvarchar(16) NULL, 
-  removed        bit NOT NULL, 
-  user_id        int NOT NULL, 
-  customer_email int NULL, 
+  id        int IDENTITY(1, 1) NOT NULL, 
+  insurance nvarchar(20) NULL, 
+  birthdate date NULL, 
+  sex       nvarchar(16) NULL, 
+  user_id   int NOT NULL UNIQUE, 
   PRIMARY KEY (id));
 CREATE TABLE Dentist (
   id        int IDENTITY(1, 1) NOT NULL, 
-  fullname  nvarchar(64) NULL, 
-  phone     nvarchar(10) NULL, 
   is_owner  bit DEFAULT 0 NOT NULL, 
   user_id   int NOT NULL UNIQUE, 
   clinic_id int NULL, 
@@ -129,9 +123,11 @@ CREATE TABLE Token (
 CREATE TABLE [User] (
   id            int IDENTITY(1, 1) NOT NULL, 
   username      nvarchar(20) NOT NULL UNIQUE, 
-  email         nvarchar(64) NOT NULL, 
   password_hash nvarchar(128) NOT NULL, 
   salt          nvarchar(128) NOT NULL, 
+  email         nvarchar(64) NOT NULL, 
+  fullname      nvarchar(255) NULL, 
+  phone         nvarchar(10) NULL, 
   creation_time datetime DEFAULT (GETDATE()) NOT NULL, 
   role          nvarchar(20) NOT NULL CHECK(role IN ('Patient', 'Staff', 'Admin')), 
   active        bit DEFAULT 1 NOT NULL, 
