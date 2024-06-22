@@ -25,12 +25,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddAppointments(Appointment Appointments)
+        public Appointment AddAppointments(Appointment appointment)
         {
-            _context.Add(Appointments);
+            _context.Add(appointment);
             this.SaveChanges();
 
-            return true;
+            return appointment;
         }
 
         public Appointment? GetAppointments(Guid BookId)
@@ -45,19 +45,19 @@ namespace ClinicPlatformDAOs
             return _context.Appointments.Include(x => x.BookedService).ToList();
         }
 
-        public bool UpdateAppointments(Appointment Appointments)
+        public Appointment? UpdateAppointments(Appointment appoinment)
         {
-            Appointment? AppointmentsInfo = GetAppointments(Appointments.Id);
+            Appointment? AppointmentsInfo = GetAppointments(appoinment.Id);
 
             if (AppointmentsInfo != null)
             {
-                _context.Appointments.Update(Appointments);
+                _context.Appointments.Update(appoinment);
                 SaveChanges();
 
-                return true;
+                return appoinment;
             }
 
-            return false;
+            return null;
         }
 
         public bool DeleteAppointments(Guid bookId)

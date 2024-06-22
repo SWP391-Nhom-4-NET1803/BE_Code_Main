@@ -24,6 +24,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
+        public Dentist AddDentist(Dentist dentist)
+        {
+            _context.Add(dentist);
+            return dentist;
+        }
+
         public IEnumerable<Dentist> GetAll()
         {
             return _context.Dentists.ToList();
@@ -34,6 +40,19 @@ namespace ClinicPlatformDAOs
             return _context.Dentists
                 .Where(x => x.Id == staffId)
                 .FirstOrDefault();
+        }
+
+        public Dentist? UpdateDentist(Dentist dentist)
+        {
+            Dentist? dentistInformation = _context.Dentists.Where(x => x.Id == dentist.Id).FirstOrDefault();
+
+            if (dentistInformation != null)
+            {
+                _context.Dentists.Update(dentist);
+                return dentist;
+            }
+
+            return null;
         }
 
         protected virtual void Dispose(bool disposing)

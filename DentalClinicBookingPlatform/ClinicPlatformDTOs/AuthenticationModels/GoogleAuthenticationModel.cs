@@ -6,9 +6,8 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDTOs.AuthenticationModels
 {
-    public class UserAuthenticationRequestModel
+    public class GoogleAuthenticationModel
     {
-        public string Username { get; set; } = string.Empty;
-        public string Password { get; set; } = string.Empty;
+        public string GoogleToken { get; set; } = string.Empty;
     }
 }

@@ -24,12 +24,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddSlot(Slot Slot)
+        public Slot AddSlot(Slot slot)
         {
-            _context.Add(Slot);
+            _context.Add(slot);
             this.SaveChanges();
 
-            return true;
+            return slot;
         }
 
         public Slot? GetSlot(int SlotId)
@@ -42,19 +42,19 @@ namespace ClinicPlatformDAOs
             return _context.Slots.ToList();
         }
 
-        public bool UpdateSlot(Slot Slot)
+        public Slot UpdateSlot(Slot slot)
         {
-            Slot? SlotInfo = GetSlot(Slot.Id);
+            Slot? SlotInfo = GetSlot(slot.Id);
 
             if (SlotInfo != null)
             {
-                _context.Slots.Update(Slot);
+                _context.Slots.Update(slot);
                 SaveChanges();
 
-                return true;
+                return slot;
             }
 
-            return false;
+            return null;
         }
 
         public bool DeleteSlot(int SlotId)

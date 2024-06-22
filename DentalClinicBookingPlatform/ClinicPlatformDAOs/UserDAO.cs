@@ -27,11 +27,11 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddUser(User user)
+        public User AddUser(User user)
         {
             _context.Add(user);
             this.SaveChanges();
-            return true;
+            return user;
         }
 
         public User? GetUser(int id)
@@ -45,7 +45,7 @@ namespace ClinicPlatformDAOs
             return _context.Users.ToList();
         }
 
-        public bool UpdateUser(User user)
+        public User? UpdateUser(User user)
         {
             User? userInfo = GetUser(user.Id);
 
@@ -54,10 +54,10 @@ namespace ClinicPlatformDAOs
                 _context.Users.Update(user);
                 SaveChanges();
 
-                return true;
+                return user;
             }
 
-            return false;
+            return null;
         }
 
         public bool DeleteUser(int userId)

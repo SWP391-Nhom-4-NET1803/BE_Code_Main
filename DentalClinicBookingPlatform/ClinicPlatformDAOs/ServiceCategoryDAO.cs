@@ -24,12 +24,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddCategory(ServiceCategory ServiceCategory)
+        public ServiceCategory AddCategory(ServiceCategory category)
         {
-            _context.Add(ServiceCategory);
+            _context.Add(category);
             this.SaveChanges();
 
-            return true;
+            return category;
         }
 
         public ServiceCategory? GetCategory(int categoryId)
@@ -42,7 +42,7 @@ namespace ClinicPlatformDAOs
             return _context.ServiceCategories.ToList();
         }
 
-        public ServiceCategory UpdateCategory(ServiceCategory ServiceCategory)
+        public ServiceCategory? UpdateCategory(ServiceCategory ServiceCategory)
         {
             ServiceCategory? ServiceInfo = GetCategory(ServiceCategory.Id);
 

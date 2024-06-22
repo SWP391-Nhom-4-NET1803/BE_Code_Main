@@ -25,12 +25,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddPayment(Payment Payment)
+        public Payment AddPayment(Payment Payment)
         {
             _context.Add(Payment);
             this.SaveChanges();
 
-            return true;
+            return Payment;
         }
 
         public Payment? GetPayment(int paymentId)
@@ -43,19 +43,19 @@ namespace ClinicPlatformDAOs
             return _context.Payments.ToList();
         }
 
-        public bool UpdatePayment(Payment Payment)
+        public Payment? UpdatePayment(Payment payment)
         {
-            Payment? ServiceInfo = GetPayment(Payment.Id);
+            Payment? ServiceInfo = GetPayment(payment.Id);
 
             if (ServiceInfo != null)
             {
-                _context.Payments.Update(Payment);
+                _context.Payments.Update(payment);
                 SaveChanges();
 
-                return true;
+                return payment;
             }
 
-            return false;
+            return null;
         }
 
         public bool DeletePayment(int paymentId)

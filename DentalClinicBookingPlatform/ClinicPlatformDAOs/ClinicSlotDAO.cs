@@ -45,19 +45,19 @@ namespace ClinicPlatformDAOs
             return _context.ClinicSlots.Include(x=> x.Time).ToList();
         }
 
-        public bool UpdateClinicSlot(ClinicSlot ClinicSlot)
+        public ClinicSlot? UpdateClinicSlot(ClinicSlot clinicSlot)
         {
-            ClinicSlot? ClinicSlotInfo = GetClinicSlot(ClinicSlot.SlotId);
+            ClinicSlot? ClinicSlotInfo = GetClinicSlot(clinicSlot.SlotId);
 
             if (ClinicSlotInfo != null)
             {
-                _context.ClinicSlots.Update(ClinicSlot);
+                _context.ClinicSlots.Update(clinicSlot);
                 SaveChanges();
 
-                return true;
+                return clinicSlot;
             }
 
-            return false;
+            return null;
         }
 
         public bool DeleteClinicSlot(Guid ClinicSlotId)

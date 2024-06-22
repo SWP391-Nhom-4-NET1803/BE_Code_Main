@@ -23,11 +23,11 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddCustomer(Customer customer)
+        public Customer AddCustomer(Customer customer)
         {
             _context.Customers.Add(customer);
 
-            return true;
+            return customer;
         }
 
         public Customer? GetCustomer(int customerId)
@@ -42,16 +42,16 @@ namespace ClinicPlatformDAOs
             return _context.Customers.ToList();
         }
 
-        public bool UpdateCustomer(Customer customer)
+        public Customer? UpdateCustomer(Customer customer)
         {
             if (GetCustomer(customer.Id) != null)
             {
                 _context.Update(customer);
 
-                return true;
+                return customer;
             }
 
-            return false;
+            return null;
         }
 
         public bool DeleteCustomer(int customerId)

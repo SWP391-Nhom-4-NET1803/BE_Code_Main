@@ -17,7 +17,7 @@ namespace ClinicPlatformDTOs.Comparator
 
         public int GetHashCode([DisallowNull] ClinicServiceInfoModel obj)
         {
-            return obj.ClinicId.GetHashCode() * 10 + obj.ServiceId.GetHashCode();
+            return obj.ClinicId.GetHashCode() * 10 + obj.CategoryId.GetHashCode();
         }
     }
 }

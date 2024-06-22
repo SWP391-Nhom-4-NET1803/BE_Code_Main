@@ -25,12 +25,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddService(ClinicService ClinicService)
+        public ClinicService AddService(ClinicService service)
         {
-            _context.Add(ClinicService);
+            _context.Add(service);
             this.SaveChanges();
 
-            return true;
+            return service;
         }
 
         public ClinicService? GetService(Guid serviceId)
@@ -43,19 +43,19 @@ namespace ClinicPlatformDAOs
             return _context.ClinicServices.ToList();
         }
 
-        public bool UpdateService(ClinicService clinicService)
+        public ClinicService UpdateService(ClinicService clinicService)
         {
-            ClinicService? ClinicServiceInfo = GetService(clinicService.Id);
+            ClinicService? clinicServiceInfo = GetService(clinicService.Id);
 
-            if (ClinicServiceInfo != null)
+            if (clinicServiceInfo != null)
             {
                 _context.ClinicServices.Update(clinicService);
                 SaveChanges();
 
-                return false;
+                return clinicService;
             }
 
-            return true;
+            return null;
         }
 
         public void DeleteService(Guid serviceId)

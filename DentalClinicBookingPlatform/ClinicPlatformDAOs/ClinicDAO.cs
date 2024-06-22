@@ -25,11 +25,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddClinic(Clinic clinic)
+        public Clinic AddClinic(Clinic clinic)
         {
             this._context.Add(clinic);
             SaveChanges();
-            return true;
+
+            return clinic;
         }
 
         public Clinic? GetClinic(int id) 
@@ -44,7 +45,7 @@ namespace ClinicPlatformDAOs
             return _context.Clinics.ToList();
         }
 
-        public bool UpdateClinic(Clinic clinic)
+        public Clinic? UpdateClinic(Clinic clinic)
         {
             Clinic? clinicInfo = GetClinic(clinic.ClinicId);
 
@@ -53,10 +54,10 @@ namespace ClinicPlatformDAOs
                 _context.Clinics.Update(clinic);
                 SaveChanges();
 
-                return true;
+                return clinic;
             }
 
-            return false;
+            return null;
         }
 
         public bool DeleteClinic(int userId)

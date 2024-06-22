@@ -24,12 +24,12 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public bool AddToken(Token Token)
+        public Token AddToken(Token token)
         {
-            _context.Add(Token);
+            _context.Add(token);
             this.SaveChanges();
 
-            return true;
+            return token;
         }
 
         public Token? GetToken(Guid tokenId)
@@ -42,19 +42,19 @@ namespace ClinicPlatformDAOs
             return _context.Tokens.ToList();
         }
 
-        public bool UpdateToken(Token Token)
+        public Token UpdateToken(Token token)
         {
-            Token? ServiceInfo = GetToken(Token.Id);
+            Token? ServiceInfo = GetToken(token.Id);
 
             if (ServiceInfo != null)
             {
-                _context.Tokens.Update(Token);
+                _context.Tokens.Update(token);
                 SaveChanges();
 
-                return true;
+                return token;
             }
 
-            return false;
+            return null;
         }
 
         public bool DeleteToken(Guid tokenId)

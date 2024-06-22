@@ -8,8 +8,7 @@ namespace ClinicPlatformDTOs.UserModels
 {
     public class PasswordResetModel
     {
-        public int userId { get; set; }
-        public string OldPassword { get; set; } = string.Empty;
+        public int TokenValue { get; set; }
         public string NewPassword { get; set; } = string.Empty;
     }
 }
