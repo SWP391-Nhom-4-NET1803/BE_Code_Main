@@ -25,11 +25,11 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public Clinic AddClinic(Clinic clinic)
+        public bool AddClinic(Clinic clinic)
         {
             this._context.Add(clinic);
             SaveChanges();
-            return clinic;
+            return true;
         }
 
         public Clinic? GetClinic(int id) 
@@ -44,7 +44,7 @@ namespace ClinicPlatformDAOs
             return _context.Clinics.ToList();
         }
 
-        public Clinic UpdateClinic(Clinic clinic)
+        public bool UpdateClinic(Clinic clinic)
         {
             Clinic? clinicInfo = GetClinic(clinic.ClinicId);
 
@@ -52,12 +52,14 @@ namespace ClinicPlatformDAOs
             {
                 _context.Clinics.Update(clinic);
                 SaveChanges();
+
+                return true;
             }
 
-            return clinic;
+            return false;
         }
 
-        public void DeleteClinic(int userId)
+        public bool DeleteClinic(int userId)
         {
             Clinic? clinic = GetClinic(userId);
 
@@ -65,7 +67,11 @@ namespace ClinicPlatformDAOs
             {
                 _context.Clinics.Remove(clinic);
                 this.SaveChanges();
+
+                return true;
             }
+
+            return false;
         }
 
         public void SaveChanges()
@@ -87,7 +93,6 @@ namespace ClinicPlatformDAOs
 
         public void Dispose()
         {
-            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
         }

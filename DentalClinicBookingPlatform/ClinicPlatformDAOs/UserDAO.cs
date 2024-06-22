@@ -27,58 +27,61 @@ namespace ClinicPlatformDAOs
             _context = context;
         }
 
-        public User AddUser(User user)
+        public bool AddUser(User user)
         {
             _context.Add(user);
             this.SaveChanges();
-            return user;
+            return true;
         }
 
         public User? GetUser(int id)
         {
-            return _context.Users
-                .Include(x => x.ClinicStaff)
-                .Include(x => x.Customer)
-                .Include(x => x.Role)
-                .Where(x => x.UserId == id)
+            return _context.Users.Where(x => x.Id == id)
+                .Include(x => x.Customers)
+                .Include(x => x.Dentist)
                 .FirstOrDefault();
         }
 
         public IEnumerable<User> GetAllUsers()
         {
-            return _context.Users.Include(x => x.ClinicStaff).Include(x => x.Customer).Include(x => x.Role).ToList();
+            return _context.Users
+                .Include(x => x.Customers)
+                .Include(x => x.Dentist)
+                .ToList();
         }
 
         public Customer? GetCustomerByCustomerId(int customerId)
         {
             return _context.Customers
                 .Include(x => x.User)
-                .Where(x => x.CustomerId == customerId)
+                .Where(x => x.Id == customerId)
                 .FirstOrDefault();
         }
 
-        public ClinicStaff? GetStaffByStaffId(int staffId)
+        public Dentist? GetStaffByStaffId(int staffId)
         {
-            return _context.ClinicStaffs
+            return _context.Dentists
                 .Include(x => x.User)
-                .Where(x => x.StaffId == staffId)
+                .Where(x => x.UserId == staffId)
                 .FirstOrDefault();
         }
 
-        public User UpdateUser(User user)
+        public bool UpdateUser(User user)
         {
-            User? userInfo = GetUser(user.UserId);
+            User? userInfo = GetUser(user.Id);
 
             if (userInfo != null)
             {
                 _context.Users.Update(user);
                 SaveChanges();
+
+                return true;
             }
 
-            return user;
+            return false;
         }
 
-        public void DeleteUser(int userId)
+        public bool DeleteUser(int userId)
         {
             User? user = GetUser(userId);
 
@@ -86,7 +89,11 @@ namespace ClinicPlatformDAOs
             {
                 _context.Users.Remove(user);
                 this.SaveChanges();
+
+                return true;
             }
+
+            return false;
         }
 
         public void SaveChanges()

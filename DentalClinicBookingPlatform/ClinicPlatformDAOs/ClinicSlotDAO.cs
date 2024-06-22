@@ -9,61 +9,67 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDAOs
 {
-    public class ServiceDAO: IDisposable
+    public class ClinicSlotDAO: IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public ServiceDAO()
+        public ClinicSlotDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public ServiceDAO(DentalClinicPlatformContext context)
+        public ClinicSlotDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public Service AddService(Service Service)
+        public ClinicSlot AddClinicSlot(ClinicSlot ClinicSlot)
         {
-            _context.Add(Service);
+            _context.Add(ClinicSlot);
             this.SaveChanges();
 
-            return Service;
+            return ClinicSlot;
         }
 
-        public Service? GetService(int serviceId)
+        public ClinicSlot? GetClinicSlot(Guid ClinicSlotId)
         {
-            return _context.Services.Where(x => x.ServiceId == serviceId).FirstOrDefault();
+            return _context.ClinicSlots.Where(x => x.SlotId == ClinicSlotId).Include(x => x.SlotId).FirstOrDefault();
         }
 
-        public IEnumerable<Service> GetAllService()
+        public IEnumerable<ClinicSlot> GetAllClinicSlot()
         {
-            return _context.Services.ToList();
+            return _context.ClinicSlots.Include(x=> x.Time).ToList();
         }
 
-        public Service UpdateService(Service Service)
+        public bool UpdateClinicSlot(ClinicSlot ClinicSlot)
         {
-            Service? ServiceInfo = GetService(Service.ServiceId);
+            ClinicSlot? ClinicSlotInfo = GetClinicSlot(ClinicSlot.SlotId);
 
-            if (ServiceInfo != null)
+            if (ClinicSlotInfo != null)
             {
-                _context.Services.Update(Service);
+                _context.ClinicSlots.Update(ClinicSlot);
                 SaveChanges();
+
+                return true;
             }
 
-            return Service;
+            return false;
         }
 
-        public void DeleteService(int serviceId)
+        public bool DeleteClinicSlot(Guid ClinicSlotId)
         {
-            Service? Service = GetService(serviceId);
+            ClinicSlot? ClinicSlot = GetClinicSlot(ClinicSlotId);
 
-            if (Service != null)
+            if (ClinicSlot != null)
             {
-                _context.Services.Remove(Service);
+                _context.ClinicSlots.Remove(ClinicSlot);
                 this.SaveChanges();
+
+                return true;
             }
+
+            return false;
         }
 
         public void SaveChanges()
@@ -89,9 +95,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<Service> Filter(Expression<Func<Service, bool>> filter, Func<IQueryable<Service>, IOrderedQueryable<Service>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        public IEnumerable<ClinicSlot> Filter(Expression<Func<ClinicSlot, bool>> filter, Func<IQueryable<ClinicSlot>, IOrderedQueryable<ClinicSlot>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<Service> query = _context.Services;
+            IQueryable<ClinicSlot> query = _context.ClinicSlots;
 
             if (filter != null)
             {
@@ -122,4 +128,3 @@ namespace ClinicPlatformDAOs
         }
     }
 }
-

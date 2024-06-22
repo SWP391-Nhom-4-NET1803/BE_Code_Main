@@ -1,4 +1,5 @@
 ﻿using ClinicPlatformBusinessObject;
+using ClinicPlatformDAOs.Contracts;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -9,61 +10,69 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDAOs
 {
-    public class ScheduledSlotDAO: IDisposable
+    public class AppointmentDAO : IFilterQuery<Appointment>, IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public ScheduledSlotDAO()
+        public AppointmentDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public ScheduledSlotDAO(DentalClinicPlatformContext context)
+        public AppointmentDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public ScheduledSlot AddScheduledSlot(ScheduledSlot ScheduledSlot)
+        public bool AddAppointments(Appointment Appointments)
         {
-            _context.Add(ScheduledSlot);
+            _context.Add(Appointments);
             this.SaveChanges();
 
-            return ScheduledSlot;
+            return true;
         }
 
-        public ScheduledSlot? GetScheduledSlot(Guid ScheduledSlotId)
+        public Appointment? GetAppointments(Guid BookId)
         {
-            return _context.ScheduledSlots.Where(x => x.ScheduleSlotId == ScheduledSlotId).Include(x => x.Slot).FirstOrDefault();
+            return _context.Appointments.Where(x => x.Id == BookId)
+                .Include(x => x.BookedService)
+                .FirstOrDefault();
         }
 
-        public IEnumerable<ScheduledSlot> GetAllScheduledSlot()
+        public IEnumerable<Appointment> GetAll()
         {
-            return _context.ScheduledSlots.Include(x=>x.Slot).ToList();
+            return _context.Appointments.Include(BookedService).ToList();
         }
 
-        public ScheduledSlot UpdateScheduledSlot(ScheduledSlot ScheduledSlot)
+        public bool UpdateAppointments(Appointment Appointments)
         {
-            ScheduledSlot? ScheduledSlotInfo = GetScheduledSlot(ScheduledSlot.ScheduleSlotId);
+            Appointment? AppointmentsInfo = GetAppointments(Appointments.Id);
 
-            if (ScheduledSlotInfo != null)
+            if (AppointmentsInfo != null)
             {
-                _context.ScheduledSlots.Update(ScheduledSlot);
+                _context.Appointments.Update(Appointments);
                 SaveChanges();
+
+                return true;
             }
 
-            return ScheduledSlot;
+            return false;
         }
 
-        public void DeleteScheduledSlot(Guid ScheduledSlotId)
+        public bool DeleteAppointments(Guid bookId)
         {
-            ScheduledSlot? ScheduledSlot = GetScheduledSlot(ScheduledSlotId);
+            Appointment? Appointments = GetAppointments(bookId);
 
-            if (ScheduledSlot != null)
+            if (Appointments != null)
             {
-                _context.ScheduledSlots.Remove(ScheduledSlot);
+                _context.Appointments.Remove(Appointments);
                 this.SaveChanges();
+
+                return true;
             }
+
+            return false;
         }
 
         public void SaveChanges()
@@ -77,7 +86,7 @@ namespace ClinicPlatformDAOs
             {
                 if (disposing)
                 {
-                    _context.Dispose();
+                   _context.Dispose();
                 }
                 disposedValue = true;
             }
@@ -89,9 +98,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        public IEnumerable<ScheduledSlot> Filter(Expression<Func<ScheduledSlot, bool>> filter, Func<IQueryable<ScheduledSlot>, IOrderedQueryable<ScheduledSlot>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
+        IEnumerable<Appointment> IFilterQuery<Appointment>.Filter(Expression<Func<Appointment, bool>> filter, Func<IQueryable<Appointment>, IOrderedQueryable<Appointment>>? orderBy, string includeProperties, int? pageSize, int? pageIndex)
         {
-            IQueryable<ScheduledSlot> query = _context.ScheduledSlots;
+            IQueryable<Appointment> query = _context.Appointments;
 
             if (filter != null)
             {

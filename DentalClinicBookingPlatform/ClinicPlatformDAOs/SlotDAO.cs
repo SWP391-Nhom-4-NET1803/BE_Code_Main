@@ -34,7 +34,7 @@ namespace ClinicPlatformDAOs
 
         public Slot? GetSlot(int SlotId)
         {
-            return _context.Slots.Where(x => x.SlotId == SlotId).FirstOrDefault();
+            return _context.Slots.Where(x => x.Id == SlotId).FirstOrDefault();
         }
 
         public IEnumerable<Slot> GetAllSlot()
@@ -44,7 +44,7 @@ namespace ClinicPlatformDAOs
 
         public bool UpdateSlot(Slot Slot)
         {
-            Slot? SlotInfo = GetSlot(Slot.SlotId);
+            Slot? SlotInfo = GetSlot(Slot.Id);
 
             if (SlotInfo != null)
             {

@@ -1,5 +1,4 @@
 ﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs.Contracts;
 using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
@@ -10,61 +9,59 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDAOs
 {
-    public class BookingDAO : IFilterQuery<Booking>, IDisposable
+    public class ServiceCategoryDAO: IDisposable
     {
         private readonly DentalClinicPlatformContext _context;
         private bool disposedValue;
 
-        public BookingDAO()
+        public ServiceCategoryDAO()
         {
             _context = new DentalClinicPlatformContext();
         }
 
-        public BookingDAO(DentalClinicPlatformContext context)
+        public ServiceCategoryDAO(DentalClinicPlatformContext context)
         {
             _context = context;
         }
 
-        public bool AddBooking(Booking booking)
+        public bool AddCategory(ServiceCategory ServiceCategory)
         {
-            _context.Add(booking);
+            _context.Add(ServiceCategory);
             this.SaveChanges();
 
             return true;
         }
 
-        public Booking? GetBooking(Guid BookId)
+        public ServiceCategory? GetCategory(int categoryId)
         {
-            return _context.Bookings.Where(x => x.BookId == BookId).FirstOrDefault();
+            return _context.ServiceCategories.Where(x => x.Id == categoryId).FirstOrDefault();
         }
 
-        public IEnumerable<Booking> GetAll()
+        public IEnumerable<ServiceCategory> GetAllCategory()
         {
-            return _context.Bookings.ToList();
+            return _context.ServiceCategories.ToList();
         }
 
-        public bool UpdateBooking(Booking booking)
+        public ServiceCategory UpdateCategory(ServiceCategory ServiceCategory)
         {
-            Booking? bookingInfo = GetBooking(booking.BookId);
+            ServiceCategory? ServiceInfo = GetCategory(ServiceCategory.Id);
 
-            if (bookingInfo != null)
+            if (ServiceInfo != null)
             {
-                _context.Bookings.Update(booking);
+                _context.ServiceCategories.Update(ServiceCategory);
                 SaveChanges();
-
-                return true;
             }
 
-            return false;
+            return ServiceCategory;
         }
 
-        public bool DeleteBooking(Guid bookId)
+        public bool DeleteCategory(int serviceId)
         {
-            Booking? booking = GetBooking(bookId);
+            ServiceCategory? ServiceCategory = GetCategory(serviceId);
 
-            if (booking != null)
+            if (ServiceCategory != null)
             {
-                _context.Bookings.Remove(booking);
+                _context.ServiceCategories.Remove(ServiceCategory);
                 this.SaveChanges();
 
                 return true;
@@ -78,30 +75,13 @@ namespace ClinicPlatformDAOs
             this._context.SaveChanges();
         }
 
-        /// <summary>
-        ///     Please consider using this when you are too tired to actually implement good structuring.
-        /// </summary>
-        /// <param name="BookId"></param>
-        /// <returns></returns>
-        public Booking? GetFullBookingDetail(Guid BookId)
-        {
-            return _context.Bookings.Where(x => x.BookId == BookId)
-                .Include(x => x.Clinic)
-                .Include(x => x.Customer)
-                .Include(x => x.Dentist)
-                .Include(x => x.ScheduleSlot)
-                    .ThenInclude(y => y.Slot)
-                .Include(x => x.BookingService)
-                .FirstOrDefault();
-        }
-
         protected virtual void Dispose(bool disposing)
         {
             if (!disposedValue)
             {
                 if (disposing)
                 {
-                   _context.Dispose();
+                    _context.Dispose();
                 }
                 disposedValue = true;
             }
@@ -113,9 +93,9 @@ namespace ClinicPlatformDAOs
             GC.SuppressFinalize(this);
         }
 
-        IEnumerable<Booking> IFilterQuery<Booking>.Filter(Expression<Func<Booking, bool>> filter, Func<IQueryable<Booking>, IOrderedQueryable<Booking>>? orderBy, string includeProperties, int? pageSize, int? pageIndex)
+        public IEnumerable<ServiceCategory> Filter(Expression<Func<ServiceCategory, bool>> filter, Func<IQueryable<ServiceCategory>, IOrderedQueryable<ServiceCategory>>? orderBy, string includeProperties = "", int? pageSize = null, int? pageIndex = null)
         {
-            IQueryable<Booking> query = _context.Bookings;
+            IQueryable<ServiceCategory> query = _context.ServiceCategories;
 
             if (filter != null)
             {
@@ -146,3 +126,4 @@ namespace ClinicPlatformDAOs
         }
     }
 }
+
