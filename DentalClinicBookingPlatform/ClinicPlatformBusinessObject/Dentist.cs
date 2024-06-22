@@ -3,9 +3,13 @@ using System.Collections.Generic;
 
 namespace ClinicPlatformBusinessObject;
 
-public partial class ClinicStaff
+public partial class Dentist
 {
-    public int StaffId { get; set; }
+    public int Id { get; set; }
+
+    public string? Fullname { get; set; }
+
+    public string? Phone { get; set; }
 
     public bool IsOwner { get; set; }
 
@@ -13,7 +17,7 @@ public partial class ClinicStaff
 
     public int? ClinicId { get; set; }
 
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
     public virtual Clinic? Clinic { get; set; }
 

@@ -5,35 +5,31 @@ namespace ClinicPlatformBusinessObject;
 
 public partial class User
 {
-    public int UserId { get; set; }
+    public int Id { get; set; }
 
     public string Username { get; set; } = null!;
 
-    public string Password { get; set; } = null!;
+    public string Email { get; set; } = null!;
 
-    public string? Email { get; set; }
+    public string PasswordHash { get; set; } = null!;
 
-    public bool Status { get; set; }
+    public string Salt { get; set; } = null!;
 
-    public string? PhoneNumber { get; set; }
+    public DateTime CreationTime { get; set; }
 
-    public string? Fullname { get; set; }
+    public string Role { get; set; } = null!;
 
-    public DateTime? CreationDate { get; set; }
+    public bool Active { get; set; }
 
-    public int RoleId { get; set; }
-
-    public virtual ClinicStaff? ClinicStaff { get; set; }
+    public bool Removed { get; set; }
 
     public virtual ICollection<Clinic> Clinics { get; set; } = new List<Clinic>();
 
-    public virtual Customer? Customer { get; set; }
+    public virtual ICollection<Customer> Customers { get; set; } = new List<Customer>();
 
-    public virtual ICollection<Medium> Media { get; set; } = new List<Medium>();
+    public virtual Dentist? Dentist { get; set; }
 
-    public virtual ICollection<Message> MessageReceiverNavigations { get; set; } = new List<Message>();
+    public virtual ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
-    public virtual Message? MessageSenderNavigation { get; set; }
-
-    public virtual Role Role { get; set; } = null!;
+    public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();
 }

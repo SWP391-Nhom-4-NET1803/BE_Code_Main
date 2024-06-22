@@ -1,10 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using ClinicPlatformBusinessObject;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-namespace ClinicPlatformDAOs;
+namespace ClinicPlatformBusinessObject;
 
 public partial class DentalClinicPlatformContext : DbContext
 {
@@ -17,35 +16,27 @@ public partial class DentalClinicPlatformContext : DbContext
     {
     }
 
-    public virtual DbSet<Booking> Bookings { get; set; }
+    public virtual DbSet<Appointment> Appointments { get; set; }
 
-    public virtual DbSet<Certification> Certifications { get; set; }
+    public virtual DbSet<BookedService> BookedServices { get; set; }
 
     public virtual DbSet<Clinic> Clinics { get; set; }
 
     public virtual DbSet<ClinicService> ClinicServices { get; set; }
 
-    public virtual DbSet<ClinicStaff> ClinicStaffs { get; set; }
+    public virtual DbSet<ClinicSlot> ClinicSlots { get; set; }
 
     public virtual DbSet<Customer> Customers { get; set; }
 
-    public virtual DbSet<MediaType> MediaTypes { get; set; }
-
-    public virtual DbSet<Medium> Media { get; set; }
-
-    public virtual DbSet<Message> Messages { get; set; }
+    public virtual DbSet<Dentist> Dentists { get; set; }
 
     public virtual DbSet<Payment> Payments { get; set; }
 
-    public virtual DbSet<PaymentType> PaymentTypes { get; set; }
-
-    public virtual DbSet<Role> Roles { get; set; }
-
-    public virtual DbSet<ScheduledSlot> ScheduledSlots { get; set; }
-
-    public virtual DbSet<Service> Services { get; set; }
+    public virtual DbSet<ServiceCategory> ServiceCategories { get; set; }
 
     public virtual DbSet<Slot> Slots { get; set; }
+
+    public virtual DbSet<Token> Tokens { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
 
@@ -70,422 +61,375 @@ public partial class DentalClinicPlatformContext : DbContext
 
         return connectionString;
     }
-
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<Booking>(entity =>
+        modelBuilder.Entity<Appointment>(entity =>
         {
-            entity.HasKey(e => e.BookId).HasName("PK__Booking__490D1AE1C45EA8F6");
+            entity.HasKey(e => e.Id).HasName("PK__Appointm__3213E83F1222A77C");
 
-            entity.ToTable("Booking");
+            entity.ToTable("Appointment");
 
-            entity.Property(e => e.BookId)
+            entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
-                .HasColumnName("book_id");
-            entity.Property(e => e.AppointmentDate).HasColumnName("appointment_date");
-            entity.Property(e => e.BookingServiceId).HasColumnName("booking_service_id");
-            entity.Property(e => e.BookingType)
-                .HasMaxLength(50)
-                .HasColumnName("booking_type");
+                .HasColumnName("id");
+            entity.Property(e => e.AppointmentType)
+                .HasMaxLength(10)
+                .HasDefaultValue("checkup")
+                .HasColumnName("appointment_type");
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
-            entity.Property(e => e.CreationDate)
-                .HasColumnType("datetime")
-                .HasColumnName("creation_date");
             entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+            entity.Property(e => e.CycleCount).HasColumnName("cycle_count");
+            entity.Property(e => e.Date).HasColumnName("date");
             entity.Property(e => e.DentistId).HasColumnName("dentist_id");
-            entity.Property(e => e.ScheduleSlotId).HasColumnName("schedule_slot_id");
-            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.DentistNote)
+                .HasMaxLength(1000)
+                .HasDefaultValue("")
+                .HasColumnName("dentist_note");
+            entity.Property(e => e.Number).HasColumnName("number");
+            entity.Property(e => e.OriginalAppointment).HasColumnName("original_appointment");
+            entity.Property(e => e.PriceFinal).HasColumnName("price_final");
+            entity.Property(e => e.SlotId).HasColumnName("slot_id");
+            entity.Property(e => e.Status)
+                .HasMaxLength(20)
+                .HasDefaultValue("booked")
+                .HasColumnName("status");
 
-            entity.HasOne(d => d.BookingService).WithMany(p => p.Bookings)
-                .HasForeignKey(d => d.BookingServiceId)
-                .HasConstraintName("FKBooking137674");
-
-            entity.HasOne(d => d.Clinic).WithMany(p => p.Bookings)
+            entity.HasOne(d => d.Clinic).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.ClinicId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKBooking367844");
+                .HasConstraintName("FKAppointmen99798");
 
-            entity.HasOne(d => d.Customer).WithMany(p => p.Bookings)
+            entity.HasOne(d => d.Customer).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.CustomerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKBooking965192");
+                .HasConstraintName("FKAppointmen366296");
 
-            entity.HasOne(d => d.Dentist).WithMany(p => p.Bookings)
+            entity.HasOne(d => d.Dentist).WithMany(p => p.Appointments)
                 .HasForeignKey(d => d.DentistId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKBooking214257");
+                .HasConstraintName("FKAppointmen157913");
 
-            entity.HasOne(d => d.ScheduleSlot).WithMany(p => p.Bookings)
-                .HasForeignKey(d => d.ScheduleSlotId)
+            entity.HasOne(d => d.OriginalAppointmentNavigation).WithMany(p => p.InverseOriginalAppointmentNavigation)
+                .HasForeignKey(d => d.OriginalAppointment)
+                .HasConstraintName("FKAppointmen41115");
+
+            entity.HasOne(d => d.Slot).WithMany(p => p.Appointments)
+                .HasForeignKey(d => d.SlotId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKBooking760309");
+                .HasConstraintName("FKAppointmen998789");
         });
 
-        modelBuilder.Entity<Certification>(entity =>
+        modelBuilder.Entity<BookedService>(entity =>
         {
-            entity.HasKey(e => e.CertificationId).HasName("PK__Certific__185D5AEC1F3F4DDB");
+            entity.HasKey(e => e.AppointmentId).HasName("PK__BookedSe__A50828FC2DD1772F");
 
-            entity.ToTable("Certification");
+            entity.ToTable("BookedService");
 
-            entity.Property(e => e.CertificationId)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("certification_id");
-            entity.Property(e => e.CertificationUrl)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("certification_url");
-            entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
-            entity.Property(e => e.MediaId).HasColumnName("media_id");
-            entity.Property(e => e.Name)
-                .HasMaxLength(50)
-                .HasColumnName("name");
+            entity.Property(e => e.AppointmentId)
+                .ValueGeneratedNever()
+                .HasColumnName("appointment_id");
+            entity.Property(e => e.Price).HasColumnName("price");
+            entity.Property(e => e.ServiceId).HasColumnName("service_id");
 
-            entity.HasOne(d => d.Clinic).WithMany(p => p.Certifications)
-                .HasForeignKey(d => d.ClinicId)
+            entity.HasOne(d => d.Appointment).WithOne(p => p.BookedService)
+                .HasForeignKey<BookedService>(d => d.AppointmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKCertificat536417");
+                .HasConstraintName("FKBookedServ274862");
 
-            entity.HasOne(d => d.Media).WithMany(p => p.Certifications)
-                .HasForeignKey(d => d.MediaId)
+            entity.HasOne(d => d.Service).WithMany(p => p.BookedServices)
+                .HasForeignKey(d => d.ServiceId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKCertificat893466");
+                .HasConstraintName("FKBookedServ419526");
         });
 
         modelBuilder.Entity<Clinic>(entity =>
         {
-            entity.HasKey(e => e.ClinicId).HasName("PK__Clinic__A0C8D19BE5C10135");
+            entity.HasKey(e => e.ClinicId).HasName("PK__Clinic__A0C8D19BF99B3CBE");
 
             entity.ToTable("Clinic");
 
-            entity.HasIndex(e => e.Name, "UQ__Clinic__72E12F1BF71FA206").IsUnique();
-
-            entity.HasIndex(e => e.Address, "UQ__Clinic__751C8E54CD6E5FC4").IsUnique();
-
-            entity.HasIndex(e => e.Email, "UQ__Clinic__AB6E6164202CDA3D").IsUnique();
-
-            entity.HasIndex(e => e.Phone, "UQ__Clinic__B43B145F381F6ED7").IsUnique();
-
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
             entity.Property(e => e.Address)
-                .HasMaxLength(50)
+                .HasMaxLength(128)
                 .HasColumnName("address");
             entity.Property(e => e.CloseHour).HasColumnName("close_hour");
             entity.Property(e => e.Description)
-                .HasMaxLength(500)
-                .IsUnicode(false)
+                .HasDefaultValue("")
+                .HasColumnType("text")
                 .HasColumnName("description");
             entity.Property(e => e.Email)
-                .HasMaxLength(80)
+                .HasMaxLength(64)
                 .HasColumnName("email");
             entity.Property(e => e.Name)
-                .HasMaxLength(50)
+                .HasMaxLength(128)
                 .HasColumnName("name");
             entity.Property(e => e.OpenHour).HasColumnName("open_hour");
             entity.Property(e => e.OwnerId).HasColumnName("owner_id");
             entity.Property(e => e.Phone)
                 .HasMaxLength(10)
                 .HasColumnName("phone");
-            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.Status)
+                .HasMaxLength(255)
+                .HasDefaultValue("unverified")
+                .HasColumnName("status");
+            entity.Property(e => e.Working)
+                .HasDefaultValue(true)
+                .HasColumnName("working");
 
             entity.HasOne(d => d.Owner).WithMany(p => p.Clinics)
                 .HasForeignKey(d => d.OwnerId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKClinic176906");
+                .HasConstraintName("FKClinic40491");
         });
 
         modelBuilder.Entity<ClinicService>(entity =>
         {
-            entity.HasKey(e => e.ClinicServiceId).HasName("PK__ClinicSe__916E631C7EC1BA81");
+            entity.HasKey(e => e.Id).HasName("PK__ClinicSe__3213E83F7590EC3D");
 
-            entity.Property(e => e.ClinicServiceId)
+            entity.ToTable("ClinicService");
+
+            entity.Property(e => e.Id)
                 .HasDefaultValueSql("(newid())")
-                .HasColumnName("clinic_service_id");
+                .HasColumnName("id");
+            entity.Property(e => e.Available)
+                .HasDefaultValue(true)
+                .HasColumnName("available");
+            entity.Property(e => e.CategoryId).HasColumnName("category_id");
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
+            entity.Property(e => e.CustomName)
+                .HasMaxLength(80)
+                .HasColumnName("custom_name");
             entity.Property(e => e.Description)
-                .HasMaxLength(255)
+                .HasMaxLength(500)
                 .HasColumnName("description");
+            entity.Property(e => e.FirstSlotTreatment).HasColumnName("first_slot_treatment");
             entity.Property(e => e.Price).HasColumnName("price");
-            entity.Property(e => e.ServiceId).HasColumnName("service_id");
+            entity.Property(e => e.Removed).HasColumnName("removed");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.ClinicServices)
+                .HasForeignKey(d => d.CategoryId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKClinicServ913410");
 
             entity.HasOne(d => d.Clinic).WithMany(p => p.ClinicServices)
                 .HasForeignKey(d => d.ClinicId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKClinicServ622868");
-
-            entity.HasOne(d => d.Service).WithMany(p => p.ClinicServices)
-                .HasForeignKey(d => d.ServiceId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKClinicServ95478");
+                .HasConstraintName("FKClinicServ128006");
         });
 
-        modelBuilder.Entity<ClinicStaff>(entity =>
+        modelBuilder.Entity<ClinicSlot>(entity =>
         {
-            entity.HasKey(e => e.StaffId).HasName("PK__ClinicSt__1963DD9CDEE4B5D0");
+            entity.HasKey(e => e.SlotId).HasName("PK__ClinicSl__971A01BB09C4627A");
 
-            entity.ToTable("ClinicStaff");
+            entity.ToTable("ClinicSlot");
 
-            entity.HasIndex(e => e.UserId, "UQ__ClinicSt__B9BE370E2AB6F1DD").IsUnique();
-
-            entity.Property(e => e.StaffId).HasColumnName("staff_id");
+            entity.Property(e => e.SlotId)
+                .HasDefaultValueSql("(newid())")
+                .HasColumnName("slot_id");
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
-            entity.Property(e => e.IsOwner).HasColumnName("is_owner");
-            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.MaxCheckup).HasColumnName("max_checkup");
+            entity.Property(e => e.MaxTreatment).HasColumnName("max_treatment");
+            entity.Property(e => e.Status)
+                .HasDefaultValue(true)
+                .HasColumnName("status");
+            entity.Property(e => e.TimeId).HasColumnName("time_id");
+            entity.Property(e => e.Weekday)
+                .HasComment("0: Sunday \r\n1: Monday \r\n2: Tuesday \r\n3: Wednesday \r\n4: Thursday \r\n5: Friday \r\n6: Saturday")
+                .HasColumnName("weekday");
 
-            entity.HasOne(d => d.Clinic).WithMany(p => p.ClinicStaffs)
+            entity.HasOne(d => d.Clinic).WithMany(p => p.ClinicSlots)
                 .HasForeignKey(d => d.ClinicId)
-                .HasConstraintName("FKClinicStaf705438");
-
-            entity.HasOne(d => d.User).WithOne(p => p.ClinicStaff)
-                .HasForeignKey<ClinicStaff>(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKClinicStaf352227");
+                .HasConstraintName("FKClinicSlot657646");
+
+            entity.HasOne(d => d.Time).WithMany(p => p.ClinicSlots)
+                .HasForeignKey(d => d.TimeId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKClinicSlot285803");
         });
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.CustomerId).HasName("PK__Customer__CD65CB85F14384C7");
+            entity.HasKey(e => e.Id).HasName("PK__Customer__3213E83F57BE4152");
 
             entity.ToTable("Customer");
 
-            entity.HasIndex(e => e.UserId, "UQ__Customer__B9BE370E79EAB27F").IsUnique();
-
-            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
-            entity.Property(e => e.BirthDate).HasColumnName("birth_date");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Birthdate).HasColumnName("birthdate");
+            entity.Property(e => e.CustomerEmail).HasColumnName("customer_email");
+            entity.Property(e => e.Fullname)
+                .HasMaxLength(255)
+                .HasColumnName("fullname");
             entity.Property(e => e.Insurance)
                 .HasMaxLength(20)
                 .HasColumnName("insurance");
-            entity.Property(e => e.Sex)
+            entity.Property(e => e.Phone)
                 .HasMaxLength(10)
+                .HasColumnName("phone");
+            entity.Property(e => e.Removed).HasColumnName("removed");
+            entity.Property(e => e.Sex)
+                .HasMaxLength(16)
                 .HasColumnName("sex");
             entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.HasOne(d => d.User).WithOne(p => p.Customer)
-                .HasForeignKey<Customer>(d => d.UserId)
+            entity.HasOne(d => d.User).WithMany(p => p.Customers)
+                .HasForeignKey(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKCustomer199874");
+                .HasConstraintName("FKCustomer336289");
         });
 
-        modelBuilder.Entity<MediaType>(entity =>
+        modelBuilder.Entity<Dentist>(entity =>
         {
-            entity.HasKey(e => e.TypeId).HasName("PK__MediaTyp__2C00059869A746CE");
+            entity.HasKey(e => e.Id).HasName("PK__Dentist__3213E83FDD3A0B1F");
 
-            entity.ToTable("MediaType");
+            entity.ToTable("Dentist");
 
-            entity.Property(e => e.TypeId).HasColumnName("type_id");
-            entity.Property(e => e.TypeName)
-                .HasMaxLength(50)
-                .HasColumnName("type_name");
-        });
+            entity.HasIndex(e => e.UserId, "UQ__Dentist__B9BE370E435FEC98").IsUnique();
 
-        modelBuilder.Entity<Medium>(entity =>
-        {
-            entity.HasKey(e => e.MediaId).HasName("PK__Media__D0A840F41585834F");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
+            entity.Property(e => e.Fullname)
+                .HasMaxLength(64)
+                .HasColumnName("fullname");
+            entity.Property(e => e.IsOwner).HasColumnName("is_owner");
+            entity.Property(e => e.Phone)
+                .HasMaxLength(10)
+                .HasColumnName("phone");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
 
-            entity.Property(e => e.MediaId)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("media_id");
-            entity.Property(e => e.CreatedDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("created_date");
-            entity.Property(e => e.CreatorId).HasColumnName("creator_id");
-            entity.Property(e => e.MediaPath).HasColumnName("media_path");
-            entity.Property(e => e.TypeId).HasColumnName("type_id");
+            entity.HasOne(d => d.Clinic).WithMany(p => p.Dentists)
+                .HasForeignKey(d => d.ClinicId)
+                .HasConstraintName("FKDentist429950");
 
-            entity.HasOne(d => d.Creator).WithMany(p => p.Media)
-                .HasForeignKey(d => d.CreatorId)
+            entity.HasOne(d => d.User).WithOne(p => p.Dentist)
+                .HasForeignKey<Dentist>(d => d.UserId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKMedia66473");
-
-            entity.HasOne(d => d.Type).WithMany(p => p.Media)
-                .HasForeignKey(d => d.TypeId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKMedia498708");
-        });
-
-        modelBuilder.Entity<Message>(entity =>
-        {
-            entity.HasKey(e => e.MessageId).HasName("PK__Messages__0BBF6EE6BDA01F4C");
-
-            entity.HasIndex(e => e.Sender, "UQ__Messages__C605FA969DD7418E").IsUnique();
-
-            entity.Property(e => e.MessageId)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("message_id");
-            entity.Property(e => e.Content)
-                .HasMaxLength(1000)
-                .HasColumnName("content");
-            entity.Property(e => e.CreationDate)
-                .HasDefaultValueSql("(getdate())")
-                .HasColumnType("datetime")
-                .HasColumnName("creation_date");
-            entity.Property(e => e.Receiver).HasColumnName("receiver");
-            entity.Property(e => e.Sender).HasColumnName("sender");
-
-            entity.HasOne(d => d.ReceiverNavigation).WithMany(p => p.MessageReceiverNavigations)
-                .HasForeignKey(d => d.Receiver)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKMessages658033");
-
-            entity.HasOne(d => d.SenderNavigation).WithOne(p => p.MessageSenderNavigation)
-                .HasForeignKey<Message>(d => d.Sender)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKMessages901196");
+                .HasConstraintName("FKDentist52014");
         });
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.PaymentId).HasName("PK__Payment__ED1FC9EAA5895C09");
+            entity.HasKey(e => e.Id).HasName("PK__Payment__3213E83F8F6DE7CB");
 
             entity.ToTable("Payment");
 
-            entity.Property(e => e.PaymentId)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("payment_id");
-            entity.Property(e => e.Amount).HasColumnName("amount");
-            entity.Property(e => e.BookingId).HasColumnName("booking_id");
-            entity.Property(e => e.MadeOn)
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Amount)
+                .HasColumnType("decimal(19, 0)")
+                .HasColumnName("amount");
+            entity.Property(e => e.AppointmentId).HasColumnName("appointment_id");
+            entity.Property(e => e.CreationTime)
+                .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
-                .HasColumnName("made_on");
-            entity.Property(e => e.PaymentTypeId).HasColumnName("payment_type_id");
+                .HasColumnName("creation_time");
+            entity.Property(e => e.Creator).HasColumnName("creator");
+            entity.Property(e => e.Expiration).HasColumnName("expiration");
+            entity.Property(e => e.Provider)
+                .HasMaxLength(20)
+                .HasColumnName("provider");
             entity.Property(e => e.Status).HasColumnName("status");
-
-            entity.HasOne(d => d.Booking).WithMany(p => p.Payments)
-                .HasForeignKey(d => d.BookingId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKPayment428514");
-
-            entity.HasOne(d => d.PaymentType).WithMany(p => p.Payments)
-                .HasForeignKey(d => d.PaymentTypeId)
-                .HasConstraintName("FKPayment702148");
-        });
-
-        modelBuilder.Entity<PaymentType>(entity =>
-        {
-            entity.HasKey(e => e.TypeId).HasName("PK__PaymentT__2C000598B48FEFA4");
-
-            entity.ToTable("PaymentType");
-
+            entity.Property(e => e.Title).HasColumnName("title");
+            entity.Property(e => e.TransactionId).HasColumnName("transaction_id");
             entity.Property(e => e.TypeId).HasColumnName("type_id");
-            entity.Property(e => e.TypeProvider)
-                .HasMaxLength(50)
-                .HasColumnName("type_provider");
-            entity.Property(e => e.TypeProviderSecret)
-                .HasMaxLength(255)
-                .HasColumnName("type_provider_secret");
-            entity.Property(e => e.TypeProviderToken)
-                .HasMaxLength(255)
-                .HasColumnName("type_provider_token");
-        });
 
-        modelBuilder.Entity<Role>(entity =>
-        {
-            entity.HasKey(e => e.RoleId).HasName("PK__Role__760965CC783C63A1");
-
-            entity.ToTable("Role");
-
-            entity.HasIndex(e => e.RoleName, "UQ__Role__783254B17E3D04BB").IsUnique();
-
-            entity.Property(e => e.RoleId).HasColumnName("role_id");
-            entity.Property(e => e.RoleDescription)
-                .HasMaxLength(255)
-                .HasColumnName("role_description");
-            entity.Property(e => e.RoleName)
-                .HasMaxLength(50)
-                .HasColumnName("role_name");
-        });
-
-        modelBuilder.Entity<ScheduledSlot>(entity =>
-        {
-            entity.HasKey(e => e.ScheduleSlotId).HasName("PK__Schedule__54B44F5969354506");
-
-            entity.ToTable("ScheduledSlot");
-
-            entity.Property(e => e.ScheduleSlotId)
-                .HasDefaultValueSql("(newid())")
-                .HasColumnName("schedule_slot_id");
-            entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
-            entity.Property(e => e.DateOfWeek).HasColumnName("date_of_week");
-            entity.Property(e => e.MaxAppointments).HasColumnName("max_appointments");
-            entity.Property(e => e.SlotId).HasColumnName("slot_id");
-
-            entity.HasOne(d => d.Clinic).WithMany(p => p.ScheduledSlots)
-                .HasForeignKey(d => d.ClinicId)
+            entity.HasOne(d => d.Appointment).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.AppointmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKScheduledS448005");
+                .HasConstraintName("FKPayment457035");
 
-            entity.HasOne(d => d.Slot).WithMany(p => p.ScheduledSlots)
-                .HasForeignKey(d => d.SlotId)
+            entity.HasOne(d => d.CreatorNavigation).WithMany(p => p.Payments)
+                .HasForeignKey(d => d.Creator)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKScheduledS501966");
+                .HasConstraintName("FKPayment177997");
         });
 
-        modelBuilder.Entity<Service>(entity =>
+        modelBuilder.Entity<ServiceCategory>(entity =>
         {
-            entity.HasKey(e => e.ServiceId).HasName("PK__Service__3E0DB8AF530EE687");
+            entity.HasKey(e => e.Id).HasName("PK__ServiceC__3213E83FF12A7545");
 
-            entity.ToTable("Service");
+            entity.ToTable("ServiceCategory");
 
-            entity.HasIndex(e => e.ServiceName, "UQ__Service__4A8EDF396D7E3223").IsUnique();
-
-            entity.Property(e => e.ServiceId).HasColumnName("service_id");
-            entity.Property(e => e.ServiceName)
-                .HasMaxLength(50)
-                .HasColumnName("service_name");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(32)
+                .HasColumnName("name");
         });
 
         modelBuilder.Entity<Slot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__Slot__971A01BBA0872C95");
+            entity.HasKey(e => e.Id).HasName("PK__Slot__3213E83F1C7A0338");
 
             entity.ToTable("Slot");
 
-            entity.Property(e => e.SlotId).HasColumnName("slot_id");
-            entity.Property(e => e.EndTime).HasColumnName("end_time");
-            entity.Property(e => e.StartTime).HasColumnName("start_time");
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.End).HasColumnName("end");
+            entity.Property(e => e.Start).HasColumnName("start");
+        });
+
+        modelBuilder.Entity<Token>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__Token__3214EC27DBD4DC5B");
+
+            entity.ToTable("Token");
+
+            entity.Property(e => e.Id)
+                .ValueGeneratedNever()
+                .HasColumnName("ID");
+            entity.Property(e => e.CreationTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("creation_time");
+            entity.Property(e => e.Expiration)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("expiration");
+            entity.Property(e => e.Reason)
+                .HasMaxLength(80)
+                .HasColumnName("reason");
+            entity.Property(e => e.TokenValue)
+                .HasMaxLength(255)
+                .HasColumnName("token_value");
+            entity.Property(e => e.Used).HasColumnName("used");
+            entity.Property(e => e.User).HasColumnName("user");
+
+            entity.HasOne(d => d.UserNavigation).WithMany(p => p.Tokens)
+                .HasForeignKey(d => d.User)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKToken237377");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.UserId).HasName("PK__User__B9BE370F3A2FFC56");
+            entity.HasKey(e => e.Id).HasName("PK__User__3213E83F3994400C");
 
             entity.ToTable("User");
 
-            entity.HasIndex(e => e.Email, "UQ__User__AB6E61649A69FB67").IsUnique();
+            entity.HasIndex(e => e.Username, "UQ__User__F3DBC572E559B621").IsUnique();
 
-            entity.HasIndex(e => e.Username, "UQ__User__F3DBC5724AE6C797").IsUnique();
-
-            entity.Property(e => e.UserId).HasColumnName("user_id");
-            entity.Property(e => e.CreationDate)
+            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.Active)
+                .HasDefaultValue(true)
+                .HasColumnName("active");
+            entity.Property(e => e.CreationTime)
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
-                .HasColumnName("creation_date");
+                .HasColumnName("creation_time");
             entity.Property(e => e.Email)
-                .HasMaxLength(50)
-                .IsUnicode(false)
+                .HasMaxLength(64)
                 .HasColumnName("email");
-            entity.Property(e => e.Fullname)
-                .HasMaxLength(50)
-                .HasColumnName("fullname");
-            entity.Property(e => e.Password)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("password");
-            entity.Property(e => e.PhoneNumber)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasColumnName("phone_number");
-            entity.Property(e => e.RoleId).HasColumnName("role_id");
-            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.PasswordHash)
+                .HasMaxLength(128)
+                .HasColumnName("password_hash");
+            entity.Property(e => e.Removed).HasColumnName("removed");
+            entity.Property(e => e.Role)
+                .HasMaxLength(20)
+                .HasColumnName("role");
+            entity.Property(e => e.Salt)
+                .HasMaxLength(128)
+                .HasColumnName("salt");
             entity.Property(e => e.Username)
-                .HasMaxLength(50)
-                .IsUnicode(false)
+                .HasMaxLength(20)
                 .HasColumnName("username");
-
-            entity.HasOne(d => d.Role).WithMany(p => p.Users)
-                .HasForeignKey(d => d.RoleId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKUser1655");
         });
 
         OnModelCreatingPartial(modelBuilder);

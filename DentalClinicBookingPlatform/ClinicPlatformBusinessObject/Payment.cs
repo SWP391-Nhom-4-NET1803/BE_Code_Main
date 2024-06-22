@@ -5,19 +5,29 @@ namespace ClinicPlatformBusinessObject;
 
 public partial class Payment
 {
-    public Guid PaymentId { get; set; }
+    public int Id { get; set; }
+
+    public int? TransactionId { get; set; }
+
+    public decimal Amount { get; set; }
+
+    public int? Title { get; set; }
+
+    public DateOnly Expiration { get; set; }
+
+    public DateTime CreationTime { get; set; }
 
     public bool Status { get; set; }
 
-    public DateTime MadeOn { get; set; }
+    public int Creator { get; set; }
 
-    public long Amount { get; set; }
+    public Guid AppointmentId { get; set; }
 
-    public Guid BookingId { get; set; }
+    public int TypeId { get; set; }
 
-    public int? PaymentTypeId { get; set; }
+    public string Provider { get; set; } = null!;
 
-    public virtual Booking Booking { get; set; } = null!;
+    public virtual Appointment Appointment { get; set; } = null!;
 
-    public virtual PaymentType? PaymentType { get; set; }
+    public virtual User CreatorNavigation { get; set; } = null!;
 }

@@ -3,11 +3,11 @@ using System.Collections.Generic;
 
 namespace ClinicPlatformBusinessObject;
 
-public partial class Service
+public partial class ServiceCategory
 {
-    public int ServiceId { get; set; }
+    public int Id { get; set; }
 
-    public string ServiceName { get; set; } = null!;
+    public string Name { get; set; } = null!;
 
     public virtual ICollection<ClinicService> ClinicServices { get; set; } = new List<ClinicService>();
 }
