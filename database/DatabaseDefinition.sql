@@ -26,6 +26,7 @@ CREATE TABLE Appointment (
   status               nvarchar(20) DEFAULT 'booked' NOT NULL CHECK(status IN ('booked', 'finished', 'canceled', 'no show')), 
   original_appointment uniqueidentifier NULL, 
   price_final          int DEFAULT 0 NOT NULL, 
+  creation_time        datetime DEFAULT (GETDATE()) NOT NULL, 
   PRIMARY KEY (id));
 CREATE TABLE BookedService (
   appointment_id uniqueidentifier NOT NULL, 
