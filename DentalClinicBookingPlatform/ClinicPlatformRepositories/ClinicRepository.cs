@@ -1,5 +1,4 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs;
+﻿using ClinicPlatformDatabaseObject;
 using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformRepositories.Contracts;
 
@@ -7,99 +6,56 @@ namespace ClinicPlatformRepositories
 {
     public class ClinicRepository : IClinicRepository
     {
-        private readonly ClinicDAO clinicDAO;
+        private readonly DentalClinicPlatformContext context;
         private bool disposedValue;
 
-        public ClinicRepository()
+        public ClinicRepository(DentalClinicPlatformContext context)
         {
-            clinicDAO = new ClinicDAO();
+            this.context = context;
         }
 
         public ClinicInfoModel? AddClinc(ClinicInfoModel clinicInfo)
         {
-            Clinic clinic = new()
-            {
-                Name = clinicInfo.Name!,
-                Description = clinicInfo.Description,
-                Address = clinicInfo.Address!,
-                Email = clinicInfo.Email!,
-                Phone = clinicInfo.Phone!,
-                OpenHour = (TimeOnly)clinicInfo.OpenHour!,
-                CloseHour = (TimeOnly)clinicInfo.CloseHour!,
-                OwnerId = (int) clinicInfo.OwnerId!,
-                Status = clinicInfo.Status ?? false,
-            };
+            Clinic clinic = MapToClinic(clinicInfo);
 
-            if (clinicDAO.AddClinic(clinic) == null)
-            {
-                return null;
-            }
+           context.Clinics.Add(clinic);
 
-            return clinicInfo;
+            return MapToClinicInfo(clinic);
         }
 
         public ClinicInfoModel? UpdateClinic(ClinicInfoModel clinicInfo)
         {
-            Clinic? target = clinicDAO.GetClinic(clinicInfo.Id);
-            
+            Clinic clinic = MapToClinic(clinicInfo);
 
-            if (target != null)
-            {
-                target.Name = clinicInfo.Name ?? target.Name;
-                target.Address = clinicInfo.Address ?? target.Address;
-                target.Description = clinicInfo.Description ?? target.Description;
-                target.Phone = clinicInfo.Phone ?? target.Phone;
-                target.OpenHour = clinicInfo.OpenHour ?? target.OpenHour;
-                target.OwnerId = clinicInfo.OwnerId ?? target.OwnerId;
-                target.Status = clinicInfo.Status ?? target.Status;
+            context.Clinics.Update(clinic);
 
-                clinicDAO.UpdateClinic(target);
-
-                return MapFromClinicToClinicModel(target);
-            }
-
-            return null;
+            return MapToClinicInfo(clinic);
         }
 
-        public IEnumerable<ClinicInfoModel> GetAll()
+        public IEnumerable<ClinicInfoModel> GetAllClinic(bool includeRemoved = true, bool includeUnverified = true)
         {
-            var mapped = from clinic in clinicDAO.GetAllClinic()
-                         select new ClinicInfoModel
-                         {
-                             Id = clinic.ClinicId,
-                             Address = clinic.Address,
-                             Name = clinic.Name,
-                             Description = clinic.Description,
-                             Email = clinic.Email,
-                             Phone = clinic.Phone,
-                             OpenHour = clinic.OpenHour,
-                             CloseHour = clinic.CloseHour,
-                             OwnerId = clinic.OwnerId,
-                             Status = clinic.Status,
-                         };
+            IEnumerable<ClinicInfoModel> result = from clinic in context.Clinics.ToList() select MapToClinicInfo(clinic);
 
-            return mapped;
+            if (!includeRemoved) 
+            {
+                result = result.Where(x => x.Status != "removed");
+            }
+
+            if(!includeUnverified)
+            {
+                result = result.Where(x => x.Status != "unverified");
+            }
+
+            return result;
         }
 
         public ClinicInfoModel? GetClinic(int clinicId)
         {
-            var result = clinicDAO.GetClinic(clinicId);
+            var result = context.Clinics.Find(clinicId);
 
             if (result != null)
             {
-                return new ClinicInfoModel()
-                {
-                    Id = clinicId,
-                    Name = result.Name,
-                    Address = result.Address,
-                    Description = result.Description,
-                    Email = result.Email,
-                    Phone = result.Phone,
-                    OpenHour = result.OpenHour,
-                    CloseHour = result.CloseHour,
-                    Status = result.Status,
-                    OwnerId = result.OwnerId,
-                };
+                return MapToClinicInfo(result);
             }
 
             return null;
@@ -107,12 +63,17 @@ namespace ClinicPlatformRepositories
 
         public void DeleteClinic(int clinicId)
         {
-            clinicDAO.DeleteClinic(clinicId);
-        }
+            Clinic? clinic = context.Clinics.Find(clinicId);
 
-        public void SaveChanges()
-        {
-            clinicDAO.SaveChanges();
+            if ( clinic != null )
+            {
+                clinic.Working = false;
+                clinic.Status = "removed";
+                context.Update(clinicId);
+            }
+            
+
+            
         }
 
         protected virtual void Dispose(bool disposing)
@@ -121,7 +82,7 @@ namespace ClinicPlatformRepositories
             {
                 if (disposing)
                 {
-                    clinicDAO.Dispose();
+                    context.Dispose();
                 }
                 disposedValue = true;
             }
@@ -134,9 +95,25 @@ namespace ClinicPlatformRepositories
         }
 
         // Mappers
-        private static ClinicInfoModel MapFromClinicToClinicModel(Clinic clinic)
+        private Clinic MapToClinic(ClinicInfoModel clinicInfo)
         {
-            return new ClinicInfoModel()
+            return new Clinic
+            {
+                ClinicId = clinicInfo.Id,
+                Name = clinicInfo.Name,
+                Address = clinicInfo.Address,
+                Email = clinicInfo.Email,
+                Phone = clinicInfo.Phone,
+                OpenHour = clinicInfo.OpenHour,
+                CloseHour = clinicInfo.CloseHour,
+                Status = clinicInfo.Status,
+
+            };
+        }
+
+        private ClinicInfoModel MapToClinicInfo(Clinic clinic)
+        {
+            return new ClinicInfoModel
             {
                 Name = clinic.Name,
                 Description = clinic.Description,

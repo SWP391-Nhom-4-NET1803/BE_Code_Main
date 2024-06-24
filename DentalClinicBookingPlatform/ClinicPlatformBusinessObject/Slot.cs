@@ -1,15 +1,15 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformDatabaseObject;
 
 public partial class Slot
 {
-    public int SlotId { get; set; }
+    public int Id { get; set; }
 
-    public TimeOnly StartTime { get; set; }
+    public TimeOnly Start { get; set; }
 
-    public TimeOnly EndTime { get; set; }
+    public TimeOnly End { get; set; }
 
-    public virtual ICollection<ScheduledSlot> ScheduledSlots { get; set; } = new List<ScheduledSlot>();
+    public virtual ICollection<ClinicSlot> ClinicSlots { get; set; } = new List<ClinicSlot>();
 }

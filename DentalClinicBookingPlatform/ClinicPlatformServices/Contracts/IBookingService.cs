@@ -1,4 +1,6 @@
-﻿using ClinicPlatformDTOs.BookingModels;
+﻿using ClinicPlatformDatabaseObject;
+using ClinicPlatformDTOs.BookingModels;
+using ClinicPlatformObjects.BookingModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -9,27 +11,27 @@ namespace ClinicPlatformServices.Contracts
 {
     public interface IBookingService: IDisposable
     {
-        bool CreateNewBooking(BookingRegistrationModel bookInfo, out string message);
-        bool CreateNewPeriodicBooking(BookingRegistrationModel bookInfo, out string message);
-        bool CreateOneTimeBooking(BookingRegistrationModel bookInfo, out string message);
+        AppointmentInfoModel? CreateNewBooking(AppointmentRegistrationModel bookInfo, out string message);
+        AppointmentInfoModel? CreateNewPeriodicBooking(AppointmentRegistrationModel bookInfo, AppointmentSetting setting,  out string message);
 
-        IEnumerable<BookingModel> GetAllBooking();
-        BookingModel? GetBooking(Guid id);
-        IEnumerable<BookingModel> GetAllClinicBooking(int clinicId, bool includeCancelled = false);
-        IEnumerable<BookingModel> GetAllCustomerBooking(int customerId, bool includeCancelled = false);
-        IEnumerable<BookingModel> GetAllDentistBooking(int dentistId, bool includeCancelled = false);
-        IEnumerable<BookingModel> GetAllBookingOnDay(DateOnly date);
-
-        bool UpdateBookingInformation(BookingModel bookModel, out string message);
-        bool CancelBooking(Guid id, out string message);
-        bool ChangeDate(Guid bookId, DateOnly newDate, out string message);
-        bool ChangeSlot(Guid bookId, Guid clinicSlotId, out string message);
-        bool ChangeDentist(Guid bookId, int clinicDentist, out string message);
-        bool ChangeService(Guid bookId, Guid clinicServiceId, out string message);
+        IEnumerable<AppointmentInfoModel> GetAllBooking();
+        AppointmentInfoModel? GetBooking(Guid id);
+        IEnumerable<AppointmentInfoModel> GetAllClinicBooking(int clinicId, bool includeCancelled = false);
+        IEnumerable<AppointmentInfoModel> GetAllCustomerBooking(int customerId, bool includeCancelled = false);
+        IEnumerable<AppointmentInfoModel> GetAllDentistBooking(int dentistId, bool includeCancelled = false);
+        IEnumerable<AppointmentInfoModel> GetAllBookingOnDay(DateOnly date);
+        AppointmentInfoModel? CancelBooking(Guid id, out string message);
+        AppointmentInfoModel? ChangeDate(Guid bookId, DateOnly newDate, out string message);
+        AppointmentInfoModel? ChangeSlot(Guid bookId, Guid clinicSlotId, out string message);
+        AppointmentInfoModel? ChangeAppointmentTime(out string message, Guid bookId, DateOnly? newDate = null, Guid? slotId = null);
+        AppointmentInfoModel? ChangeDentist(Guid bookId, int clinicDentist, out string message);
+        AppointmentInfoModel? ChangeService(Guid bookId, Guid clinicServiceId, out string message);
+        AppointmentInfoModel? RemoveService(Guid bookId, out string message);
+        BookedServiceInfoModel? GetBookedService(Guid bookId);
 
         bool DeleteBookingInformation(Guid bookId, out string messgae);
         
-        IEnumerable<BookingModel> FilterBookList(IEnumerable<BookingModel> list, DateOnly? start = null, DateOnly? end = null, bool includeCanceledOrFinished = false, int? page_size = null, int? page = null);
+        IEnumerable<AppointmentInfoModel> FilterBookList(IEnumerable<AppointmentInfoModel> list, DateOnly? start = null, DateOnly? end = null, bool includeCanceledOrFinished = false, int? page_size = null, int? page = null);
 
     }
 }

@@ -2,7 +2,9 @@
 using ClinicPlatformDTOs.SlotModels;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformServices.Contracts;
+using ClinicPlatformWebAPI.Helpers.ModelMapper;
 using ClinicPlatformWebAPI.Helpers.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -15,14 +17,87 @@ namespace ClinicPlatformWebAPI.Controllers
     public class ClinicController : ControllerBase
     {
         private readonly IClinicService clinicService;
+        private readonly IClinicServiceService clinicServiceService;
         private readonly IUserService userService;
         private readonly IScheduleService scheduleService;
 
-        public ClinicController(IClinicService clinicService, IUserService userService, IScheduleService scheduleService)
+        public ClinicController(IClinicService clinicService, IUserService userService, IScheduleService scheduleService, IClinicServiceService clinicServiceService)
         {
             this.clinicService = clinicService;
             this.userService = userService;
             this.scheduleService = scheduleService;
+            this.clinicServiceService = clinicServiceService;
+        }
+
+        [HttpPost("register/clinic-owner")]
+        [AllowAnonymous]
+        public ActionResult<HttpResponseModel> RegisterClinicOwner([FromBody] UserRegistrationModel userInfo)
+        {
+            userInfo.ClinicOwner = true;
+            userInfo.Clinic = null;
+            var ResponseBody = new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "OK",
+                Detail = "User created successfully!",
+            };
+
+            if (!userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Dentist", out var message))
+            {
+                ResponseBody.StatusCode = 400;
+                ResponseBody.Message = "Register account failed";
+                ResponseBody.Detail = message;
+
+                return BadRequest(ResponseBody);
+            }
+
+            return Ok(ResponseBody);
+        }
+
+        [HttpPost("staff/register")]
+        [Authorize(Roles = "Dentist")]
+        public ActionResult<HttpResponseModel> RegisterClinicStaff([FromBody] UserRegistrationModel userInfo)
+        {
+            if (!userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Dentist", out var message))
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Failed",
+                    Detail = message,
+                });
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "OK",
+                Detail = "User created successfully!",
+            });
+        }
+
+        [HttpGet("staff/{dentistId}")]
+        public ActionResult<IHttpResponseModel<DentistInfoViewModel>> GetDentistInformation(int dentistId)
+        {
+            UserInfoModel? dentist = userService.GetDentistWithDentistId(dentistId);
+
+            if (dentist == null)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "User not found",
+                    Detail = $"User does not exist for dentistId {dentistId}!"
+                });
+
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = UserInfoMapper.ToDentistView(dentist)
+            });
         }
 
         [HttpGet("{id}")]
@@ -49,25 +124,15 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("search")]
-        public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> SearchClinic([FromQuery] string? name=null, [FromQuery] TimeOnly? open=null, [FromQuery] TimeOnly? close=null , string? service = null, int page_size=10, int page = 1)
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> SearchClinic([FromQuery] string? name=null, [FromQuery] TimeOnly? open=null, [FromQuery] TimeOnly? close=null, int page_size=100, int page = 1)
         {
-            IEnumerable<ClinicInfoModel> result = clinicService.GetAll();;
+            IEnumerable<ClinicInfoModel> result;
 
-            if (service != null)
-            {
-                int? real = clinicService.GetClinicServiceWithName(service)?.ServiceId;
-
-                if (real != null)
-                {
-                    Console.WriteLine("real");
-                    result = clinicService.GetClinicHasService((int) real);
-                }
-            }
+            result = clinicService.GetAllClinic(page_size, page);
 
             if (name != null)
             {
-                result = result
-                    .Where(x => !x.Name.IsNullOrEmpty() && x.Name!.StartsWith(name, true, CultureInfo.InvariantCulture));
+                result = result.Where(x => !x.Name.IsNullOrEmpty() && x.Name!.StartsWith(name, true, CultureInfo.InvariantCulture));
             }
 
             if (open != null)
@@ -92,7 +157,7 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpPost("register")]
         public ActionResult<HttpResponseModel> RegisterClinic([FromBody] ClinicRegistrationModel info)
         {
-            UserInfoModel? userInfo = userService.GetUserInformation((int) info.OwnerId!);
+            UserInfoModel? userInfo = userService.GetUserWithUserId((int) info.OwnerId!);
 
             if (userInfo == null || userInfo.IsOwner == false)
             {
@@ -109,7 +174,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
 
-            if (!clinicService.RegisterClinic(info, out var message))
+            if (!clinicService.RegisterClinic(ClinicMapper.MapToClinicInfo(info), out var message))
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -177,6 +242,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("activate/{id}")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> ActivateClinic(int id)
         {
 
@@ -244,7 +310,9 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpPost("service/add")]
         public ActionResult<HttpResponseModel> AddClinicService([FromBody] ClinicServiceInfoModel serviceInfo)
         {
-            if (!clinicService.AddClinicService(serviceInfo, out var message))
+            ClinicServiceInfoModel? service = clinicServiceService.AddClinicService(serviceInfo, out var message);
+
+            if (service == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -267,7 +335,7 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpPost("service/add-batch")]
         public ActionResult<HttpResponseModel> AddClinicServices([FromBody] IEnumerable<ClinicServiceInfoModel> serviceInfo)
         {
-            if (!clinicService.AddClinicServices(serviceInfo, out var message))
+            if (!clinicServiceService.AddClinicServices(serviceInfo, out var message))
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -310,31 +378,8 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
-        [HttpPut("service/update-batch")]
-        public ActionResult<HttpResponseModel> UpdateClinicServices([FromBody] IEnumerable<ClinicServiceInfoModel> serviceInfo)
-        {
-            if (!clinicService.UpdateClinicServices(serviceInfo, out var message))
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Bad Request",
-                    Detail = message,
-                });
-            }
-            else
-            {
-                return Ok(new HttpResponseModel()
-                {
-                    StatusCode = 200,
-                    Message = "Service added sucessfully",
-                    Detail = $"Updated information for {serviceInfo.Count()} services!",
-                });
-            }
-        }
-
         [HttpDelete("service/delete")]
-        public ActionResult<HttpResponseModel> InactivateService(Guid clinicServiceId)
+        public ActionResult<HttpResponseModel> RemoveService(Guid clinicServiceId)
         {
             if (clinicService.DeleteClinicServices(clinicServiceId, out var message))
             {
@@ -353,7 +398,7 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpGet("{id}/schedule")]
+        [HttpGet("{id}/slots")]
         public ActionResult<IHttpResponseModel<IEnumerable<ClinicSlotInfoModel>>> GetClinicSlot(int id)
         {
             if (clinicService.GetClinicWithId(id) != null)
@@ -374,7 +419,8 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpPost("schedule")]
+        [HttpPost("slot")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> AddClinicSlot([FromBody] ClinicSlotRegistrationModel slotInfo)
         {
             if (clinicService.GetClinicWithId((int)slotInfo.ClinicId) == null)
@@ -387,13 +433,16 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
 
-            if (scheduleService.RegisterClinicSlot(slotInfo, out var message))
+            ClinicSlotInfoModel? slot = scheduleService.AddNewClinicSlot(ClinicMapper.MapToSlotInfo(slotInfo), out var message);
+
+            if (slot != null)
             {
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
                     Message = "Success",
                     Detail = message,
+                    Content = slot
                 });
             }
             else
@@ -407,10 +456,12 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
-        [HttpPut("schedule")]
+        [HttpPut("slot/update")]
         public ActionResult<HttpResponseModel> UpdateClinicSlot([FromBody] ClinicSlotInfoModel slotInfo)
         {
-            if (scheduleService.UpdateClinicSlot(slotInfo, out var message))
+            ClinicSlotInfoModel? slot = scheduleService.UpdateClinicSlot(slotInfo, out var message);
+
+            if (slot != null)
             {
                 return Ok(new HttpResponseModel()
                 {

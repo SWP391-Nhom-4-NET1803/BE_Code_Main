@@ -12,140 +12,147 @@ GO
 USE DentalClinicPlatform;
 GO
 
-CREATE TABLE Booking (
-  book_id            uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
-  appointment_date   date NOT NULL, 
-  customer_id        int NOT NULL, 
-  clinic_id          int NOT NULL, 
-  dentist_id         int NOT NULL, 
-  schedule_slot_id   uniqueidentifier NOT NULL, 
-  creation_date      datetime NOT NULL, 
-  status             bit NOT NULL, 
-  booking_type       nvarchar(50) NOT NULL CHECK(booking_type in ('Khám tổng quát', 'Khám theo dịch vụ', 'Khám định kì')), 
-  booking_service_id uniqueidentifier NULL, 
-  PRIMARY KEY (book_id));
-CREATE TABLE Certification (
-  certification_id  uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
-  name              nvarchar(50) NULL, 
-  certification_url varchar(50) NULL, 
-  clinic_id         int NOT NULL, 
-  media_id          uniqueidentifier NOT NULL, 
-  PRIMARY KEY (certification_id));
+CREATE TABLE Appointment (
+  id                   uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
+  appointment_type     nvarchar(10) DEFAULT 'checkup' NOT NULL CHECK(appointment_type in ('checkup', 'treatment')), 
+  [date]               date NOT NULL, 
+  slot_id              uniqueidentifier NOT NULL, 
+  customer_id          int NOT NULL, 
+  dentist_id           int NOT NULL, 
+  clinic_id            int NOT NULL, 
+  dentist_note         nvarchar(1000) DEFAULT '' NOT NULL, 
+  status               nvarchar(20) DEFAULT 'booked' NOT NULL CHECK(status IN ('booked', 'pending',  'finished', 'canceled', 'no show')), 
+  cycle_count          int DEFAULT 0 NOT NULL, 
+  original_appointment uniqueidentifier NULL, 
+  price_final          int DEFAULT 0 NOT NULL, 
+  creation_time        datetime DEFAULT (GETDATE()) NOT NULL, 
+  PRIMARY KEY (id));
+CREATE TABLE BookedService (
+  appointment_id uniqueidentifier NOT NULL, 
+  service_id     uniqueidentifier NOT NULL, 
+  price          int NOT NULL, 
+  PRIMARY KEY (appointment_id));
 CREATE TABLE Clinic (
-  clinic_id   int IDENTITY(1, 1) NOT NULL, 
-  name        nvarchar(50) NOT NULL UNIQUE, 
-  address     nvarchar(50) NOT NULL UNIQUE, 
+  clinic_id   int IDENTITY NOT NULL, 
+  name        nvarchar(128) NOT NULL, 
+  address     nvarchar(128) NOT NULL, 
+  description text DEFAULT '' NOT NULL, 
+  phone       nvarchar(10) NOT NULL, 
+  email       nvarchar(64) NOT NULL, 
   open_hour   time(7) NOT NULL, 
   close_hour  time(7) NOT NULL, 
-  description varchar(500) NULL, 
-  email       nvarchar(80) NOT NULL UNIQUE, 
-  phone       nvarchar(10) NOT NULL UNIQUE, 
-  status      bit NOT NULL, 
+  working     bit DEFAULT 1 NOT NULL, 
+  status      nvarchar(255) DEFAULT 'unverified' NOT NULL CHECK(status IN ('unverified', 'verified', 'removed')), 
   owner_id    int NOT NULL, 
   PRIMARY KEY (clinic_id));
-CREATE TABLE ClinicServices (
-  clinic_service_id uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
-  price             bigint NULL, 
-  description       nvarchar(255) NULL, 
-  clinic_id         int NOT NULL, 
-  service_id        int NOT NULL, 
-  PRIMARY KEY (clinic_service_id));
-CREATE TABLE ClinicStaff (
-  staff_id  int IDENTITY(1, 1) NOT NULL, 
-  is_owner  bit NOT NULL, 
+CREATE TABLE ClinicService (
+  id          uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
+  custom_name nvarchar(80) NULL, 
+  description nvarchar(500) NOT NULL, 
+  price       int NOT NULL, 
+  clinic_id   int NOT NULL, 
+  category_id int NOT NULL, 
+  available   bit DEFAULT 1 NOT NULL, 
+  removed     bit NOT NULL, 
+  PRIMARY KEY (id));
+CREATE TABLE ClinicSlot (
+  slot_id       uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
+  max_checkup   int NOT NULL, 
+  max_treatment int NOT NULL, 
+  weekday       tinyint NOT NULL CHECK(0 <= weekday AND  weekday < 7), 
+  clinic_id     int NOT NULL, 
+  time_id       int NOT NULL, 
+  status        bit DEFAULT 1 NOT NULL, 
+  PRIMARY KEY (slot_id));
+EXEC sp_addextendedproperty 
+  @NAME = N'MS_Description', @VALUE = N'0: Sunday 
+1: Monday 
+2: Tuesday 
+3: Wednesday 
+4: Thursday 
+5: Friday 
+6: Saturday', 
+  @LEVEL0TYPE = N'Schema', @LEVEL0NAME = N'dbo', 
+  @LEVEL1TYPE = N'Table', @LEVEL1NAME = N'ClinicSlot', 
+  @LEVEL2TYPE = N'Column', @LEVEL2NAME = N'weekday';
+CREATE TABLE Customer (
+  id        int IDENTITY(1, 1) NOT NULL, 
+  insurance nvarchar(20) NULL, 
+  birthdate date NULL, 
+  sex       nvarchar(16) NULL, 
+  user_id   int NOT NULL UNIQUE, 
+  PRIMARY KEY (id));
+CREATE TABLE Dentist (
+  id        int IDENTITY(1, 1) NOT NULL, 
+  is_owner  bit DEFAULT 0 NOT NULL, 
   user_id   int NOT NULL UNIQUE, 
   clinic_id int NULL, 
-  PRIMARY KEY (staff_id));
-CREATE TABLE Customer (
-  customer_id int IDENTITY(1, 1) NOT NULL, 
-  sex         nvarchar(10) NULL, 
-  birth_date  date NULL, 
-  insurance   nvarchar(20) NULL, 
-  user_id     int NOT NULL UNIQUE, 
-  PRIMARY KEY (customer_id));
-CREATE TABLE Media (
-  media_id     uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
-  media_path   int NULL, 
-  created_date datetime DEFAULT (GETDATE()) NOT NULL, 
-  type_id      int NOT NULL, 
-  creator_id   int NOT NULL, 
-  PRIMARY KEY (media_id));
-CREATE TABLE MediaType (
-  type_id   int IDENTITY(1, 1) NOT NULL, 
-  type_name nvarchar(50) NOT NULL, 
-  PRIMARY KEY (type_id));
-CREATE TABLE Messages (
-  message_id    uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
-  content       nvarchar(1000) NOT NULL, 
-  creation_date datetime DEFAULT (GETDATE()) NOT NULL, 
-  sender        int NOT NULL UNIQUE, 
-  receiver      int NOT NULL, 
-  PRIMARY KEY (message_id));
+  PRIMARY KEY (id));
 CREATE TABLE Payment (
-  payment_id      uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
-  status          bit NOT NULL, 
-  made_on         datetime NOT NULL, 
-  amount          bigint NOT NULL, 
-  booking_id      uniqueidentifier NOT NULL, 
-  payment_type_id int NULL, 
-  PRIMARY KEY (payment_id));
-CREATE TABLE PaymentType (
-  type_id              int IDENTITY(1, 1) NOT NULL, 
-  type_provider        nvarchar(50) NOT NULL, 
-  type_provider_secret nvarchar(255) NOT NULL, 
-  type_provider_token  nvarchar(255) NOT NULL, 
-  PRIMARY KEY (type_id));
-CREATE TABLE Role (
-  role_id          int IDENTITY(1, 1) NOT NULL, 
-  role_name        nvarchar(50) NOT NULL UNIQUE, 
-  role_description nvarchar(255) NULL, 
-  PRIMARY KEY (role_id));
-CREATE TABLE ScheduledSlot (
-  schedule_slot_id uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
-  max_appointments int NOT NULL, 
-  date_of_week     tinyint NOT NULL CHECK((date_of_week >= 0 AND date_of_week <= 7) ), 
-  clinic_id        int NOT NULL, 
-  slot_id          int NOT NULL, 
-  PRIMARY KEY (schedule_slot_id));
-CREATE TABLE Service (
-  service_id   int IDENTITY(1, 1) NOT NULL, 
-  service_name nvarchar(50) NOT NULL UNIQUE, 
-  PRIMARY KEY (service_id));
+  id             int IDENTITY NOT NULL, 
+  transaction_id nvarchar(255) NOT NULL, 
+  title          nvarchar(255) NULL, 
+  amount         decimal(19, 0) NOT NULL, 
+  creation_time  datetime DEFAULT (GETDATE()) NOT NULL, 
+  provider       nvarchar(20) NOT NULL, 
+  appointment_id uniqueidentifier NOT NULL, 
+  sender         int NOT NULL, 
+  recieve        int NOT NULL, 
+  other          nvarchar(255) NULL, 
+  PRIMARY KEY (id));
+CREATE TABLE ServiceCategory (
+  id   int IDENTITY(1, 1) NOT NULL, 
+  name nvarchar(32) NOT NULL, 
+  PRIMARY KEY (id));
 CREATE TABLE Slot (
-  slot_id    int IDENTITY(1, 1) NOT NULL, 
-  start_time time(7) NOT NULL, 
-  end_time   time(7) NOT NULL, 
-  PRIMARY KEY (slot_id));
+  id      int IDENTITY(1, 1) NOT NULL, 
+  [start] time(7) NOT NULL, 
+  [end]   time(7) NOT NULL, 
+  PRIMARY KEY (id));
+CREATE TABLE Token (
+  ID            uniqueidentifier NOT NULL, 
+  token_value   nvarchar(255) NOT NULL, 
+  reason        nvarchar(80) NOT NULL CHECK(reason IN ('password_reset', '')), 
+  creation_time datetime DEFAULT (GETDATE()) NOT NULL, 
+  used          bit DEFAULT 0 NOT NULL, 
+  expiration    datetime DEFAULT (GETDATE()) NOT NULL, 
+  [user]        int NOT NULL, 
+  PRIMARY KEY (ID));
 CREATE TABLE [User] (
-  user_id       int IDENTITY(1, 1) NOT NULL, 
-  username      varchar(50) NOT NULL UNIQUE, 
-  password      varchar(50) NOT NULL, 
-  email         varchar(50) NULL UNIQUE, 
-  status        bit NOT NULL, 
-  phone_number  varchar(50) NULL, 
-  fullname      nvarchar(50) NULL, 
-  creation_date datetime DEFAULT (GETDATE()) NULL, 
-  role_id       int NOT NULL, 
+  id            int IDENTITY(1, 1) NOT NULL, 
+  username      nvarchar(20) NOT NULL UNIQUE, 
+  password_hash nvarchar(128) NOT NULL, 
+  salt          nvarchar(128) NOT NULL, 
+  email         nvarchar(64) NOT NULL, 
+  fullname      nvarchar(255) NULL, 
+  phone         nvarchar(10) NULL, 
+  creation_time datetime DEFAULT (GETDATE()) NOT NULL, 
+  role          nvarchar(20) NOT NULL CHECK(role IN ('Patient', 'Staff', 'Admin')), 
+  active        bit DEFAULT 1 NOT NULL, 
+  removed       bit NOT NULL, 
+  PRIMARY KEY (id));
+CREATE TABLE UserPanfoymentInfo (
+  user_id        int NOT NULL, 
+  payment_number nvarchar(255) NULL, 
   PRIMARY KEY (user_id));
-ALTER TABLE Certification ADD CONSTRAINT FKCertificat536417 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
-ALTER TABLE Payment ADD CONSTRAINT FKPayment428514 FOREIGN KEY (booking_id) REFERENCES Booking (book_id);
-ALTER TABLE Booking ADD CONSTRAINT FKBooking367844 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
-ALTER TABLE Booking ADD CONSTRAINT FKBooking965192 FOREIGN KEY (customer_id) REFERENCES Customer (customer_id);
-ALTER TABLE ClinicServices ADD CONSTRAINT FKClinicServ622868 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
-ALTER TABLE ClinicServices ADD CONSTRAINT FKClinicServ95478 FOREIGN KEY (service_id) REFERENCES Service (service_id);
-ALTER TABLE Customer ADD CONSTRAINT FKCustomer199874 FOREIGN KEY (user_id) REFERENCES [User] (user_id);
-ALTER TABLE ClinicStaff ADD CONSTRAINT FKClinicStaf352227 FOREIGN KEY (user_id) REFERENCES [User] (user_id);
-ALTER TABLE Booking ADD CONSTRAINT FKBooking760309 FOREIGN KEY (schedule_slot_id) REFERENCES ScheduledSlot (schedule_slot_id);
-ALTER TABLE ScheduledSlot ADD CONSTRAINT FKScheduledS501966 FOREIGN KEY (slot_id) REFERENCES Slot (slot_id);
-ALTER TABLE ScheduledSlot ADD CONSTRAINT FKScheduledS448005 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
-ALTER TABLE [User] ADD CONSTRAINT FKUser1655 FOREIGN KEY (role_id) REFERENCES Role (role_id);
-ALTER TABLE Payment ADD CONSTRAINT FKPayment702148 FOREIGN KEY (payment_type_id) REFERENCES PaymentType (type_id);
-ALTER TABLE Messages ADD CONSTRAINT FKMessages901196 FOREIGN KEY (sender) REFERENCES [User] (user_id);
-ALTER TABLE Messages ADD CONSTRAINT FKMessages658033 FOREIGN KEY (receiver) REFERENCES [User] (user_id);
-ALTER TABLE Booking ADD CONSTRAINT FKBooking214257 FOREIGN KEY (dentist_id) REFERENCES ClinicStaff (staff_id);
-ALTER TABLE ClinicStaff ADD CONSTRAINT FKClinicStaf705438 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
-ALTER TABLE Clinic ADD CONSTRAINT FKClinic176906 FOREIGN KEY (owner_id) REFERENCES [User] (user_id);
-ALTER TABLE Media ADD CONSTRAINT FKMedia498708 FOREIGN KEY (type_id) REFERENCES MediaType (type_id);
-ALTER TABLE Media ADD CONSTRAINT FKMedia66473 FOREIGN KEY (creator_id) REFERENCES [User] (user_id);
-ALTER TABLE Certification ADD CONSTRAINT FKCertificat893466 FOREIGN KEY (media_id) REFERENCES Media (media_id);
-ALTER TABLE Booking ADD CONSTRAINT FKBooking137674 FOREIGN KEY (booking_service_id) REFERENCES ClinicServices (clinic_service_id);
+ALTER TABLE Customer ADD CONSTRAINT FKCustomer336289 FOREIGN KEY (user_id) REFERENCES [User] (id);
+ALTER TABLE Clinic ADD CONSTRAINT FKClinic40491 FOREIGN KEY (owner_id) REFERENCES [User] (id);
+ALTER TABLE ClinicService ADD CONSTRAINT FKClinicServ128006 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
+ALTER TABLE ClinicService ADD CONSTRAINT FKClinicServ913410 FOREIGN KEY (category_id) REFERENCES ServiceCategory (id);
+ALTER TABLE ClinicSlot ADD CONSTRAINT FKClinicSlot657646 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
+ALTER TABLE ClinicSlot ADD CONSTRAINT FKClinicSlot285803 FOREIGN KEY (time_id) REFERENCES Slot (id);
+ALTER TABLE Token ADD CONSTRAINT FKToken237377 FOREIGN KEY ([user]) REFERENCES [User] (id);
+ALTER TABLE BookedService ADD CONSTRAINT FKBookedServ419526 FOREIGN KEY (service_id) REFERENCES ClinicService (id);
+ALTER TABLE Payment ADD CONSTRAINT FKPayment457035 FOREIGN KEY (appointment_id) REFERENCES Appointment (id);
+ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen41115 FOREIGN KEY (original_appointment) REFERENCES Appointment (id);
+ALTER TABLE BookedService ADD CONSTRAINT FKBookedServ274862 FOREIGN KEY (appointment_id) REFERENCES Appointment (id);
+ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen366296 FOREIGN KEY (customer_id) REFERENCES Customer (id);
+ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen998789 FOREIGN KEY (slot_id) REFERENCES ClinicSlot (slot_id);
+ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen99798 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
+ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen157913 FOREIGN KEY (dentist_id) REFERENCES Dentist (id);
+ALTER TABLE Dentist ADD CONSTRAINT FKDentist52014 FOREIGN KEY (user_id) REFERENCES [User] (id);
+ALTER TABLE Dentist ADD CONSTRAINT FKDentist429950 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
+ALTER TABLE UserPanfoymentInfo ADD CONSTRAINT FKUserPanfoy990304 FOREIGN KEY (user_id) REFERENCES [User] (id);
+ALTER TABLE Payment ADD CONSTRAINT FKPayment630698 FOREIGN KEY (sender) REFERENCES UserPanfoymentInfo (user_id);
+ALTER TABLE Payment ADD CONSTRAINT FKPayment740479 FOREIGN KEY (recieve) REFERENCES UserPanfoymentInfo (user_id);
+

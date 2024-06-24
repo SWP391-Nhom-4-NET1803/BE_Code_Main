@@ -19,12 +19,11 @@
 
   <ItemGroup>
     <Folder Include="Helpers\Authorization\Policies\" />
-    <Folder Include="Middlewares\Authentication\" />
     <Folder Include="Services\ConverterService\" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClinicPlatformDTOs\ClinicPlatformDTOs.csproj" />
+    <ProjectReference Include="..\ClinicPlatformDTOs\ClinicPlatformObjects.csproj" />
     <ProjectReference Include="..\ClinicPlatformServices\ClinicPlatformServices.csproj" />
   </ItemGroup>
 

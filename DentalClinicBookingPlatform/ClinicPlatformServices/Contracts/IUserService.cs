@@ -1,5 +1,4 @@
-﻿using ClinicPlatformDTOs.RoleModels;
-using ClinicPlatformDTOs.UserModels;
+﻿using ClinicPlatformDTOs.UserModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -11,41 +10,31 @@ namespace ClinicPlatformServices.Contracts
     public interface IUserService: IDisposable
     {
         IEnumerable<UserInfoModel> GetUsers();
-        UserInfoModel? GetUserInformation(int userId);
+        UserInfoModel? GetUserWithUserId(int userId);
 
-        CustomerInfoModel? GetCustomerInformation(int customerId);
+        UserInfoModel? GetUserWithCustomerId(int customerId);
 
-        ClinicStaffInfoModel? GetClinicStaffInformation(int staffId);
+        UserInfoModel? GetUserWithEmail(string email);
 
-        public ClinicStaffInfoModel? GetClinicStaffInformationWithUserId(int userId);
+        UserInfoModel? GetDentistWithDentistId(int dentistId);
 
-        public CustomerInfoModel? GetCustomerInformationWithUserID(int userId);
+        IEnumerable<UserInfoModel> GetRemovedUser();
 
-        UserInfoModel? GetUserInformationWithEmail(string email);
+        IEnumerable<UserInfoModel> GetAllUserOfRole(string role);
 
-        bool RegisterCustomerAccount(UserRegistrationModel information, out string message);
+        IEnumerable<UserInfoModel> GetUserRegisteredOn(DateOnly date);
 
-        bool RegisterClinicStaffAccount(UserRegistrationModel information, out string message);
-
-        bool RegisterAccount(UserRegistrationModel information, RoleModel.Roles role, out string message, bool IsAdmin = false);
-
-        bool UpdateUserInformation(UserInfoModel information, out string message);
+        bool RegisterAccount(UserInfoModel information, string role, out string message, bool IsAdmin = false);
 
         bool DeleteUser(int id, out string message);
 
-
-        // Other business logics
         bool CheckLogin(string username, string password, out UserInfoModel? user);
-        
-        bool LoginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message);
 
-        bool LoginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message);
-
-        bool LoginAsAdmin(string username, string password, out UserInfoModel? info, out string message);
+        bool UpdateUserInformation(UserInfoModel information, out string message);
 
         bool ExistUser(int id);
 
-        bool UpdatePasswordForUserWithId(int userId, string oldPassword, string newPassword, out string message);
+        bool UpdatePasswordForUserWithId(int userId, string newPassword, out string message);
 
         bool ActivateUser(int id, out string message);
 

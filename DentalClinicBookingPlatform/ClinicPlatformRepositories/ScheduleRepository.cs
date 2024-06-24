@@ -1,5 +1,4 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs;
+﻿using ClinicPlatformDatabaseObject;
 using ClinicPlatformDTOs.SlotModels;
 using ClinicPlatformRepositories.Contracts;
 
@@ -7,24 +6,25 @@ namespace ClinicPlatformRepositories
 {
     public class ScheduleRepository : IScheduleRepository
     {
-        private readonly ScheduledSlotDAO clinicSlotDAO;
-        private readonly SlotDAO slotDAO;
+        private readonly DentalClinicPlatformContext context;
         private bool disposedValue;
 
-        public ScheduleRepository()
+        public ScheduleRepository(DentalClinicPlatformContext context)
         {
-            this.clinicSlotDAO = new ScheduledSlotDAO();
-            this.slotDAO = new SlotDAO();
+            this.context = context;
         }
 
-        public bool AddSlot(SlotInfoModel slot)
-        { 
-            return slotDAO.AddSlot(MapSlotModelToSlot(slot));
+        public SlotInfoModel AddSlot(SlotInfoModel slot)
+        {
+            Slot slotInfo = MapToSlot(slot);
+            context.Slots.Add(slotInfo);
+
+            return MapSlotToSlotModel(slotInfo);
         }
 
         public SlotInfoModel? GetSlot(int slotId)
         {
-            var result = slotDAO.GetSlot(slotId);
+            var result = context.Slots.Find(slotId);
 
             if (result == null)
             {
@@ -36,92 +36,110 @@ namespace ClinicPlatformRepositories
 
         public IEnumerable<SlotInfoModel> GetAllSlot() 
         {
-            return from slot in slotDAO.GetAllSlot()
+            return from slot in context.Slots
                    select new SlotInfoModel
                    {
-                       Id = slot.SlotId,
-                       StartTime = slot.StartTime,
-                       EndTime = slot.EndTime,
+                       Id = slot.Id,
+                       StartTime = slot.Start,
+                       EndTime = slot.End,
                    };
         }
 
-        public bool UpdateSlot(SlotInfoModel slot)
+        public SlotInfoModel? UpdateSlot(SlotInfoModel slot)
         {
             if (slot.Id != null)
             {
-                var slotInfo = slotDAO.GetSlot((int)slot.Id);
+                var slotInfo = context.Slots.Find((int)slot.Id);
                 if (slotInfo != null)
                 {
-                    slotInfo.StartTime = slot.StartTime ?? slotInfo.StartTime;
-                    slotInfo.EndTime = slot.EndTime ?? slotInfo.EndTime;
+                    slotInfo.Start = slot.StartTime ?? slotInfo.Start;
+                    slotInfo.End = slot.EndTime ?? slotInfo.End;
 
-                    return slotDAO.UpdateSlot(slotInfo);
+                    context.Slots.Update(slotInfo);
+                    return MapSlotToSlotModel(slotInfo);
                 }
             }
 
-            return false;
+            return null;
         }
 
         public bool DeleteSlot(int slotId)
         {
-            return slotDAO.DeleteSlot(slotId);
+            Slot? slot = context.Slots.Find(slotId);
+
+            if (slot == null)
+            {
+                return false;
+            }
+
+            context.Slots.Remove(slot);
+            return true;
         }
 
-        public bool AddClinicSlot(ClinicSlotInfoModel slot)
+        public ClinicSlotInfoModel AddClinicSlot(ClinicSlotInfoModel slot)
         {
             slot.ClinicSlotId = null;
-            return clinicSlotDAO.AddScheduledSlot(MapClinicSlotModelToScheduleSlot(slot)) != null;
+
+            ClinicSlot slotInfo = MapToClinicSlot(slot);
+
+            context.ClinicSlots.Add(slotInfo);
+
+            return MapToClinicSlotModel(slotInfo);
         }
 
         public ClinicSlotInfoModel? GetClinicSlot(Guid slotId)
         {
-            var result = clinicSlotDAO.GetScheduledSlot(slotId);
+            var result = context.ClinicSlots.Find(slotId);
 
-            result.Slot = slotDAO.GetSlot(result.SlotId)!;
+            if (result != null)
+            {
+                result.Time = context.Slots.Find(result.SlotId)!;
 
-            return result != null ? MapScheduleSlotToClinicSlotModel(result) : null; 
+                return MapToClinicSlotModel(result); 
+            }
+            return null;
+            
         }
 
         public IEnumerable<ClinicSlotInfoModel> GetAllClinicSlot()
         {
-            return from clinicSlot in clinicSlotDAO.GetAllScheduledSlot()
-                   join baseSlot in slotDAO.GetAllSlot() on clinicSlot.SlotId equals baseSlot.SlotId
+            return from clinicSlot in context.ClinicSlots
+                   join baseSlot in context.Slots on clinicSlot.TimeId equals baseSlot.Id
                    select new ClinicSlotInfoModel
                    {
-                       ClinicSlotId = clinicSlot.ScheduleSlotId,
-                       SlotId = clinicSlot.SlotId,
-                       Weekday = clinicSlot.DateOfWeek,
+                       ClinicSlotId = clinicSlot.SlotId,
+                       SlotId = clinicSlot.TimeId,
+                       Weekday = clinicSlot.Weekday,
                        ClinicId = clinicSlot.ClinicId,
-                       MaxAppointment = clinicSlot.MaxAppointments,
-                       StartTime = baseSlot.StartTime,
-                       EndTime = baseSlot.EndTime,
+                       MaxCheckup = clinicSlot.MaxCheckup,
+                       MaxTreatment = clinicSlot.MaxTreatment,
+                       StartTime = baseSlot.Start,
+                       EndTime = baseSlot.End,
                    };
         }
 
-        public bool UpdateClinicSlot(ClinicSlotInfoModel slot)
+        public ClinicSlotInfoModel UpdateClinicSlot(ClinicSlotInfoModel slot)
         {
-            if (slot.ClinicSlotId != null)
-            {
-                var slotInfo = clinicSlotDAO.GetScheduledSlot((Guid) slot.ClinicSlotId);
-                if (slotInfo != null)
-                {
-                    slotInfo.DateOfWeek = (byte?) slot.Weekday ?? slotInfo.DateOfWeek;
-                    slotInfo.SlotId = slot.SlotId ?? slotInfo.SlotId;
-                    slotInfo.MaxAppointments = slot.MaxAppointment ?? slotInfo.MaxAppointments;
+            var slotInfo = MapToClinicSlot(slot);
 
-                    clinicSlotDAO.UpdateScheduledSlot(slotInfo);
-                    return true;
-                }
-            }
-
-            return false;
+            context.ClinicSlots.Update(slotInfo);
+          
+            return MapToClinicSlotModel(slotInfo);
         }
 
         public bool DeleteClinicSlot(Guid slotId)
         {
-            clinicSlotDAO.DeleteScheduledSlot(slotId);
+            var clinicSlot = context.ClinicSlots.Find(slotId);
 
-            return true;
+            if (clinicSlot != null)
+            {
+                context.ClinicSlots.Remove(clinicSlot);
+
+                return true;
+
+            }
+
+            return false;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -130,8 +148,7 @@ namespace ClinicPlatformRepositories
             {
                 if (disposing)
                 {
-                    slotDAO.Dispose();
-                    clinicSlotDAO.Dispose();
+                    context.Dispose();
                 }
                 disposedValue = true;
             }
@@ -145,16 +162,19 @@ namespace ClinicPlatformRepositories
         }
 
         // Mappers
-        private ClinicSlotInfoModel MapScheduleSlotToClinicSlotModel(ScheduledSlot ScheduleSlot)
+        private ClinicSlotInfoModel MapToClinicSlotModel(ClinicSlot ScheduleSlot)
         {
             return new ClinicSlotInfoModel()
             {
-                ClinicSlotId = ScheduleSlot.ScheduleSlotId,
+                ClinicSlotId = ScheduleSlot.SlotId,
                 ClinicId = ScheduleSlot.ClinicId,
-                SlotId = ScheduleSlot.SlotId,
-                Weekday = ScheduleSlot.DateOfWeek,
-                StartTime = ScheduleSlot.Slot.StartTime,
-                EndTime = ScheduleSlot.Slot.EndTime,
+                SlotId = ScheduleSlot.TimeId,
+                Weekday = ScheduleSlot.Weekday,
+                MaxTreatment = ScheduleSlot.MaxTreatment,
+                MaxCheckup = ScheduleSlot.MaxCheckup,
+                StartTime = ScheduleSlot.Time.Start,
+                EndTime = ScheduleSlot.Time.End,
+                Status = ScheduleSlot.Status,
             };
         }
 
@@ -162,31 +182,33 @@ namespace ClinicPlatformRepositories
         {
             return new SlotInfoModel()
             {
-                Id = slot.SlotId,
-                StartTime = slot.StartTime,
-                EndTime = slot.EndTime,
+                Id = slot.Id,
+                StartTime = slot.Start,
+                EndTime = slot.End,
             };
         }
 
-        private ScheduledSlot MapClinicSlotModelToScheduleSlot(ClinicSlotInfoModel slotInfo)
+        private ClinicSlot MapToClinicSlot(ClinicSlotInfoModel slotInfo)
         {
-            return new ScheduledSlot()
+            return new ClinicSlot()
             {
-                ScheduleSlotId = slotInfo.ClinicSlotId ?? Guid.NewGuid(),
-                SlotId = (int)slotInfo.SlotId!,
-                ClinicId = slotInfo.ClinicId ?? 0,
-                DateOfWeek = (byte)slotInfo.Weekday!,
-                MaxAppointments = (int)slotInfo.MaxAppointment!,
+                SlotId = slotInfo.ClinicSlotId ?? Guid.NewGuid(),
+                TimeId = slotInfo.SlotId,
+                ClinicId = slotInfo.ClinicId,
+                Weekday = (byte)slotInfo.Weekday,
+                MaxCheckup = slotInfo.MaxCheckup,
+                MaxTreatment = slotInfo.MaxTreatment,
+                Status = slotInfo.Status,
             };
         }
 
-        private Slot MapSlotModelToSlot(SlotInfoModel slotInfo)
+        private Slot MapToSlot(SlotInfoModel slotInfo)
         {
             return new Slot()
             {
-                SlotId = (int)slotInfo.Id!,
-                StartTime = (TimeOnly)slotInfo.StartTime!,
-                EndTime = (TimeOnly)slotInfo.EndTime!,
+                Id = (int)slotInfo.Id!,
+                Start = (TimeOnly)slotInfo.StartTime!,
+                End = (TimeOnly)slotInfo.EndTime!,
             };
         }
     }

@@ -1,39 +1,39 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformDatabaseObject;
 
 public partial class User
 {
-    public int UserId { get; set; }
+    public int Id { get; set; }
 
     public string Username { get; set; } = null!;
 
-    public string Password { get; set; } = null!;
+    public string PasswordHash { get; set; } = null!;
 
-    public string? Email { get; set; }
+    public string Salt { get; set; } = null!;
 
-    public bool Status { get; set; }
-
-    public string? PhoneNumber { get; set; }
+    public string Email { get; set; } = null!;
 
     public string? Fullname { get; set; }
 
-    public DateTime? CreationDate { get; set; }
+    public string? Phone { get; set; }
 
-    public int RoleId { get; set; }
+    public DateTime CreationTime { get; set; }
 
-    public virtual ClinicStaff? ClinicStaff { get; set; }
+    public string Role { get; set; } = null!;
+
+    public bool Active { get; set; }
+
+    public bool Removed { get; set; }
 
     public virtual ICollection<Clinic> Clinics { get; set; } = new List<Clinic>();
 
     public virtual Customer? Customer { get; set; }
 
-    public virtual ICollection<Medium> Media { get; set; } = new List<Medium>();
+    public virtual Dentist? Dentist { get; set; }
 
-    public virtual ICollection<Message> MessageReceiverNavigations { get; set; } = new List<Message>();
+    public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();
 
-    public virtual Message? MessageSenderNavigation { get; set; }
-
-    public virtual Role Role { get; set; } = null!;
+    public virtual UserPanfoymentInfo? UserPanfoymentInfo { get; set; }
 }

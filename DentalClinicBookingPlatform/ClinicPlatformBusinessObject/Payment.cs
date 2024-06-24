@@ -1,23 +1,33 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformDatabaseObject;
 
 public partial class Payment
 {
-    public Guid PaymentId { get; set; }
+    public int Id { get; set; }
 
-    public bool Status { get; set; }
+    public string TransactionId { get; set; } = null!;
 
-    public DateTime MadeOn { get; set; }
+    public string? Title { get; set; }
 
-    public long Amount { get; set; }
+    public decimal Amount { get; set; }
 
-    public Guid BookingId { get; set; }
+    public DateTime CreationTime { get; set; }
 
-    public int? PaymentTypeId { get; set; }
+    public string Provider { get; set; } = null!;
 
-    public virtual Booking Booking { get; set; } = null!;
+    public Guid AppointmentId { get; set; }
 
-    public virtual PaymentType? PaymentType { get; set; }
+    public int Sender { get; set; }
+
+    public int Recieve { get; set; }
+
+    public string? Other { get; set; }
+
+    public virtual Appointment Appointment { get; set; } = null!;
+
+    public virtual UserPanfoymentInfo RecieveNavigation { get; set; } = null!;
+
+    public virtual UserPanfoymentInfo SenderNavigation { get; set; } = null!;
 }

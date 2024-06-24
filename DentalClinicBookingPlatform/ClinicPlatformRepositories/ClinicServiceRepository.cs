@@ -1,5 +1,4 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs;
+﻿using ClinicPlatformDatabaseObject;
 using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformRepositories.Contracts;
 using Microsoft.IdentityModel.Tokens;
@@ -13,182 +12,189 @@ namespace ClinicPlatformRepositories
 {
     public class ClinicServiceRepository : IClinicServiceRepository
     {
-        private readonly ClinicServiceDAO clinicServiceDAO;
-        private readonly ServiceDAO serviceDAO;
+        private readonly DentalClinicPlatformContext context;
         private bool disposedValue;
 
-        public ClinicServiceRepository()
+        public ClinicServiceRepository(DentalClinicPlatformContext context)
         {
-            this.clinicServiceDAO = new ClinicServiceDAO();
-            this.serviceDAO = new ServiceDAO();
+            this.context = context;
         }
 
-        public bool AddBaseService(ClinicServiceInfoModel service)
+        public bool AddServiceCategory(ServiceCategoryModel service)
         {
             if (service.Name.IsNullOrEmpty())
             {
                 return false;
             }
 
-            if (serviceDAO.GetAllService().Any(x => x.ServiceName == service.Name))
+            if (context.ServiceCategories.Any(x => x.Name == service.Name))
             {
                 return false;
             }
 
-            Service newService = new Service()
+            ServiceCategory newService = new ServiceCategory()
             {
-                ServiceName = service.Name!
+                Name = service.Name!
+                // Avaiable = service.Available;
             };
 
-            serviceDAO.AddService(newService);
+            context.ServiceCategories.Add(newService);
 
             return true;
         }
 
-        public bool AddClinicService(ClinicServiceInfoModel clinicServiceInfo)
+        public ClinicServiceInfoModel? AddClinicService(ClinicServiceInfoModel clinicServiceInfo)
         {
-            Service? baseService = serviceDAO.GetAllService()
-                .Where(x => x.ServiceId == clinicServiceInfo.ServiceId)
+            ServiceCategory? category = context.ServiceCategories
+                .Where(x => x.Id == clinicServiceInfo.CategoryId)
                 .FirstOrDefault();
 
-            if (baseService == null)
+            if (category == null)
             {
-                return false;
+                return null;
             }
 
-            ClinicService newClinicService = new ClinicService()
-            {
-                ClinicId = (int) clinicServiceInfo.ClinicId!,
-                Price = clinicServiceInfo.Price,
-                ServiceId = (int) clinicServiceInfo.ServiceId!,
-                Description = clinicServiceInfo.Description,
-            };
+            ClinicService newClinicService = MapToClinicService(clinicServiceInfo);
 
-            clinicServiceDAO.AddClinicService(newClinicService);
-            return true;
+            context.ClinicServices.Add(newClinicService);
+            return MapToClinicServiceModel(newClinicService);
 
         }
 
         public IEnumerable<ClinicServiceInfoModel> GetAll(int clinicId)
         {
-            // I was crying on the floor laughing because of this.
-            return from service in clinicServiceDAO.GetAllClinicService()
-                   join baseService in serviceDAO.GetAllService() on service.ServiceId equals baseService.ServiceId
+            return from service in context.ClinicServices.ToList()
+                   join category in context.ServiceCategories on service.CategoryId equals category.Id
                    where service.ClinicId == clinicId
                    select new ClinicServiceInfoModel()
                    {
-                       ClinicServiceId = service.ClinicServiceId,
+                       ClinicServiceId = service.Id,
                        Price = service.Price,
                        ClinicId = clinicId,
+                       Available = service.Available,
+                       CategoryId = category.Id,
+                       Removed = service.Removed,
                        Description= service.Description,
-                       Name = baseService.ServiceName
+                       Name = service.CustomName ?? category.Name
+                       
                    };
         }
 
-        public IEnumerable<ClinicServiceInfoModel> GetAll()
+        public IEnumerable<ClinicServiceInfoModel> GetAllClinicService()
         {
-            return from service in clinicServiceDAO.GetAllClinicService()
-                   join baseService in serviceDAO.GetAllService() on service.ServiceId equals baseService.ServiceId
+            return from service in context.ClinicServices
+                   join category in context.ServiceCategories on service.CategoryId equals category.Id
                    select new ClinicServiceInfoModel()
                    {
-                       ClinicServiceId = service.ClinicServiceId,
+                       ClinicServiceId = service.Id,
                        Price = service.Price,
                        ClinicId = service.ClinicId,
                        Description = service.Description,
-                       Name = baseService.ServiceName,
-                       ServiceId = baseService.ServiceId
+                       Name = service.CustomName ?? category.Name,
+                       CategoryId = category.Id,
                    };
         }
 
-        public IEnumerable<ClinicServiceInfoModel> GetAllBaseService()
+        public IEnumerable<ServiceCategoryModel> GetAllServiceCategory()
         {
-            return from baseService in serviceDAO.GetAllService()
-                   select new ClinicServiceInfoModel()
+            return from category in context.ServiceCategories
+                   select new ServiceCategoryModel()
                    {
-                       Name = baseService.ServiceName,
-                       ServiceId = baseService.ServiceId,
+                       Name = category.Name,
+                       Id = category.Id,
                    };
         }
 
-        public ClinicServiceInfoModel? GetBaseService(int serviceId)
+        public ServiceCategoryModel? GetServiceCategory(int categoryId)
         {
-            var result = serviceDAO.GetService(serviceId);
+            var result = context.ServiceCategories.Find(categoryId);
 
             if (result != null)
             {
-                return new ClinicServiceInfoModel() { ServiceId = result.ServiceId, Name = result.ServiceName };
+                return new ServiceCategoryModel() { Id = result.Id, Name = result.Name };
             }
             return null;
         }
 
-        public ClinicServiceInfoModel? GetClinicServie(Guid clinicServiceId)
+        public ClinicServiceInfoModel? GetClinicService(Guid clinicServiceId)
         {
-            var result = clinicServiceDAO.GetClinicService(clinicServiceId);
+            var result = context.ClinicServices.Find(clinicServiceId);
 
-            var baseService = result != null ? serviceDAO.GetService(result.ServiceId) : null;
+            var category = result != null ? context.ServiceCategories.Find(result.CategoryId) : null;
 
-            if (baseService != null && result != null)
+            if (category != null && result != null)
             {
                 return new ClinicServiceInfoModel()
                 {
-                    ClinicServiceId = result.ClinicServiceId,
+                    ClinicServiceId = result.Id,
                     ClinicId = result.ClinicId,
                     Description = result.Description,
                     Price = result.Price,
-                    ServiceId = result.ServiceId,
-                    Name = baseService.ServiceName,
+                    CategoryId = result.CategoryId,
+                    Name = result.CustomName ?? category.Name,
                 };
             }
 
             return null;
         }
 
-        public bool UpdateBaseService(ClinicServiceInfoModel serviceInfo)
+        public ServiceCategoryModel UpdateServiceCategory(ServiceCategoryModel serviceInfo)
         {
-            Service? service = serviceInfo.ServiceId != null ? serviceDAO.GetService((int) serviceInfo.ServiceId): null;
+            ServiceCategory? service = context.ServiceCategories.Find((int)serviceInfo.Id);
             
             if (service != null)
             {
-                service.ServiceName = serviceInfo.Name ?? service.ServiceName;
+                service.Name = serviceInfo.Name ?? service.Name;
+                //service.Available = serviceInfo.Available
 
-                serviceDAO.UpdateService(service);
-                return true;
+                context.ServiceCategories.Update(service);
+                return new ServiceCategoryModel
+                {
+                    Id = service.Id,
+                    Name = service.Name
+                };
             }
 
-            return false;
+            return null;
         }
 
-        public bool UpdateClinicService(ClinicServiceInfoModel serviceInfo)
+        public ClinicServiceInfoModel UpdateClinicService(ClinicServiceInfoModel serviceInfo)
         {
-            ClinicService? clinicService = clinicServiceDAO.GetClinicService(serviceInfo.ClinicServiceId);
+            ClinicService clinicService = MapToClinicService(serviceInfo);
 
-            Service? service = clinicService != null && serviceInfo.ServiceId != null ? serviceDAO.GetService((int)serviceInfo.ServiceId) : null;
+            context.ClinicServices.Update(clinicService);
+            return MapToClinicServiceModel(clinicService);
+        }
 
-            if (clinicService != null)
+        public bool DeleteServiceCategory(int serviceId)
+        {
+
+            ServiceCategory? category = context.ServiceCategories.Find(serviceId);
+
+            if (category != null)
             {
-                clinicService.Price = serviceInfo.Price ?? clinicService.Price;
-                clinicService.Description = serviceInfo.Description ?? clinicService.Description;
-                clinicService.ServiceId = service != null ? service.ServiceId : clinicService.ServiceId;
+                context.ServiceCategories.Remove(category);
 
-                clinicServiceDAO.UpdateClinicService(clinicService);
                 return true;
             }
 
+
             return false;
-        }
-
-        public bool DeleteBaseService(int serviceId)
-        {
-            serviceDAO.DeleteService(serviceId);
-
-            return serviceDAO.GetService(serviceId) != null;
         }
 
         public bool DeleteClinicService(Guid clinicServiceId)
         {
-            clinicServiceDAO.DeleteClinicService(clinicServiceId);
+            ClinicService? service = context.ClinicServices.Find(clinicServiceId);
 
-            return clinicServiceDAO.GetClinicService(clinicServiceId) != null;
+            if (service != null)
+            {
+                service.Removed = true;
+                context.ClinicServices.Update(service);
+
+                return true;
+            }
+
+            return false;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -197,8 +203,7 @@ namespace ClinicPlatformRepositories
             {
                 if (disposing)
                 {
-                    serviceDAO.Dispose();
-                    clinicServiceDAO.Dispose(); 
+                    context.Dispose();
                 }
                 disposedValue = true;
             }
@@ -210,29 +215,33 @@ namespace ClinicPlatformRepositories
             GC.SuppressFinalize(this);
         }
 
-        // Mappers (currently have no use)
-        private ClinicServiceInfoModel MapClinicServiceToClinicServiceModel(ClinicService service)
+        private ClinicServiceInfoModel MapToClinicServiceModel(ClinicService service)
         {
             return new()
             {
-                ClinicServiceId = service.ClinicServiceId,
-                Name = service.Service.ServiceName,
+                ClinicServiceId = service.Id,
+                Name = service.CustomName ?? service.Category.Name,
                 Description = service.Description,
                 Price = service.Price,
-                ServiceId = service.ServiceId,
+                CategoryId = service.CategoryId,
                 ClinicId = service.ClinicId,
+                Available = service.Available,
+                Removed = service.Removed,
             };
         }
 
-        private ClinicService MapClinicServiceModelToClinicService(ClinicServiceInfoModel serviceInfo)
+        private ClinicService MapToClinicService(ClinicServiceInfoModel serviceInfo)
         {
             return new()
             {
-                ClinicServiceId = serviceInfo.ClinicServiceId,
+                Id = serviceInfo.ClinicServiceId,
+                CustomName = serviceInfo.Name,
                 Description = serviceInfo.Description,
                 Price = serviceInfo.Price,
-                ServiceId = serviceInfo.ServiceId ?? 0,
-                ClinicId = serviceInfo.ClinicId ?? 0,
+                CategoryId = serviceInfo.CategoryId,
+                ClinicId = serviceInfo.ClinicId,
+                Available = serviceInfo.Available,
+                Removed = serviceInfo.Removed,
             };
         }
     }

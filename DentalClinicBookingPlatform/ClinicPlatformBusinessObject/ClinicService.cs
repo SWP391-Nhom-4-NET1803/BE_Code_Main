@@ -1,23 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformDatabaseObject;
 
 public partial class ClinicService
 {
-    public Guid ClinicServiceId { get; set; }
+    public Guid Id { get; set; }
 
-    public long? Price { get; set; }
+    public string? CustomName { get; set; }
 
-    public string? Description { get; set; }
+    public string Description { get; set; } = null!;
+
+    public int Price { get; set; }
 
     public int ClinicId { get; set; }
 
-    public int ServiceId { get; set; }
+    public int CategoryId { get; set; }
 
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
+    public bool Available { get; set; }
+
+    public bool Removed { get; set; }
+
+    public virtual ICollection<BookedService> BookedServices { get; set; } = new List<BookedService>();
+
+    public virtual ServiceCategory Category { get; set; } = null!;
 
     public virtual Clinic Clinic { get; set; } = null!;
-
-    public virtual Service Service { get; set; } = null!;
 }
