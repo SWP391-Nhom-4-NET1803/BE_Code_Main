@@ -53,8 +53,6 @@ namespace ClinicPlatformServices
         {
             var user = userRepository.GetUserWithUsername(username);
 
-            Console.WriteLine(user);
-
             if (user == null)
             {
                 user = userRepository.GetUserWithEmail(username);
@@ -64,10 +62,6 @@ namespace ClinicPlatformServices
                     return null;
                 }
             }
-
-            Console.WriteLine(user.Username);
-            Console.WriteLine(user.PasswordHash);
-            Console.WriteLine(HashPassword(password, user.Salt));
 
             if (HashPassword(password, user.Salt) == user.PasswordHash)
             {
@@ -123,24 +117,24 @@ namespace ClinicPlatformServices
         /// <param name="message"></param>
         /// <param name="IsAdmin">Granting the registing user an admin if true regardless of their role</param>
         /// <returns><see cref="true"/> if register sucessfully or <see cref="false"/> if failed.</returns>
-        public bool RegisterAccount(UserInfoModel information, string role, out string message, bool IsAdmin = false)
+        public UserInfoModel? RegisterAccount(UserInfoModel information, string role, out string message, bool IsAdmin = false)
         {
 
             if (!CheckAccountAvailability(information.Username, information.Email, out message))
             {
-                return false;
+                return null;
             }
 
             if (!CheckValidUsername(information.Username))
             {
                 message = "Username should contain at least 8 character starting with a alphabet character and containing at least one uppercase, lowercase or number with maxium of 30 character.";
-                return false;
+                return null;
             }
 
             if (!CheckValidPassword(information.PasswordHash))
             {
                 message = "Pass should contain at least 8 character and containing at least one uppercase, lowercase and number with maxium of 30 character.";
-                return false;
+                return null;
             }
 
             information.Salt = CreateSalt(64);
@@ -155,11 +149,11 @@ namespace ClinicPlatformServices
                 if (newUser == null)
                 {
                     message = "Failed while creating admin account";
-                    return false;
+                    return null;
                 }
 
                 message = "Created admin account successfully";
-                return true;
+                return newUser;
             }
             else if (role == "Customer")
             {
@@ -168,11 +162,11 @@ namespace ClinicPlatformServices
                 if (newUser == null)
                 {
                     message = "Failed while creating Customer account";
-                    return false;
+                    return null;
                 }
 
                 message = "Created Customer account successfully";
-                return true;
+                return newUser;
             }
             else if (role == "Dentist")
             {
@@ -181,29 +175,30 @@ namespace ClinicPlatformServices
                 if (newUser == null)
                 {
                     message = "Failed while creating Dentist account";
-                    return false;
+                    return null;
                 }
 
                 message = "Created Dentist account successfully";
-                return true;
+                return newUser;
             }
             else
             {
                 message = "Unknown user role provided";
-                return false;
+                return null;
             }
         }
 
-        public bool UpdateUserInformation(UserInfoModel information, out string message)
+        public UserInfoModel UpdateUserInformation(UserInfoModel information, out string message)
         {
-            if (userRepository.UpdateUser(information) != null)
+            UserInfoModel user = userRepository.UpdateUser(information);
+            if (user != null)
             {
                 message = "Update user information successfully";
-                return true;
+                return user;
             }
 
             message = "Update user information failed";
-            return false;
+            return null ;
         }
 
         public bool UpdatePasswordForUserWithId(int userId, string newPassword, out string message)
@@ -221,7 +216,7 @@ namespace ClinicPlatformServices
             {
                 userInfo.PasswordHash = HashPassword(newPassword, userInfo.Salt);
 
-                return UpdateUserInformation(userInfo, out message);
+                return UpdateUserInformation(userInfo, out message) != null;
             }
 
             message = $"User does not exist for Id {userId}";

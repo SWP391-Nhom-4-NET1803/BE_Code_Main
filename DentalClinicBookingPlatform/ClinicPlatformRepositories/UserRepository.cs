@@ -32,8 +32,6 @@ namespace ClinicPlatformRepositories
         {
             IEnumerable<User> userList = context.Users.Include(x => x.Customer).Include(x => x.Dentist);
 
-            Console.WriteLine($"{userList.Count()}");
-
             if (!includeRemoved)
             {
                 userList = userList.Where(x => !x.Removed);
@@ -49,7 +47,7 @@ namespace ClinicPlatformRepositories
 
         public UserInfoModel? GetUser(int userId)
         {
-            User? user = context.Users.Find(userId);
+            User? user = context.Users.Include(x => x.Dentist).Include(x => x.Customer).Where(x => x.Id == userId).FirstOrDefault();
 
             if (user != null)
             {
@@ -98,15 +96,45 @@ namespace ClinicPlatformRepositories
 
             user.Removed = true;
 
-            context.Users.Update(user);
+            context.Entry(user).CurrentValues.SetValues(user);
             context.SaveChanges();
         }
 
         public UserInfoModel? UpdateUser(UserInfoModel userInfo)
         {
-            context.Users.Update(MapToUser(userInfo));
-            context.SaveChanges();
-            return userInfo;
+            User? target = context.Users.Include(x => x.Customer).Include(x => x.Dentist).Where(x => x.Id == userInfo.Id).FirstOrDefault(); ;
+
+            if (target != null)
+            {
+
+                target.Username = userInfo.Username ?? target.Username;
+                target.PasswordHash = userInfo.PasswordHash ?? target.PasswordHash;
+                target.Fullname = userInfo.Fullname ?? target.Fullname;
+                target.Email = userInfo.Email ?? target.Email;
+                target.Phone = userInfo.Phone ?? target.Phone;
+                target.Active = userInfo.IsActive;
+                target.Removed = userInfo.IsRemoved;
+
+                if (target.Role == "Dentist")
+                {
+                    target.Dentist!.ClinicId = userInfo.ClinicId;
+                    target.Dentist!.IsOwner = userInfo.IsOwner ?? false;
+                }
+
+                if (target.Role == "Customer")
+                {
+                    target.Customer!.Birthdate = userInfo.Birthdate ?? target.Customer.Birthdate;
+                    target.Customer!.Insurance = userInfo.Insurance ?? target.Customer.Insurance;
+                    target.Customer!.Sex = userInfo.Sex ?? target.Customer.Sex;
+                }
+
+                context.Users.Update(target);
+                context.SaveChanges();
+
+                return userInfo;
+            }
+
+            return null;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -132,6 +160,7 @@ namespace ClinicPlatformRepositories
         {
             User user = new User()
             {
+                Id = userInfo.Id,
                 Username = userInfo.Username,
                 PasswordHash = userInfo.PasswordHash,
                 Salt = userInfo.Salt,
@@ -152,7 +181,9 @@ namespace ClinicPlatformRepositories
             {
                 user.Dentist = new Dentist()
                 {
-                    ClinicId = null,
+                    Id = userInfo.DentistId ?? 0,
+                    UserId = userInfo.Id,
+                    ClinicId = userInfo.ClinicId,
                     IsOwner = userInfo.IsOwner ?? false,
                 };
             }
