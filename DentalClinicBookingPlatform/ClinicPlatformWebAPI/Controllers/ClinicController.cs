@@ -84,7 +84,7 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             ClinicInfoModel? clinicInfo = clinicService.GetClinicWithId(id);
 
-            if (clinicInfo == null)
+            if (clinicInfo == null || clinicInfo.Status == "removed")
             {
                 return NotFound(new HttpResponseModel()
                 {
@@ -108,6 +108,8 @@ namespace ClinicPlatformWebAPI.Controllers
             IEnumerable<ClinicInfoModel> result;
 
             result = clinicService.GetAllClinic(page_size, page-1);
+
+            result = result.Where(x => x.Status != "removed");
 
             if (name != null)
             {
@@ -300,6 +302,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("deactivate/{id}")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> InactivateClinic(int id)
         {
 

@@ -230,14 +230,21 @@ namespace ClinicPlatformServices
 
         public bool DeleteClinic(int clinicId)
         {
-            clinicRepository.DeleteClinic(clinicId);
+            ClinicInfoModel? clinic = clinicRepository.GetClinic(clinicId);
 
-            if (clinicRepository.GetClinic(clinicId) != null)
+            if (clinic != null)
             {
-                return false;
-            }
+                clinic.Status = "removed";
 
-            return true;
+                clinic = clinicRepository.UpdateClinic(clinic);
+
+                if (clinic != null)
+                {
+                    return true;
+                }
+            }   
+
+            return false;
         }
 
         public bool DeleteClinicServices(Guid clinicServiceId, out string message)
