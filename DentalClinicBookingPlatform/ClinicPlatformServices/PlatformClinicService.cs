@@ -116,16 +116,17 @@ namespace ClinicPlatformServices
             return clinicServiceRepository.GetAllClinicService().Where(x => x.CategoryId == categoryId).FirstOrDefault();
         }
 
-        public bool UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message)
+        public ClinicInfoModel? UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message)
         {
-            if (clinicRepository.UpdateClinic(clinicInfo) == null)
+            var clinic = clinicRepository.UpdateClinic(clinicInfo);
+            if (clinic == null)
             {
                 message = $"Error while trying to update clinic information! Update invoked for {clinicInfo.Name} ({clinicInfo.Id})";
-                return false;
+                return null;
             };
 
             message = $"Updated clinic {clinicInfo.Name} information!";
-            return true;
+            return clinic;
         }
 
         public bool AddClinicService(ClinicServiceInfoModel clinicService, out string message)

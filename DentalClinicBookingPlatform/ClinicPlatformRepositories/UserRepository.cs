@@ -75,14 +75,7 @@ namespace ClinicPlatformRepositories
 
         public UserInfoModel? GetUserWithUsername(string username)
         {
-            var user = GetAllUser().Where(x => x.Username == username);
-
-            if (user != null)
-            {
-                Console.WriteLine(GetAllUser().FirstOrDefault().Username);
-            }
-
-            return user.FirstOrDefault();
+            return GetAllUser().Where(x => x.Username == username).FirstOrDefault();
         }
 
         public void DeleteUser(int userId)
