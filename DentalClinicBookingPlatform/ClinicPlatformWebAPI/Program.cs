@@ -123,7 +123,6 @@ builder.Services.AddScoped<IClinicServiceService, ClinicServiceService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IAuthService,  AuthService>();
 
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -139,6 +138,8 @@ app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<AuthorizationMiddleware>();
 
 app.MapControllers();
 

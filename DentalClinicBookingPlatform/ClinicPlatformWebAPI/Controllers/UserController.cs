@@ -14,11 +14,13 @@ namespace ClinicPlatformWebAPI.Controllers
     [ApiController]
     public class UserController : ControllerBase
     {
-        private IUserService userService;
+        private readonly IUserService userService;
+        private readonly IAuthService authService;
 
-        public UserController(IUserService userService)
+        public UserController(IUserService userService, IAuthService authService)
         {
             this.userService = userService;
+            this.authService = authService;
         }
 
         [HttpPut("update")]
@@ -30,6 +32,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
+
                     Message = "Update user info failed",
                     Detail = "User Id does not match!"
                 });
@@ -144,7 +147,6 @@ namespace ClinicPlatformWebAPI.Controllers
         [AllowAnonymous]
         public ActionResult<HttpResponseModel> ResetPassword([FromQuery] string email)
         {
-
             UserInfoModel? user = userService.GetUserWithEmail(email);
 
             if (user == null)
