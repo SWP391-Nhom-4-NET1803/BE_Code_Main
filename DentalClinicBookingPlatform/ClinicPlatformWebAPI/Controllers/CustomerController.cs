@@ -55,7 +55,8 @@ namespace ClinicPlatformWebAPI.Controllers
         [AllowAnonymous]
         public ActionResult<HttpResponseModel> RegisterCustomer([FromBody] UserRegistrationModel userInfo)
         {
-            if (!userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Customer", out var message))
+            UserInfoModel? user = userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Customer", out var message);
+            if (user == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {

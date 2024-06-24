@@ -20,6 +20,7 @@ namespace ClinicPlatformRepositories
         {
             var appointment = MapBookingModelToBooking(booking);
             context.Appointments.Add(appointment);
+            context.SaveChanges();
 
             return MapBookingToBookingModel(appointment);
         }
@@ -39,6 +40,7 @@ namespace ClinicPlatformRepositories
         {
             var service = ToBookedService(bookedService);
             context.BookedServices.Add(service);
+            context.SaveChanges();
 
             return ToBookedServiceModel(service);
         }
@@ -57,20 +59,45 @@ namespace ClinicPlatformRepositories
 
         public BookedServiceInfoModel? UpdateBookingService(BookedServiceInfoModel service)
         {
-            var serviceInfo = ToBookedService(service);
+            var serviceInfo = context.BookedServices.Find(service.AppointmentId);
 
-            context.BookedServices.Update(serviceInfo);
+            if (serviceInfo != null)
+            {
 
-            return ToBookedServiceModel(serviceInfo);
+                serviceInfo.ServiceId = service.ClinicServiceId;
+                serviceInfo.Price = service.Price;
+
+                context.BookedServices.Update(serviceInfo);
+                context.SaveChanges();
+
+                return ToBookedServiceModel(serviceInfo);
+            }
+
+            return null;
         }
 
-        public AppointmentInfoModel UpdateBookingInfo(AppointmentInfoModel booking)
+        public AppointmentInfoModel? UpdateBookingInfo(AppointmentInfoModel booking)
         {
-            var info = MapBookingModelToBooking(booking);
-            context.Appointments.Update(info);
+            var info = context.Appointments.Find(booking.Id);
 
-            return MapBookingToBookingModel(info);
+            if (info != null)
+            {
+                info.DentistId = booking.DentistId;
+                info.AppointmentType = booking.Type;
+                info.DentistNote = booking.Note;
+                info.SlotId = booking.ClinicSlotId;
+                info.Date = booking.AppointmentDate;
+                info.Status = booking.Status;
+                info.CycleCount = booking.CyleCount;
+                info.PriceFinal = booking.AppointmentFee;
 
+                context.Appointments.Update(info);
+                context.SaveChanges();
+
+                return MapBookingToBookingModel(info);
+            }
+
+            return null;
         }
 
         public bool DeleteBookingInfo(Guid bookId)
@@ -80,6 +107,7 @@ namespace ClinicPlatformRepositories
             if (appointment != null)
             {
                 context.Appointments.Remove(appointment);
+                context.SaveChanges();
                 return true;
             }
 
@@ -92,6 +120,7 @@ namespace ClinicPlatformRepositories
 
             if (service != null)
             context.BookedServices.Remove(service);
+            context.SaveChanges();
         }
 
         protected virtual void Dispose(bool disposing)

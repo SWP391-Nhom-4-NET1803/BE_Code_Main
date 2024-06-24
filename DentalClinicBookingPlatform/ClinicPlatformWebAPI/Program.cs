@@ -9,6 +9,8 @@ using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformRepositories;
 using Microsoft.AspNetCore.Mvc;
 using ClinicPlatformWebAPI.Helpers.Models;
+using ClinicPlatformWebAPI.Middlewares.Authentication;
+using Microsoft.Extensions.Options;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -122,6 +124,8 @@ builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IClinicServiceService, ClinicServiceService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IAuthService,  AuthService>();
+
+builder.Services.AddTransient<AuthorizationMiddleware>();
 
 var app = builder.Build();
 

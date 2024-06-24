@@ -19,30 +19,41 @@ namespace ClinicPlatformServices
     {
         private readonly IClinicRepository clinicRepository;
         private readonly IClinicServiceRepository clinicServiceRepository;
+        private readonly IUserRepository userRepository;
         private bool disposedValue;
 
-        public PlatformClinicService(IClinicRepository clinicRepo, IClinicServiceRepository serviceRepo)
+        public PlatformClinicService(IClinicRepository clinicRepo, IClinicServiceRepository serviceRepo, IUserRepository userRepository)
         {
             clinicRepository = clinicRepo;
             clinicServiceRepository = serviceRepo;
+            this.userRepository = userRepository;
         }
 
-        public bool RegisterClinic(ClinicInfoModel registrationInfo, out string message)
+        public ClinicInfoModel? RegisterClinic(ClinicInfoModel registrationInfo, out string message)
         {
+
             if (GetClinicWithOwnerId(registrationInfo.OwnerId) != null)
             {
                 message = "User already created clinic!";
-                return false;
+                return null;
             }
 
-            if (clinicRepository.AddClinc(registrationInfo) == null)
+            if (userRepository.GetUser(registrationInfo.OwnerId) == null)
+            {
+                message = "Error, can not get user!";
+                return null;
+            }
+
+            ClinicInfoModel? clinic = clinicRepository.AddClinc(registrationInfo);
+
+            if (clinic == null)
             {
                 message = "Failed! Unknown error while insert clinic info to database.";
-                return false;
+                return null;
             }
 
             message = "Successfully create new clinic.";
-            return true;
+            return clinic;
         }
 
         public IEnumerable<ClinicInfoModel> GetAllClinic(int top = 0, int page = 0)
@@ -51,12 +62,12 @@ namespace ClinicPlatformServices
 
             if (page >= 0)
             {
-                result = result.Skip((int)(top * page));
+                result = result.Skip(top * page);
             }
 
             if (top > 0)
             {
-                result = result.Take((int)top).ToList();
+                result = result.Take(top).ToList();
             }
 
             return result;

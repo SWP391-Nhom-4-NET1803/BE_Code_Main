@@ -24,13 +24,13 @@ namespace ClinicPlatformServices.Contracts
 
         IEnumerable<UserInfoModel> GetUserRegisteredOn(DateOnly date);
 
-        bool RegisterAccount(UserInfoModel information, string role, out string message, bool IsAdmin = false);
+        UserInfoModel? RegisterAccount(UserInfoModel information, string role, out string message, bool IsAdmin = false);
 
         bool DeleteUser(int id, out string message);
 
         bool CheckLogin(string username, string password, out UserInfoModel? user);
 
-        bool UpdateUserInformation(UserInfoModel information, out string message);
+        UserInfoModel UpdateUserInformation(UserInfoModel information, out string message);
 
         bool ExistUser(int id);
 

@@ -24,7 +24,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("update")]
-        [Authorize]
+        //[Authorize]
         public ActionResult<HttpResponseModel> UpdateUser(int id, [FromBody] UserInfoModel user)
         {
             if (id != user.Id)
@@ -40,13 +40,23 @@ namespace ClinicPlatformWebAPI.Controllers
 
             try
             {
-                if (!userService.UpdateUserInformation(user, out var message))
+                UserInfoModel userInfo = userService.UpdateUserInformation(user, out var message);
+                if (userInfo == null)
                 {
                     return BadRequest(new HttpResponseModel()
                     {
                         StatusCode = 400,
                         Message = "Update user info failed",
                         Detail = message,
+                    });
+                }
+                else
+                {
+                    return Ok(new HttpResponseModel()
+                    {
+                        StatusCode = 200,
+                        Message = "Update user success",
+                        Content = userInfo
                     });
                 }
 
@@ -67,12 +77,6 @@ namespace ClinicPlatformWebAPI.Controllers
                     throw;
                 }
             }
-
-            return Ok(new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "Update user success",
-            });
         }
 
 
