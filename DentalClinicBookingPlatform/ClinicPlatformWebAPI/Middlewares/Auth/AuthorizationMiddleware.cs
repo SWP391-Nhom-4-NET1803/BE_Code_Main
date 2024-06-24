@@ -14,9 +14,16 @@ namespace ClinicPlatformWebAPI.Middlewares.Authentication
 
         public Task InvokeAsync(HttpContext context, RequestDelegate next)
         {
-            UserInfoModel? user = authService.ValidateAccessToken(context.Request.Headers.Authorization, out var message);
+            string? token = context.Request.Headers.Authorization;
 
-            context.Items.Add("user", user);
+            if (!string.IsNullOrEmpty(token) )
+            {
+                UserInfoModel? user = authService.ValidateAccessToken(token.Split(" ").Last(), out var message);
+
+                context.Items.Add("user", user);
+            }
+
+            
 
             return next(context);
         }

@@ -26,12 +26,27 @@ namespace ClinicPlatformRepositories
 
         public ClinicInfoModel? UpdateClinic(ClinicInfoModel clinicInfo)
         {
-            Clinic clinic = MapToClinic(clinicInfo);
+            Clinic? clinic = context.Clinics.Find(clinicInfo.Id);
 
-            context.Clinics.Update(clinic);
-            context.SaveChanges();
+            if (clinic != null)
+            {
+                clinic.OwnerId = clinicInfo.OwnerId;
+                clinic.Name = clinicInfo.Name;
+                clinic.Address = clinicInfo.Address;
+                clinic.Email = clinicInfo.Email;
+                clinic.Phone = clinicInfo.Phone;
+                clinic.Description = clinicInfo.Description;
+                clinic.Working = clinicInfo.Working;
+                clinic.OpenHour = clinicInfo.OpenHour;
+                clinic.CloseHour = clinicInfo.CloseHour;
+                clinic.Status = clinicInfo.Status;
 
-            return MapToClinicInfo(clinic);
+                context.Clinics.Update(clinic);
+                context.SaveChanges();
+                return MapToClinicInfo(clinic);
+            }
+
+            return null;
         }
 
         public IEnumerable<ClinicInfoModel> GetAllClinic(bool includeRemoved = true, bool includeUnverified = true)
