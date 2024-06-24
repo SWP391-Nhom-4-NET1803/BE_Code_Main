@@ -162,9 +162,9 @@ namespace ClinicPlatformRepositories
             };
         }
 
-        private AppointmentInfoModel MapBookingToBookingModel(Appointment appointment)
+        private static AppointmentInfoModel MapBookingToBookingModel(Appointment appointment)
         {
-            return new AppointmentInfoModel()
+            return new AppointmentInfoModel
             {
                 Id = appointment.Id,
                 AppointmentDate = appointment.Date,
@@ -183,7 +183,7 @@ namespace ClinicPlatformRepositories
             };
         }
 
-        private BookedServiceInfoModel ToBookedServiceModel(BookedService bookedService)
+        private static BookedServiceInfoModel ToBookedServiceModel(BookedService bookedService)
         {
             return new BookedServiceInfoModel()
             {
@@ -193,7 +193,7 @@ namespace ClinicPlatformRepositories
             };
         }
 
-        private BookedService ToBookedService(BookedServiceInfoModel bookedServiceInfo)
+        private static BookedService ToBookedService(BookedServiceInfoModel bookedServiceInfo)
         {
             return new BookedService()
             {

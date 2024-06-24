@@ -20,16 +20,16 @@ namespace ClinicPlatformRepositories
             this.context = context;
         }
 
-        public bool AddServiceCategory(ServiceCategoryModel service)
+        public ServiceCategoryModel? AddServiceCategory(ServiceCategoryModel service)
         {
             if (service.Name.IsNullOrEmpty())
             {
-                return false;
+                return null;
             }
 
             if (context.ServiceCategories.Any(x => x.Name == service.Name))
             {
-                return false;
+                return null;
             }
 
             ServiceCategory newService = new ServiceCategory()
@@ -40,7 +40,9 @@ namespace ClinicPlatformRepositories
 
             context.ServiceCategories.Add(newService);
 
-            return true;
+            service.Id = newService.Id;
+
+            return service;
         }
 
         public ClinicServiceInfoModel? AddClinicService(ClinicServiceInfoModel clinicServiceInfo)
@@ -138,7 +140,7 @@ namespace ClinicPlatformRepositories
             return null;
         }
 
-        public ServiceCategoryModel UpdateServiceCategory(ServiceCategoryModel serviceInfo)
+        public ServiceCategoryModel? UpdateServiceCategory(ServiceCategoryModel serviceInfo)
         {
             ServiceCategory? service = context.ServiceCategories.Find((int)serviceInfo.Id);
             
@@ -158,12 +160,24 @@ namespace ClinicPlatformRepositories
             return null;
         }
 
-        public ClinicServiceInfoModel UpdateClinicService(ClinicServiceInfoModel serviceInfo)
+        public ClinicServiceInfoModel? UpdateClinicService(ClinicServiceInfoModel serviceInfo)
         {
-            ClinicService clinicService = MapToClinicService(serviceInfo);
+            ClinicService? clinicService = context.ClinicServices.Find(serviceInfo.ClinicServiceId);
 
-            context.ClinicServices.Update(clinicService);
-            return MapToClinicServiceModel(clinicService);
+            if (clinicService != null)
+            {
+                clinicService.CustomName = serviceInfo.Name;
+                clinicService.Description = serviceInfo.Description;
+                clinicService.Available = serviceInfo.Available;
+                clinicService.Removed = serviceInfo.Removed;
+                clinicService.Price = serviceInfo.Price;
+                clinicService.CategoryId = serviceInfo.CategoryId;
+
+                context.ClinicServices.Update(clinicService);
+                return MapToClinicServiceModel(clinicService);
+            }
+
+            return null;
         }
 
         public bool DeleteServiceCategory(int serviceId)

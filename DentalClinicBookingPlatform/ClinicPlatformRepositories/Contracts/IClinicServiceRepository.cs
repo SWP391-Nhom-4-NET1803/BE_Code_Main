@@ -19,8 +19,8 @@ namespace ClinicPlatformRepositories.Contracts
         // Service "Type"
         IEnumerable<ServiceCategoryModel> GetAllServiceCategory();
         ServiceCategoryModel? GetServiceCategory(int categoryId);
-        bool AddServiceCategory(ServiceCategoryModel category);
-        ServiceCategoryModel UpdateServiceCategory(ServiceCategoryModel categoryId);
+        ServiceCategoryModel? AddServiceCategory(ServiceCategoryModel category);
+        ServiceCategoryModel? UpdateServiceCategory(ServiceCategoryModel categoryId);
         bool DeleteServiceCategory(int categoryId);
     }
 }

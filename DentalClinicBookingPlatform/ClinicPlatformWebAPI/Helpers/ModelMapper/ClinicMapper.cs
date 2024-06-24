@@ -1,6 +1,7 @@
 ﻿using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformDTOs.SlotModels;
 using ClinicPlatformObjects.ClinicModels;
+using ClinicPlatformObjects.ServiceModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
@@ -35,6 +36,18 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
                  MaxCheckup = model.MaxCheckup,
                  MaxTreatment = model.MaxTreatment,
                  Weekday = model.Weekday,
+            };
+        }
+
+        public static ClinicServiceInfoModel MapToServiceInfo(ClinicServiceRegistrationModel model)
+        {
+            return new ClinicServiceInfoModel
+            {
+                Name = model.ServiceName,
+                Description = model.ServiceDescription,
+                Price = model.servicePrice,
+                ClinicId = model.clinicId,
+                CategoryId = model.ServiceCategory
             };
         }
     }

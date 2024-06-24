@@ -129,7 +129,7 @@ namespace ClinicPlatformServices
             return clinic;
         }
 
-        public bool AddClinicService(ClinicServiceInfoModel clinicService, out string message)
+        public ClinicServiceInfoModel? AddClinicService(ClinicServiceInfoModel clinicService, out string message)
         {
             var allClinicServices = clinicServiceRepository.GetAllServiceCategory();
 
@@ -138,19 +138,19 @@ namespace ClinicPlatformServices
             if (!allClinicServices.Any(x => x.Id == clinicService.CategoryId))
             {
                 message += $" No category exist with Id {clinicService.CategoryId}";
-                return false;
+                return null;
             }
             ClinicInfoModel? clinic = clinicRepository.GetClinic((int)clinicService.ClinicId!);
 
             if (clinic == null)
             {
                 message += $"Failed{(clinic == null ? " (Cannot find clinic information)" : "")}. ";
-                return false;
+                return null;
             }
             else
             {
                 message += "Sucess.";
-                return clinicServiceRepository.AddClinicService(clinicService) != null;
+                return clinicServiceRepository.AddClinicService(clinicService);
             }
         }
 
@@ -163,7 +163,7 @@ namespace ClinicPlatformServices
 
             foreach (var clinicService in clinicServices)
             {
-                if (!AddClinicService(clinicService, out var tempt_message))
+                if (AddClinicService(clinicService, out var tempt_message) == null)
                 {
                     countFailed++;
                     message += $"Failed while adding {clinicService.Name}: {tempt_message} ";
@@ -180,16 +180,18 @@ namespace ClinicPlatformServices
         }
 
 
-        public bool UpdateClinicService(ClinicServiceInfoModel clinicService, out string message)
+        public ClinicServiceInfoModel? UpdateClinicService(ClinicServiceInfoModel clinicService, out string message)
         {
-            if (clinicServiceRepository.UpdateClinicService(clinicService) != null)
+            var serviceInfo = clinicServiceRepository.UpdateClinicService(clinicService);
+
+            if (serviceInfo != null)
             {
                 message = $"Success.";
-                return true;
+                return serviceInfo;
             }
 
             message = $"Error while updating information for {clinicService.ClinicServiceId}.";
-            return false;
+            return null;
         }
 
 
@@ -203,66 +205,23 @@ namespace ClinicPlatformServices
             return clinicServiceRepository.GetAllClinicService().Where(x => x.CategoryId == id && minimum < x.Price && x.Price < maximum);
         }
 
-        public bool UpdateClinicServices(IEnumerable<ClinicServiceInfoModel> clinicServices, out string message)
-        {
-            int countPassed = 0;
-            int countFailed = 0;
-
-            message = $"Found {clinicServices.Count()} service update requests. ";
-
-            foreach (var clinicService in clinicServices)
-            {
-                if (!UpdateClinicService(clinicService, out var tempt_message))
-                {
-                    countFailed++;
-                    message += $"Failed while updating {clinicService.ClinicServiceId}: {tempt_message} ";
-                }
-                else
-                {
-                    countPassed++;
-                    message += $"Successfully updating {clinicService.ClinicServiceId}. ";
-                }
-            }
-
-            message += $"Finished batch! {countPassed}/{clinicServices.Count()}. {countFailed} Failed add attempt!";
-            return true;
-        }
-
         public bool DeleteClinic(int clinicId)
         {
-            clinicRepository.DeleteClinic(clinicId);
+            ClinicInfoModel? clinic = clinicRepository.GetClinic(clinicId);
 
-            if (clinicRepository.GetClinic(clinicId) != null)
+            if (clinic != null)
             {
-                return false;
-            }
+                clinic.Status = "removed";
 
-            return true;
-        }
+                clinic = clinicRepository.UpdateClinic(clinic);
 
-        public bool DeleteClinicServices(Guid clinicServiceId, out string message)
-        {
-            clinicServiceRepository.DeleteClinicService(clinicServiceId);
+                if (clinic != null)
+                {
+                    return true;
+                }
+            }   
 
-            if (clinicServiceRepository.GetClinicService(clinicServiceId) != null)
-            {
-                message = $"Can not delete {clinicServiceId}.";
-                return false;
-            }
-
-            message = $"Deleted service {clinicServiceId}.";
-            return true;
-        }
-
-        public bool DeleteClinicServices(IEnumerable<Guid> clinicServiceId, out string message)
-        {
-            foreach (var id in clinicServiceId)
-            {
-                clinicServiceRepository.DeleteClinicService(id);
-            }
-
-            message = $"Deleted {clinicServiceId.Count()} service";
-            return true;
+            return false;
         }
 
         public bool InactivateClinic(int clinicId, out string message)
@@ -338,7 +297,7 @@ namespace ClinicPlatformServices
             DateTime now = DateTime.Now;
 
             message = "Operation Success";
-            return clinic.OpenHour < TimeOnly.FromDateTime(now) && TimeOnly.FromDateTime(now) < clinic.CloseHour;
+            return clinic.OpenHour < TimeOnly.FromDateTime(now) && TimeOnly.FromDateTime(now) < clinic.CloseHour && clinic.Working;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -348,6 +307,7 @@ namespace ClinicPlatformServices
                 if (disposing)
                 {
                     clinicRepository.Dispose();
+                    clinicServiceRepository.Dispose();
                 }
                 disposedValue = true;
             }
@@ -359,57 +319,55 @@ namespace ClinicPlatformServices
             GC.SuppressFinalize(this);
         }
 
-        public bool AddBaseService(ServiceCategoryModel service, out string message)
+        public ServiceCategoryModel? AddServiceCategory(ServiceCategoryModel service, out string message)
         {
             if (clinicServiceRepository.GetAllServiceCategory().Any(x => x.Name == service.Name))
             {
                 message = "There is another service with this name exist";
-                return false;
+                return null;
             }
 
-            if (clinicServiceRepository.AddServiceCategory(service))
+            var serviceCategory = clinicServiceRepository.AddServiceCategory(service);
+
+            if (serviceCategory != null)
             {
                 message = "Added new service successfully";
-                return true;
+                return serviceCategory;
             }
 
             message = "Failed";
-            return false;
+            return null;
         }
 
-        public IEnumerable<ServiceCategoryModel> GetBaseServices()
+        public ServiceCategoryModel? UpdateServiceCategory(ServiceCategoryModel service, out string message)
         {
-            throw new NotImplementedException();
-        }
-
-        public ServiceCategoryModel? GetBaseService(int categoryId)
-        {
-            return clinicServiceRepository.GetServiceCategory(categoryId);
-        }
-
-        public ServiceCategoryModel? GetCategoryWithId(string name)
-        {
-            return clinicServiceRepository.GetAllServiceCategory().Where(x => x.Name == name).FirstOrDefault();
-        }
-
-        public ServiceCategoryModel? GetCategoryWithName(string name)
-        {
-            return clinicServiceRepository.GetAllServiceCategory().Where(x => x.Name == name).FirstOrDefault();
-        }
-
-        public IEnumerable<ClinicInfoModel> FilterClinicList(IEnumerable<ClinicInfoModel> clinics, TimeOnly? from = null, TimeOnly? to = null, bool includeInactive = false, bool includeRemoved = false, string? includeService = null)
-        {
-            if (includeService != null)
+            if (clinicServiceRepository.GetAllServiceCategory().Any(x => x.Name == service.Name))
             {
-                var service = GetCategoryWithName(includeService);
-
-                if (service != null)
-                {
-                    var clinic = GetClinicHasService(service.Id);
-
-                    clinics = clinics.Where(x => clinic.Any(y => y.Id == x.Id));
-                }
+                message = "There is another service with this name exist";
+                return null;
             }
+
+            ServiceCategoryModel? serviceCategory = clinicServiceRepository.UpdateServiceCategory(service);
+
+            if (serviceCategory != null)
+            {
+                message = "Added new service successfully";
+                return serviceCategory;
+            }
+
+            message = "Failed";
+            return null;
+        }
+
+        public IEnumerable<ServiceCategoryModel> GetServiceCategories()
+        {
+            return clinicServiceRepository.GetAllServiceCategory();
+        }
+
+        // Old relic from the pass.
+        public IEnumerable<ClinicInfoModel> FilterClinicList( TimeOnly? from = null, TimeOnly? to = null, bool includeInactive = false, bool includeRemoved = false)
+        {
+            IEnumerable<ClinicInfoModel> clinics = clinicRepository.GetAllClinic();
 
             if (from != null)
             {
@@ -436,14 +394,9 @@ namespace ClinicPlatformServices
             return clinics;
         }
 
-        ClinicInfoModel? IClinicService.GetClinicWithName(string name)
+        public IEnumerable<ClinicServiceInfoModel> GetClinicServiceWithName(int clinicId, string name)
         {
-            throw new NotImplementedException();
-        }
-
-        public ClinicServiceInfoModel? GetClinicServiceWithName(string name)
-        {
-            throw new NotImplementedException();
+            return clinicServiceRepository.GetAllClinicService().Where(x => x.ClinicId == clinicId && x.Name.Contains(name, StringComparison.OrdinalIgnoreCase));
         }
 
         public ClinicServiceInfoModel? GetClinicOnCategory(int categoryId)
@@ -453,12 +406,77 @@ namespace ClinicPlatformServices
 
         public bool DisableClinicService(Guid clinicServiceId, out string message)
         {
-            throw new NotImplementedException();
+            ClinicServiceInfoModel? clinicService = clinicServiceRepository.GetClinicService(clinicServiceId);
+
+            if (clinicService != null)
+            {
+                clinicService.Available = false;
+
+                clinicService = clinicServiceRepository.UpdateClinicService(clinicService);
+
+                if (clinicService != null)
+                {
+                    message = $"Enabled clinic service {clinicServiceId}";
+                    return true;
+                }
+
+                message = "Failed to enable clinic service!";
+                return false;
+
+            }
+
+            message = $"Can not find the specific clinic service {clinicServiceId}";
+            return false;
         }
 
         public bool EnableClinicService(Guid clinicServiceId, out string message)
         {
-            throw new NotImplementedException();
+            ClinicServiceInfoModel? clinicService = clinicServiceRepository.GetClinicService(clinicServiceId);
+
+            if (clinicService != null)
+            {
+                clinicService.Available = true;
+
+                clinicService = clinicServiceRepository.UpdateClinicService(clinicService);
+
+                if (clinicService != null)
+                {
+                    message = $"Enabled clinic service {clinicServiceId}";
+                    return true;
+                }
+
+                message = "Failed to enable clinic service!";
+                return false;
+               
+            }
+
+            message = $"Can not find the specific clinic service {clinicServiceId}";
+            return false;
+        }
+
+        public bool DeleteClinicServices(Guid clinicServiceId, out string message)
+        {
+            ClinicServiceInfoModel? clinicService = clinicServiceRepository.GetClinicService(clinicServiceId);
+
+            if (clinicService != null)
+            {
+                clinicService.Removed = true;
+
+                clinicService = clinicServiceRepository.UpdateClinicService(clinicService);
+
+                if (clinicService != null)
+                {
+                    message = $"Deleted clinic service {clinicServiceId}";
+                    return true;
+                }
+
+                message = "Failed to delete the clinic service!";
+                return false;
+
+            }
+
+            message = $"Can not find the specific clinic service {clinicServiceId}";
+            return false;
         }
     }
 }

@@ -26,11 +26,11 @@ namespace ClinicPlatformWebAPI.Controllers
             this.userService = userService;
         }
 
-        [HttpGet("{customerId}")]
-        [Authorize(Roles="customer")]
-        public ActionResult<IHttpResponseModel<CustomerInfoViewModel>> GetCustomerInformation(int customerId)
+        [HttpGet]
+        [Authorize(Roles="Customer")]
+        public ActionResult<IHttpResponseModel<CustomerInfoViewModel>> GetCustomerInformationint()
         {
-            UserInfoModel? customer = userService.GetUserWithCustomerId(customerId);
+            UserInfoModel? customer = (UserInfoModel?) HttpContext.Items["user"];
 
             if (customer == null)
             {
@@ -38,7 +38,6 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     StatusCode = 400,
                     Message = "User not found",
-                    Detail = $"User does not exist for customer ID {customerId}!"
                 });
 
             }
@@ -47,7 +46,7 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 StatusCode = 200,
                 Message = "Success",
-                Content = customer
+                Content = UserInfoMapper.ToCustomerView(customer)
             });
         }
 
