@@ -151,7 +151,7 @@ namespace ClinicPlatformServices
         }
 
         public UserInfoModel? ValidateAccessToken(string token, string roles, out string message)
-        {
+
             if (token == null)
             {
                 message = "No token provided";
@@ -179,6 +179,7 @@ namespace ClinicPlatformServices
 
                 int userId = int.Parse(Token.Claims.First(x => x.Type == "id").Value);
                 string userRole = Token.Claims.First(x => x.Type == "role").Value;
+
 
                 var roleList = roles.Split(",");
 
