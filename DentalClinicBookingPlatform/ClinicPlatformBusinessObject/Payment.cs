@@ -9,25 +9,25 @@ public partial class Payment
 
     public string TransactionId { get; set; } = null!;
 
+    public string? Title { get; set; }
+
     public decimal Amount { get; set; }
-
-    public int? Title { get; set; }
-
-    public DateOnly Expiration { get; set; }
 
     public DateTime CreationTime { get; set; }
 
-    public bool Status { get; set; }
-
-    public int Creator { get; set; }
+    public string Provider { get; set; } = null!;
 
     public Guid AppointmentId { get; set; }
 
-    public int TypeId { get; set; }
+    public int Sender { get; set; }
 
-    public string Provider { get; set; } = null!;
+    public int Recieve { get; set; }
+
+    public string? Other { get; set; }
 
     public virtual Appointment Appointment { get; set; } = null!;
 
-    public virtual User CreatorNavigation { get; set; } = null!;
+    public virtual UserPanfoymentInfo RecieveNavigation { get; set; } = null!;
+
+    public virtual UserPanfoymentInfo SenderNavigation { get; set; } = null!;
 }

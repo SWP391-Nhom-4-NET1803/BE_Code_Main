@@ -16,7 +16,7 @@ namespace ClinicPlatformDTOs.BookingModels
         public int ClinicId { get; set; }
         public Guid? ServiceId { get; set; } = null;
         public int MaxRecurring { get; set; } = 0;
-        public bool IsRecurring { get; set; } = false;
+        public Guid? OrginialAppointment { get; set; } = null!;
         public string Status { get; set; } = "booked";
 
         public const string Checkup = "checkup";

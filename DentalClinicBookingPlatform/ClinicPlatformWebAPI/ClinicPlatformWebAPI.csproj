@@ -19,7 +19,6 @@
 
   <ItemGroup>
     <Folder Include="Helpers\Authorization\Policies\" />
-    <Folder Include="Middlewares\Authentication\" />
     <Folder Include="Services\ConverterService\" />
   </ItemGroup>
 

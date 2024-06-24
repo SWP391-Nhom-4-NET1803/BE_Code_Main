@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.Web;
 using ClinicPlatformDTOs.PayementModels;
 using ClinicPlatformWebAPI.Services.VNPayService;
+using ClinicPlatformServices.Contracts;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -11,13 +12,15 @@ namespace ClinicPlatformWebAPI.Controllers
     [ApiController]
     public class PaymentController : ControllerBase
     {
-        public string url = "http://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        public string returnUrl = $"https://localhost:7163/vnpayAPI/PaymentConfirm";
-        public string tmCode = string.Empty;
-        public string hashSecret = string.Empty;
+        private IPaymentService paymentService;
+        private string url = "http://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
+        private string returnUrl = $"https://localhost:7163/vnpayAPI/PaymentConfirm";
+        private string tmCode = string.Empty;
+        private string hashSecret = string.Empty;
 
-        public PaymentController(IConfiguration configuration)
+        public PaymentController(IConfiguration configuration, IPaymentService paymentService)
         {
+            this.paymentService = paymentService;
             tmCode = configuration.GetValue<string>("VNPay:TMCode")!;
             hashSecret = configuration.GetValue<string>("VNPay:VNPay")!;
         }
@@ -63,6 +66,11 @@ namespace ClinicPlatformWebAPI.Controllers
                 //lấy toàn bộ dữ liệu trả về
                 var queryString = Request.QueryString.Value;
                 var json = HttpUtility.ParseQueryString(queryString);
+
+                foreach (var item in json)
+                {
+                    Console.WriteLine($" {item.ToString()}");
+                }
 
                 //long orderId = Convert.ToInt64(json["vnp_TxnRef"]); //mã hóa đơn
                 //string orderInfor = json["vnp_OrderInfo"]!.ToString(); //Thông tin giao dịch

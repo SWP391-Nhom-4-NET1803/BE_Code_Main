@@ -21,8 +21,6 @@ public partial class ClinicService
 
     public bool Removed { get; set; }
 
-    public bool? FirstSlotTreatment { get; set; }
-
     public virtual ICollection<BookedService> BookedServices { get; set; } = new List<BookedService>();
 
     public virtual ServiceCategory Category { get; set; } = null!;

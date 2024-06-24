@@ -1,45 +1,97 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs;
+﻿using ClinicPlatformDatabaseObject;
 using ClinicPlatformDTOs.BookingModels;
+using ClinicPlatformObjects.BookingModels;
 using ClinicPlatformRepositories.Contracts;
+using Microsoft.EntityFrameworkCore;
 
 namespace ClinicPlatformRepositories
 {
     public class BookingRepository : IBookingRepository
     {
-        private BookingDAO bookingDAO;
+        private readonly DentalClinicPlatformContext context;
         private bool disposedValue;
 
-        public BookingRepository()
+        public BookingRepository(DentalClinicPlatformContext context)
         {
-            bookingDAO = new BookingDAO();
+            this.context = context;
         }
 
-        public bool CreateNewBooking(BookingModel booking)
+        public AppointmentInfoModel CreateNewBooking(AppointmentInfoModel booking)
         {
-            return bookingDAO.AddBooking(MapBookingModelToBooking(booking));
+            var appointment = MapBookingModelToBooking(booking);
+            context.Appointments.Add(appointment);
+
+            return MapBookingToBookingModel(appointment);
         }
 
-        public BookingModel? GetBooking(Guid id)
+        public AppointmentInfoModel? GetBooking(Guid id)
         {
-            var result = bookingDAO.GetBooking(id);
+            var result = context.Appointments.Find(id);
             return result == null ? null : MapBookingToBookingModel(result);
         }
 
-        public IEnumerable<BookingModel> GetAll()
+        public IEnumerable<AppointmentInfoModel> GetAll()
         {
-            return from item in bookingDAO.GetAll() select MapBookingToBookingModel(item);
+            return from item in context.Appointments select MapBookingToBookingModel(item);
         }
 
-        public bool UpdateBookingInfo(BookingModel booking)
+        public BookedServiceInfoModel? AddBookingService(BookedServiceInfoModel bookedService)
         {
-            return bookingDAO.UpdateBooking(MapBookingModelToBooking(booking));
+            var service = ToBookedService(bookedService);
+            context.BookedServices.Add(service);
+
+            return ToBookedServiceModel(service);
+        }
+
+        public BookedServiceInfoModel? GetBookingService(Guid appointmentId)
+        {
+            var bookedService = context.BookedServices.Find(appointmentId);
+
+            if (bookedService != null)
+            {
+                return ToBookedServiceModel(bookedService);
+            }
+
+            return null;
+        }
+
+        public BookedServiceInfoModel? UpdateBookingService(BookedServiceInfoModel service)
+        {
+            var serviceInfo = ToBookedService(service);
+
+            context.BookedServices.Update(serviceInfo);
+
+            return ToBookedServiceModel(serviceInfo);
+        }
+
+        public AppointmentInfoModel UpdateBookingInfo(AppointmentInfoModel booking)
+        {
+            var info = MapBookingModelToBooking(booking);
+            context.Appointments.Update(info);
+
+            return MapBookingToBookingModel(info);
 
         }
 
         public bool DeleteBookingInfo(Guid bookId)
         {
-            return bookingDAO.DeleteBooking(bookId);
+            var appointment = context.Appointments.Find(bookId);
+
+            if (appointment != null)
+            {
+                context.Appointments.Remove(appointment);
+                return true;
+            }
+
+            return false;
+        }
+
+        public void DeleteBookingService(Guid appointmentId)
+        {
+            var service = context.BookedServices.Find(appointmentId);
+
+            if (service != null)
+            context.BookedServices.Remove(service);
         }
 
         protected virtual void Dispose(bool disposing)
@@ -48,7 +100,7 @@ namespace ClinicPlatformRepositories
             {
                 if (disposing)
                 {
-                    bookingDAO.Dispose();
+                    context.Dispose();
                 }
                 disposedValue = true;
             }
@@ -61,37 +113,64 @@ namespace ClinicPlatformRepositories
             GC.SuppressFinalize(this);
         }
 
-        private Booking MapBookingModelToBooking(BookingModel book)
+        private Appointment MapBookingModelToBooking(AppointmentInfoModel book)
         {
-            return new Booking()
+            return new Appointment()
             {
-                BookId = book.Id,
-                AppointmentDate = book.AppointmentDate ?? DateOnly.FromDateTime(DateTime.Now),
-                BookingServiceId = book.SelectedService ?? null,
-                BookingType = book.Type ?? "khám tổng quát",
-                CreationDate = book.CreationTime ?? DateTime.Now,
-                ClinicId = book.ClinicId ?? 0,
-                CustomerId = book.CustomerId ?? 0,
-                DentistId = book.DentistId ?? 0,
-                ScheduleSlotId = book.TimeSlotId ?? Guid.NewGuid(),
-                Status = book.Status
-            };
-        }
-
-        private BookingModel MapBookingToBookingModel(Booking book)
-        {
-            return new BookingModel()
-            {
-                Id = book.BookId,
-                AppointmentDate = book.AppointmentDate,
-                SelectedService = book.BookingServiceId,
-                Type = book.BookingType,
-                CreationTime = book.CreationDate,
+                Id = book.Id,
+                Date = book.AppointmentDate,
+                AppointmentType = book.Type ?? "checkup",
                 ClinicId = book.ClinicId,
                 CustomerId = book.CustomerId,
                 DentistId = book.DentistId,
-                TimeSlotId = book.ScheduleSlotId,
-                Status = book.Status
+                SlotId = book.ClinicSlotId,
+                Status = book.Status,
+                CycleCount = book.CyleCount,
+                DentistNote = book.Note,
+                OriginalAppointment = book.OriginalAppoinment,
+                PriceFinal = book.AppointmentFee,
+                
+            };
+        }
+
+        private AppointmentInfoModel MapBookingToBookingModel(Appointment appointment)
+        {
+            return new AppointmentInfoModel()
+            {
+                Id = appointment.Id,
+                AppointmentDate = appointment.Date,
+                Type = appointment.AppointmentType,
+                CreationTime = appointment.CreationTime,
+                ClinicId = appointment.ClinicId,
+                CustomerId = appointment.CustomerId,
+                DentistId = appointment.DentistId,
+                ClinicSlotId = appointment.SlotId,
+                Status = appointment.Status,
+                Note = appointment.DentistNote,
+                CyleCount = appointment.CycleCount,
+                OriginalAppoinment = appointment.OriginalAppointment!,
+                AppointmentFee = appointment.PriceFinal,
+                
+            };
+        }
+
+        private BookedServiceInfoModel ToBookedServiceModel(BookedService bookedService)
+        {
+            return new BookedServiceInfoModel()
+            {
+                AppointmentId = bookedService.AppointmentId,
+                ClinicServiceId = bookedService.ServiceId,
+                Price = bookedService.Price,
+            };
+        }
+
+        private BookedService ToBookedService(BookedServiceInfoModel bookedServiceInfo)
+        {
+            return new BookedService()
+            {
+                AppointmentId = bookedServiceInfo.AppointmentId,
+                ServiceId = bookedServiceInfo.ClinicServiceId,
+                Price = bookedServiceInfo.Price,
             };
         }
     }

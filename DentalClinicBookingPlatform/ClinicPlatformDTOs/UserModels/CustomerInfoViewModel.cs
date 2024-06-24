@@ -8,13 +8,15 @@ namespace ClinicPlatformDTOs.UserModels
 {
     public class CustomerInfoViewModel
     {
-        public string? Username { get; set; }
-        public string? Email { get; set; }
-        public int? Role { get; set; }
-        public bool? Status { get; set; }
+        public int CustomerId { get; set; }
+        public string Username { get; set; } = null!;
+        public string Fullname { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        public string Phone { get; set; } = null!;
         public DateOnly? Birthdate { get; set; } = null;
-        public string? Sex { get; set; }
-        public string? Insurance { get; set; }
+        public string Sex { get; set; } = null!;
+        public string Insurance { get; set; } = null!;
         public DateTime? JoinedDate { get; set; }
+        public bool IsActive { get; set; }
     }
 }

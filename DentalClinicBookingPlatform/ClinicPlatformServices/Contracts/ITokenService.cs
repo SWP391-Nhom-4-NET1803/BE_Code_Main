@@ -4,9 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ClinicPlatformRepositories.Contracts
+namespace ClinicPlatformServices.Contracts
 {
-    public interface ICustomerRepository: IDisposable
+    public interface ITokenService: IDisposable
     {
         
     }

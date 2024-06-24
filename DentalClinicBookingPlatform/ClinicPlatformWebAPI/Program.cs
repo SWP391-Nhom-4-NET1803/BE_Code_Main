@@ -7,8 +7,8 @@ using ClinicPlatformServices;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformRepositories;
-using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs;
+using Microsoft.AspNetCore.Mvc;
+using ClinicPlatformWebAPI.Helpers.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -19,7 +19,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Add authorization testing for Swagger.
 builder.Services.AddSwaggerGen(option =>
 {
     option.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -29,11 +28,16 @@ builder.Services.AddSwaggerGen(option =>
         In = ParameterLocation.Header,
         Type = SecuritySchemeType.ApiKey,
         Scheme = "Bearer",
+        Reference = new OpenApiReference
+        {
+            Id = JwtBearerDefaults.AuthenticationScheme,
+            Type = ReferenceType.SecurityScheme
+        },
     });
 
     option.AddSecurityRequirement(new OpenApiSecurityRequirement()
                 {
-                    {
+                     {
                         new OpenApiSecurityScheme
                         {
                         Reference = new OpenApiReference
@@ -74,9 +78,31 @@ builder.Services.AddAuthentication(options =>
         //ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         ValidateIssuer = true,
-        //ValidateAudience = true,
+        ValidateAudience = false,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true
+    };
+
+    options.Events = new JwtBearerEvents
+    {
+        OnChallenge = async context =>
+        {
+
+            context.HandleResponse();
+
+            context.Response.StatusCode = 401;
+            var actionContext = new ActionContext(context.HttpContext, context.HttpContext.GetRouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
+
+            var result = new ObjectResult(new HttpResponseModel()
+            {
+                StatusCode = 401,
+                Message = "Unauthorized",
+                Detail = "You are not logged in or this resource is not accessible."
+            })
+            { StatusCode = 401 };
+
+            await result.ExecuteResultAsync(actionContext);
+        }
     };
 });
 
@@ -88,11 +114,15 @@ builder.Services.AddScoped<IClinicRepository, ClinicRepository>();
 builder.Services.AddScoped<IClinicServiceRepository, ClinicServiceRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClinicService, PlatformClinicService>();
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
+builder.Services.AddScoped<IClinicServiceService, ClinicServiceService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
+builder.Services.AddScoped<IAuthService,  AuthService>();
+
 
 var app = builder.Build();
 

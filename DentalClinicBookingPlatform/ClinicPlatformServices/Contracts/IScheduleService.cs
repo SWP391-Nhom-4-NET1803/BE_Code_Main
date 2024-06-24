@@ -15,17 +15,16 @@ namespace ClinicPlatformServices.Contracts
 
         IEnumerable<ClinicSlotInfoModel> GetAllClinicSlot(int clinicId);
 
-        IEnumerable<ClinicSlotInfoModel> GetAllWithMaxAppointment(int clinicId, int max);
+        IEnumerable<ClinicSlotInfoModel> GetAllWithMaxCheckup(int clinicId, int max);
+        public IEnumerable<ClinicSlotInfoModel> GetAllWithMaxTreatment(int clinicId, int max);
 
         IEnumerable<ClinicSlotInfoModel> GetClinicSlotInRange(TimeOnly start, TimeOnly end);
 
         IEnumerable<ClinicSlotInfoModel> GetClinicSlotInRange(int clinicId, TimeOnly start, TimeOnly end);
 
-        bool RegisterClinicSlot(ClinicSlotRegistrationModel slotInfo, out string message);
+        ClinicSlotInfoModel? AddNewClinicSlot(ClinicSlotInfoModel slotInfo, out string message);
 
-        bool AddNewClinicSlot(ClinicSlotInfoModel slotInfo, out string message);
-
-        bool UpdateClinicSlot(ClinicSlotInfoModel slotInfo, out string message);
+        ClinicSlotInfoModel? UpdateClinicSlot(ClinicSlotInfoModel slotInfo, out string message);
 
         bool DeleteClinicSlot(Guid slotId);
 

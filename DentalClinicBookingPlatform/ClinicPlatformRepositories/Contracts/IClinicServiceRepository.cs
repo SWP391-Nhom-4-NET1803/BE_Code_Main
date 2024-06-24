@@ -10,17 +10,17 @@ namespace ClinicPlatformRepositories.Contracts
     public interface IClinicServiceRepository: IDisposable
     {
         // ClincServices
-        bool AddClinicService(ClinicServiceInfoModel clinicServiceInfo);
-        IEnumerable<ClinicServiceInfoModel> GetAll();
-        ClinicServiceInfoModel? GetClinicServie(Guid clinicServiceId);
-        bool UpdateClinicService(ClinicServiceInfoModel serviceInfo);
+        ClinicServiceInfoModel? AddClinicService(ClinicServiceInfoModel clinicServiceInfo);
+        IEnumerable<ClinicServiceInfoModel> GetAllClinicService();
+        ClinicServiceInfoModel? GetClinicService(Guid clinicServiceId);
+        ClinicServiceInfoModel? UpdateClinicService(ClinicServiceInfoModel serviceInfo);
         bool DeleteClinicService(Guid clinicServiceId);
 
         // Service "Type"
-        IEnumerable<ClinicServiceInfoModel> GetAllBaseService();
-        ClinicServiceInfoModel? GetBaseService(int serviceId);
-        bool AddBaseService(ClinicServiceInfoModel service);
-        bool UpdateBaseService(ClinicServiceInfoModel serviceId);
-        bool DeleteBaseService(int serviceId);
+        IEnumerable<ServiceCategoryModel> GetAllServiceCategory();
+        ServiceCategoryModel? GetServiceCategory(int categoryId);
+        bool AddServiceCategory(ServiceCategoryModel category);
+        ServiceCategoryModel UpdateServiceCategory(ServiceCategoryModel categoryId);
+        bool DeleteServiceCategory(int categoryId);
     }
 }

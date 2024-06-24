@@ -8,7 +8,6 @@ namespace ClinicPlatformDTOs.BookingModels
 {
     public class AppointmentSetting
     {
-        public bool IsRecurring { get; set; } = false;
         public int MaxRecurring { get; set; } = 0;
         public int RepeatYear { get; set; }
         public int RepeatMonth { get; set; }

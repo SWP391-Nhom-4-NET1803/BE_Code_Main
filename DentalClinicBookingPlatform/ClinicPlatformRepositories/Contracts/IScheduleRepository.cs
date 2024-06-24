@@ -1,5 +1,4 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.SlotModels;
+﻿using ClinicPlatformDTOs.SlotModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -12,17 +11,17 @@ namespace ClinicPlatformRepositories.Contracts
     {
 
         // Slots
-        bool AddSlot(SlotInfoModel slot);
+        SlotInfoModel? AddSlot(SlotInfoModel slot);
         SlotInfoModel? GetSlot(int slotId);
         IEnumerable<SlotInfoModel> GetAllSlot();
-        bool UpdateSlot(SlotInfoModel slot);
+        SlotInfoModel? UpdateSlot(SlotInfoModel slot);
         bool DeleteSlot(int slotId);
 
         // Schedule Slots
-        bool AddClinicSlot(ClinicSlotInfoModel slot);
+        ClinicSlotInfoModel? AddClinicSlot(ClinicSlotInfoModel slot);
         ClinicSlotInfoModel? GetClinicSlot(Guid slotId);
         IEnumerable<ClinicSlotInfoModel> GetAllClinicSlot();
-        bool UpdateClinicSlot(ClinicSlotInfoModel slot);
+        ClinicSlotInfoModel? UpdateClinicSlot(ClinicSlotInfoModel slot);
         bool DeleteClinicSlot(Guid slotId);
     }
 }

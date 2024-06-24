@@ -1,5 +1,5 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.BookingModels;
+﻿using ClinicPlatformDTOs.BookingModels;
+using ClinicPlatformObjects.BookingModels;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -10,10 +10,15 @@ namespace ClinicPlatformRepositories.Contracts
 {
     public interface IBookingRepository: IDisposable
     {
-        bool CreateNewBooking(BookingModel booking);
-        BookingModel? GetBooking(Guid id);
-        IEnumerable<BookingModel> GetAll();
-        bool UpdateBookingInfo(BookingModel booking);
+        AppointmentInfoModel CreateNewBooking(AppointmentInfoModel booking);
+        AppointmentInfoModel? GetBooking(Guid id);
+        IEnumerable<AppointmentInfoModel> GetAll();
+        AppointmentInfoModel UpdateBookingInfo(AppointmentInfoModel booking);
         bool DeleteBookingInfo(Guid bookId);
+
+        public BookedServiceInfoModel? GetBookingService(Guid appointmentId);
+        public BookedServiceInfoModel? AddBookingService(BookedServiceInfoModel bookedService);
+        public BookedServiceInfoModel? UpdateBookingService(BookedServiceInfoModel service);
+        public void DeleteBookingService(Guid appointmentId);
     }
 }

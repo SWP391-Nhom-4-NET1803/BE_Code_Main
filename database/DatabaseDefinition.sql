@@ -15,15 +15,14 @@ GO
 CREATE TABLE Appointment (
   id                   uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
   appointment_type     nvarchar(10) DEFAULT 'checkup' NOT NULL CHECK(appointment_type in ('checkup', 'treatment')), 
-  number               int NOT NULL, 
   [date]               date NOT NULL, 
   slot_id              uniqueidentifier NOT NULL, 
   customer_id          int NOT NULL, 
   dentist_id           int NOT NULL, 
   clinic_id            int NOT NULL, 
-  cycle_count          int DEFAULT 0 NOT NULL, 
   dentist_note         nvarchar(1000) DEFAULT '' NOT NULL, 
-  status               nvarchar(20) DEFAULT 'booked' NOT NULL CHECK(status IN ('booked', 'finished', 'canceled', 'no show')), 
+  status               nvarchar(20) DEFAULT 'booked' NOT NULL CHECK(status IN ('booked', 'pending',  'finished', 'canceled', 'no show')), 
+  cycle_count          int DEFAULT 0 NOT NULL, 
   original_appointment uniqueidentifier NULL, 
   price_final          int DEFAULT 0 NOT NULL, 
   creation_time        datetime DEFAULT (GETDATE()) NOT NULL, 
@@ -47,15 +46,14 @@ CREATE TABLE Clinic (
   owner_id    int NOT NULL, 
   PRIMARY KEY (clinic_id));
 CREATE TABLE ClinicService (
-  id                   uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
-  custom_name          nvarchar(80) NULL, 
-  description          nvarchar(500) NOT NULL, 
-  price                int NOT NULL, 
-  clinic_id            int NOT NULL, 
-  category_id          int NOT NULL, 
-  available            bit DEFAULT 1 NOT NULL, 
-  removed              bit NOT NULL, 
-  first_slot_treatment bit NULL, 
+  id          uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
+  custom_name nvarchar(80) NULL, 
+  description nvarchar(500) NOT NULL, 
+  price       int NOT NULL, 
+  clinic_id   int NOT NULL, 
+  category_id int NOT NULL, 
+  available   bit DEFAULT 1 NOT NULL, 
+  removed     bit NOT NULL, 
   PRIMARY KEY (id));
 CREATE TABLE ClinicSlot (
   slot_id       uniqueidentifier DEFAULT (NEWID()) NOT NULL, 
@@ -93,15 +91,14 @@ CREATE TABLE Dentist (
 CREATE TABLE Payment (
   id             int IDENTITY NOT NULL, 
   transaction_id nvarchar(255) NOT NULL, 
+  title          nvarchar(255) NULL, 
   amount         decimal(19, 0) NOT NULL, 
-  title          int NULL, 
-  expiration     date NOT NULL, 
   creation_time  datetime DEFAULT (GETDATE()) NOT NULL, 
-  status         bit DEFAULT 0 NOT NULL CHECK(status IN ('waiting', 'canceled', 'completed')), 
-  creator        int NOT NULL, 
-  appointment_id uniqueidentifier NOT NULL, 
-  type_id        int NOT NULL, 
   provider       nvarchar(20) NOT NULL, 
+  appointment_id uniqueidentifier NOT NULL, 
+  sender         int NOT NULL, 
+  recieve        int NOT NULL, 
+  other          nvarchar(255) NULL, 
   PRIMARY KEY (id));
 CREATE TABLE ServiceCategory (
   id   int IDENTITY(1, 1) NOT NULL, 
@@ -134,13 +131,14 @@ CREATE TABLE [User] (
   active        bit DEFAULT 1 NOT NULL, 
   removed       bit NOT NULL, 
   PRIMARY KEY (id));
+CREATE TABLE UserPanfoymentInfo (
+  user_id        int NOT NULL, 
+  payment_number nvarchar(255) NULL, 
+  PRIMARY KEY (user_id));
 ALTER TABLE Customer ADD CONSTRAINT FKCustomer336289 FOREIGN KEY (user_id) REFERENCES [User] (id);
-ALTER TABLE Dentist ADD CONSTRAINT FKDentist52014 FOREIGN KEY (user_id) REFERENCES [User] (id);
 ALTER TABLE Clinic ADD CONSTRAINT FKClinic40491 FOREIGN KEY (owner_id) REFERENCES [User] (id);
-ALTER TABLE Dentist ADD CONSTRAINT FKDentist429950 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
 ALTER TABLE ClinicService ADD CONSTRAINT FKClinicServ128006 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
 ALTER TABLE ClinicService ADD CONSTRAINT FKClinicServ913410 FOREIGN KEY (category_id) REFERENCES ServiceCategory (id);
-ALTER TABLE Payment ADD CONSTRAINT FKPayment177997 FOREIGN KEY (creator) REFERENCES [User] (id);
 ALTER TABLE ClinicSlot ADD CONSTRAINT FKClinicSlot657646 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
 ALTER TABLE ClinicSlot ADD CONSTRAINT FKClinicSlot285803 FOREIGN KEY (time_id) REFERENCES Slot (id);
 ALTER TABLE Token ADD CONSTRAINT FKToken237377 FOREIGN KEY ([user]) REFERENCES [User] (id);
@@ -149,6 +147,12 @@ ALTER TABLE Payment ADD CONSTRAINT FKPayment457035 FOREIGN KEY (appointment_id) 
 ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen41115 FOREIGN KEY (original_appointment) REFERENCES Appointment (id);
 ALTER TABLE BookedService ADD CONSTRAINT FKBookedServ274862 FOREIGN KEY (appointment_id) REFERENCES Appointment (id);
 ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen366296 FOREIGN KEY (customer_id) REFERENCES Customer (id);
-ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen157913 FOREIGN KEY (dentist_id) REFERENCES Dentist (id);
 ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen998789 FOREIGN KEY (slot_id) REFERENCES ClinicSlot (slot_id);
 ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen99798 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
+ALTER TABLE Appointment ADD CONSTRAINT FKAppointmen157913 FOREIGN KEY (dentist_id) REFERENCES Dentist (id);
+ALTER TABLE Dentist ADD CONSTRAINT FKDentist52014 FOREIGN KEY (user_id) REFERENCES [User] (id);
+ALTER TABLE Dentist ADD CONSTRAINT FKDentist429950 FOREIGN KEY (clinic_id) REFERENCES Clinic (clinic_id);
+ALTER TABLE UserPanfoymentInfo ADD CONSTRAINT FKUserPanfoy990304 FOREIGN KEY (user_id) REFERENCES [User] (id);
+ALTER TABLE Payment ADD CONSTRAINT FKPayment630698 FOREIGN KEY (sender) REFERENCES UserPanfoymentInfo (user_id);
+ALTER TABLE Payment ADD CONSTRAINT FKPayment740479 FOREIGN KEY (recieve) REFERENCES UserPanfoymentInfo (user_id);
+

@@ -4,7 +4,7 @@ using ClinicPlatformDatabaseObject;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformRepositories;
 
 public partial class DentalClinicPlatformContext : DbContext
 {
@@ -41,6 +41,8 @@ public partial class DentalClinicPlatformContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<UserPanfoymentInfo> UserPanfoymentInfos { get; set; }
+
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
     {
         optionsBuilder.UseSqlServer(GetConnectionString());
@@ -67,7 +69,7 @@ public partial class DentalClinicPlatformContext : DbContext
     {
         modelBuilder.Entity<Appointment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Appointm__3213E83F9915D363");
+            entity.HasKey(e => e.Id).HasName("PK__Appointm__3213E83F443D278C");
 
             entity.ToTable("Appointment");
 
@@ -79,6 +81,10 @@ public partial class DentalClinicPlatformContext : DbContext
                 .HasDefaultValue("checkup")
                 .HasColumnName("appointment_type");
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
+            entity.Property(e => e.CreationTime)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime")
+                .HasColumnName("creation_time");
             entity.Property(e => e.CustomerId).HasColumnName("customer_id");
             entity.Property(e => e.CycleCount).HasColumnName("cycle_count");
             entity.Property(e => e.Date).HasColumnName("date");
@@ -87,7 +93,6 @@ public partial class DentalClinicPlatformContext : DbContext
                 .HasMaxLength(1000)
                 .HasDefaultValue("")
                 .HasColumnName("dentist_note");
-            entity.Property(e => e.Number).HasColumnName("number");
             entity.Property(e => e.OriginalAppointment).HasColumnName("original_appointment");
             entity.Property(e => e.PriceFinal).HasColumnName("price_final");
             entity.Property(e => e.SlotId).HasColumnName("slot_id");
@@ -123,7 +128,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<BookedService>(entity =>
         {
-            entity.HasKey(e => e.AppointmentId).HasName("PK__BookedSe__A50828FC9C50B488");
+            entity.HasKey(e => e.AppointmentId).HasName("PK__BookedSe__A50828FCD5D0E773");
 
             entity.ToTable("BookedService");
 
@@ -146,7 +151,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Clinic>(entity =>
         {
-            entity.HasKey(e => e.ClinicId).HasName("PK__Clinic__A0C8D19BA2E6D8CF");
+            entity.HasKey(e => e.ClinicId).HasName("PK__Clinic__A0C8D19B968EE7D9");
 
             entity.ToTable("Clinic");
 
@@ -186,7 +191,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<ClinicService>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ClinicSe__3213E83F9828DB7E");
+            entity.HasKey(e => e.Id).HasName("PK__ClinicSe__3213E83F88200051");
 
             entity.ToTable("ClinicService");
 
@@ -204,7 +209,6 @@ public partial class DentalClinicPlatformContext : DbContext
             entity.Property(e => e.Description)
                 .HasMaxLength(500)
                 .HasColumnName("description");
-            entity.Property(e => e.FirstSlotTreatment).HasColumnName("first_slot_treatment");
             entity.Property(e => e.Price).HasColumnName("price");
             entity.Property(e => e.Removed).HasColumnName("removed");
 
@@ -221,7 +225,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<ClinicSlot>(entity =>
         {
-            entity.HasKey(e => e.SlotId).HasName("PK__ClinicSl__971A01BBE206CF5B");
+            entity.HasKey(e => e.SlotId).HasName("PK__ClinicSl__971A01BBDEEFA3AC");
 
             entity.ToTable("ClinicSlot");
 
@@ -252,11 +256,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Customer>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Customer__3213E83F799D1FB1");
+            entity.HasKey(e => e.Id).HasName("PK__Customer__3213E83F282147CF");
 
             entity.ToTable("Customer");
 
-            entity.HasIndex(e => e.UserId, "UQ__Customer__B9BE370E4F7CC227").IsUnique();
+            entity.HasIndex(e => e.UserId, "UQ__Customer__B9BE370E099C7DEA").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Birthdate).HasColumnName("birthdate");
@@ -276,11 +280,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Dentist>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Dentist__3213E83F85372C74");
+            entity.HasKey(e => e.Id).HasName("PK__Dentist__3213E83F97192FBF");
 
             entity.ToTable("Dentist");
 
-            entity.HasIndex(e => e.UserId, "UQ__Dentist__B9BE370EF8D21F95").IsUnique();
+            entity.HasIndex(e => e.UserId, "UQ__Dentist__B9BE370E099B3C02").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.ClinicId).HasColumnName("clinic_id");
@@ -299,7 +303,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Payment>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Payment__3213E83F2EE5D1CD");
+            entity.HasKey(e => e.Id).HasName("PK__Payment__3213E83F65650B6B");
 
             entity.ToTable("Payment");
 
@@ -312,32 +316,40 @@ public partial class DentalClinicPlatformContext : DbContext
                 .HasDefaultValueSql("(getdate())")
                 .HasColumnType("datetime")
                 .HasColumnName("creation_time");
-            entity.Property(e => e.Creator).HasColumnName("creator");
-            entity.Property(e => e.Expiration).HasColumnName("expiration");
+            entity.Property(e => e.Other)
+                .HasMaxLength(255)
+                .HasColumnName("other");
             entity.Property(e => e.Provider)
                 .HasMaxLength(20)
                 .HasColumnName("provider");
-            entity.Property(e => e.Status).HasColumnName("status");
-            entity.Property(e => e.Title).HasColumnName("title");
+            entity.Property(e => e.Recieve).HasColumnName("recieve");
+            entity.Property(e => e.Sender).HasColumnName("sender");
+            entity.Property(e => e.Title)
+                .HasMaxLength(255)
+                .HasColumnName("title");
             entity.Property(e => e.TransactionId)
                 .HasMaxLength(255)
                 .HasColumnName("transaction_id");
-            entity.Property(e => e.TypeId).HasColumnName("type_id");
 
             entity.HasOne(d => d.Appointment).WithMany(p => p.Payments)
                 .HasForeignKey(d => d.AppointmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FKPayment457035");
 
-            entity.HasOne(d => d.CreatorNavigation).WithMany(p => p.Payments)
-                .HasForeignKey(d => d.Creator)
+            entity.HasOne(d => d.RecieveNavigation).WithMany(p => p.PaymentRecieveNavigations)
+                .HasForeignKey(d => d.Recieve)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FKPayment177997");
+                .HasConstraintName("FKPayment740479");
+
+            entity.HasOne(d => d.SenderNavigation).WithMany(p => p.PaymentSenderNavigations)
+                .HasForeignKey(d => d.Sender)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKPayment630698");
         });
 
         modelBuilder.Entity<ServiceCategory>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__ServiceC__3213E83FD4B1C448");
+            entity.HasKey(e => e.Id).HasName("PK__ServiceC__3213E83FCD83E6E7");
 
             entity.ToTable("ServiceCategory");
 
@@ -349,7 +361,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Slot>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Slot__3213E83F743ED738");
+            entity.HasKey(e => e.Id).HasName("PK__Slot__3213E83F8BA6CDD2");
 
             entity.ToTable("Slot");
 
@@ -360,7 +372,7 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<Token>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__Token__3214EC2738021DD8");
+            entity.HasKey(e => e.Id).HasName("PK__Token__3214EC272CB43DC8");
 
             entity.ToTable("Token");
 
@@ -392,11 +404,11 @@ public partial class DentalClinicPlatformContext : DbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Id).HasName("PK__User__3213E83FA15FF376");
+            entity.HasKey(e => e.Id).HasName("PK__User__3213E83FF96076A4");
 
             entity.ToTable("User");
 
-            entity.HasIndex(e => e.Username, "UQ__User__F3DBC5724E8CBBD4").IsUnique();
+            entity.HasIndex(e => e.Username, "UQ__User__F3DBC572CC69970D").IsUnique();
 
             entity.Property(e => e.Id).HasColumnName("id");
             entity.Property(e => e.Active)
@@ -428,6 +440,25 @@ public partial class DentalClinicPlatformContext : DbContext
             entity.Property(e => e.Username)
                 .HasMaxLength(20)
                 .HasColumnName("username");
+        });
+
+        modelBuilder.Entity<UserPanfoymentInfo>(entity =>
+        {
+            entity.HasKey(e => e.UserId).HasName("PK__UserPanf__B9BE370FFCA832FD");
+
+            entity.ToTable("UserPanfoymentInfo");
+
+            entity.Property(e => e.UserId)
+                .ValueGeneratedNever()
+                .HasColumnName("user_id");
+            entity.Property(e => e.PaymentNumber)
+                .HasMaxLength(255)
+                .HasColumnName("payment_number");
+
+            entity.HasOne(d => d.User).WithOne(p => p.UserPanfoymentInfo)
+                .HasForeignKey<UserPanfoymentInfo>(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FKUserPanfoy990304");
         });
 
         OnModelCreatingPartial(modelBuilder);

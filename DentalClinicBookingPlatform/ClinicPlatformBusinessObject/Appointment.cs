@@ -9,8 +9,6 @@ public partial class Appointment
 
     public string AppointmentType { get; set; } = null!;
 
-    public int Number { get; set; }
-
     public DateOnly Date { get; set; }
 
     public Guid SlotId { get; set; }
@@ -21,15 +19,17 @@ public partial class Appointment
 
     public int ClinicId { get; set; }
 
-    public int CycleCount { get; set; }
-
     public string DentistNote { get; set; } = null!;
 
     public string Status { get; set; } = null!;
 
+    public int CycleCount { get; set; }
+
     public Guid? OriginalAppointment { get; set; }
 
     public int PriceFinal { get; set; }
+
+    public DateTime CreationTime { get; set; }
 
     public virtual BookedService? BookedService { get; set; }
 
