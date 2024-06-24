@@ -13,7 +13,6 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
         {
             return new ClinicInfoModel
             {
-                OwnerId = model.OwnerId,
                 Description = model.Description,
                 Name = model.Name,
                 Address = model.Address,

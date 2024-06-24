@@ -18,7 +18,8 @@ namespace ClinicPlatformRepositories
         {
             Clinic clinic = MapToClinic(clinicInfo);
 
-           context.Clinics.Add(clinic);
+            context.Clinics.Add(clinic);
+            context.SaveChanges();
 
             return MapToClinicInfo(clinic);
         }
@@ -28,6 +29,7 @@ namespace ClinicPlatformRepositories
             Clinic clinic = MapToClinic(clinicInfo);
 
             context.Clinics.Update(clinic);
+            context.SaveChanges();
 
             return MapToClinicInfo(clinic);
         }
@@ -70,6 +72,7 @@ namespace ClinicPlatformRepositories
                 clinic.Working = false;
                 clinic.Status = "removed";
                 context.Update(clinicId);
+                context.SaveChanges();
             }
             
 
@@ -102,12 +105,14 @@ namespace ClinicPlatformRepositories
                 ClinicId = clinicInfo.Id,
                 Name = clinicInfo.Name,
                 Address = clinicInfo.Address,
+                Description = clinicInfo.Description,
                 Email = clinicInfo.Email,
                 Phone = clinicInfo.Phone,
                 OpenHour = clinicInfo.OpenHour,
                 CloseHour = clinicInfo.CloseHour,
                 Status = clinicInfo.Status,
-
+                OwnerId = clinicInfo.OwnerId,
+                Working = clinicInfo.Working,
             };
         }
 
@@ -115,6 +120,7 @@ namespace ClinicPlatformRepositories
         {
             return new ClinicInfoModel
             {
+                Id = clinic.ClinicId,
                 Name = clinic.Name,
                 Description = clinic.Description,
                 Address = clinic.Address!,
@@ -124,6 +130,7 @@ namespace ClinicPlatformRepositories
                 CloseHour = (TimeOnly)clinic.CloseHour!,
                 OwnerId = clinic.OwnerId,
                 Status = clinic.Status,
+                Working = clinic.Working
             };
         }
     }

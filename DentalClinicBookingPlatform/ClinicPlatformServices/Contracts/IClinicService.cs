@@ -4,7 +4,7 @@ namespace ClinicPlatformServices.Contracts
 {
     public interface IClinicService : IDisposable
     {
-        bool RegisterClinic(ClinicInfoModel registrationInfo, out string message);
+        ClinicInfoModel? RegisterClinic(ClinicInfoModel registrationInfo, out string message);
         IEnumerable<ClinicInfoModel> GetClinicWorkingInHourRange(TimeOnly start, TimeOnly end);
         ClinicInfoModel? GetClinicWithId(int id);
         IEnumerable<ClinicInfoModel> GetAllClinic(int size, int page);

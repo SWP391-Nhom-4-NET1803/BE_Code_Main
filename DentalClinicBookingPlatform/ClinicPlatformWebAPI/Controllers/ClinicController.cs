@@ -42,7 +42,9 @@ namespace ClinicPlatformWebAPI.Controllers
                 Detail = "User created successfully!",
             };
 
-            if (!userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Dentist", out var message))
+            UserInfoModel? user = userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Dentist", out var message);
+
+            if (user == null)
             {
                 ResponseBody.StatusCode = 400;
                 ResponseBody.Message = "Register account failed";
@@ -58,7 +60,10 @@ namespace ClinicPlatformWebAPI.Controllers
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> RegisterClinicStaff([FromBody] UserRegistrationModel userInfo)
         {
-            if (!userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Dentist", out var message))
+
+            UserInfoModel? user = userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Dentist", out var message);
+
+            if (user==null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -128,11 +133,11 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             IEnumerable<ClinicInfoModel> result;
 
-            result = clinicService.GetAllClinic(page_size, page);
+            result = clinicService.GetAllClinic(page_size, page-1);
 
             if (name != null)
             {
-                result = result.Where(x => !x.Name.IsNullOrEmpty() && x.Name!.StartsWith(name, true, CultureInfo.InvariantCulture));
+                result = result.Where(x => !x.Name.IsNullOrEmpty() && x.Name!.Contains(name, StringComparison.OrdinalIgnoreCase));
             }
 
             if (open != null)
@@ -149,22 +154,33 @@ namespace ClinicPlatformWebAPI.Controllers
 
             return Ok(new HttpResponseModel()
             {
+                StatusCode = 200,
                 Message = "Success",
-                Content = result.Skip(Math.Abs(page - 1) * page_size).Take(page_size)
+                Content = result
             });
         }
 
         [HttpPost("register")]
         public ActionResult<HttpResponseModel> RegisterClinic([FromBody] ClinicRegistrationModel info)
         {
-            UserInfoModel? userInfo = userService.GetUserWithUserId((int) info.OwnerId!);
+
+            UserInfoModel? userInfo = new UserInfoModel()
+            {
+                Username = info.OwnerUserName,
+                PasswordHash = info.OwnerPassword,
+                Fullname = info.OwnerFullName,
+                Email = info.OwnerEmail,
+                IsOwner = true
+            };
+                
+            userInfo = userService.RegisterAccount(userInfo, "Dentist", out var message);
 
             if (userInfo == null || userInfo.IsOwner == false)
             {
                 string errorReason = "Error while getting user information: ";
 
-                errorReason += (userInfo != null ? $"No user with {info.OwnerId} exis. " : "");
-                errorReason += (!userInfo?.IsOwner ?? false ? "User is not a clinic owner" : "");
+                errorReason += (userInfo == null ? message : "");
+                errorReason += (!userInfo?.IsOwner ?? false  ? "User is not a clinic owner" : "");
 
                 return BadRequest(new HttpResponseModel()
                 {
@@ -174,7 +190,13 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
 
-            if (!clinicService.RegisterClinic(ClinicMapper.MapToClinicInfo(info), out var message))
+            ClinicInfoModel? clinic = ClinicMapper.MapToClinicInfo(info);
+
+            clinic.OwnerId = userInfo.Id;
+
+            clinic = clinicService.RegisterClinic(clinic, out message);
+
+            if (clinic == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -184,11 +206,10 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
 
-            ClinicInfoModel registeredClinic = clinicService.GetClinicWithOwnerId((int)info.OwnerId!)!;
+            userInfo.ClinicId = clinic.Id;
+            UserInfoModel user = userService.UpdateUserInformation(userInfo, out message);
 
-            userInfo.ClinicId = registeredClinic.Id;
-
-            if (!userService.UpdateUserInformation(userInfo, out message))
+            if (user == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -197,13 +218,13 @@ namespace ClinicPlatformWebAPI.Controllers
                     Detail = message
                 });
             }
-
+            
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
                 Message = "Success",
                 Detail = "Succesfully created new clinic",
-                Content = registeredClinic
+                Content = clinic
             });
         }
 
