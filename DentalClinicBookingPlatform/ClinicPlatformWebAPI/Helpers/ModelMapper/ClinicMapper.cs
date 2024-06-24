@@ -1,5 +1,6 @@
 ﻿using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformDTOs.SlotModels;
+using ClinicPlatformObjects.ClinicModels;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 

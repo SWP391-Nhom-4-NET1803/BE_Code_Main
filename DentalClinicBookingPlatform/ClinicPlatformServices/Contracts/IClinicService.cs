@@ -10,7 +10,7 @@ namespace ClinicPlatformServices.Contracts
         IEnumerable<ClinicInfoModel> GetAllClinic(int size, int page);
         ClinicInfoModel? GetClinicWithName(string name);
         ClinicInfoModel? GetClinicWithOwnerId(int ownerId);
-        bool UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message);
+        ClinicInfoModel? UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message);
         bool InactivateClinic(int clinicId, out string message);
         bool ActivateClinic(int clinicId, out string message);
         bool IsClinicNameAvailable(string name);
