@@ -151,7 +151,7 @@ namespace ClinicPlatformServices
         }
 
         public UserInfoModel? ValidateAccessToken(string token, string roles, out string message)
-
+        {
             if (token == null)
             {
                 message = "No token provided";
