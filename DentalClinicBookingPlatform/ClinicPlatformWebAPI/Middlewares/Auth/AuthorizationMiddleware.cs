@@ -3,7 +3,7 @@ using ClinicPlatformServices.Contracts;
 
 namespace ClinicPlatformWebAPI.Middlewares.Authentication
 {
-    public class AuthorizationMiddleware: IMiddleware
+    public class AuthorizationMiddleware : IMiddleware
     {
         private readonly IAuthService authService;
 

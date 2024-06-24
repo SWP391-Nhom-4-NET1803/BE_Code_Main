@@ -1,9 +1,10 @@
-﻿using ClinicPlatformDTOs.RoleModels;
-using ClinicPlatformDTOs.UserModels;
+﻿using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformRepositories;
+using System.Security.Cryptography;
 using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformServices.Contracts;
 using Microsoft.IdentityModel.Tokens;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ClinicPlatformServices
@@ -13,11 +14,6 @@ namespace ClinicPlatformServices
         private readonly IUserRepository userRepository;
         private bool disposedValue;
 
-        public UserService()
-        {
-            userRepository = new UserRepository();
-        }
-
         public UserService(IUserRepository repository)
         {
             userRepository = repository;
@@ -25,12 +21,70 @@ namespace ClinicPlatformServices
 
         public IEnumerable<UserInfoModel> GetUsers()
         {
-            return userRepository.GetAll();
+            return userRepository.GetAllUser();
+        }
+
+        public UserInfoModel? GetUserWithUserId(int userId)
+        {
+            return userRepository.GetUser(userId);
+        }
+
+        public UserInfoModel? GetUserWithCustomerId(int customerId)
+        {
+            return userRepository.GetUserWithCustomerID(customerId);
+        }
+
+        public UserInfoModel? GetDentistWithDentistId(int dentistId)
+        {
+            return userRepository.GetUserWithDentistID(dentistId);
+        }
+
+        public UserInfoModel? GetUserWithEmail(string email)
+        {
+            return userRepository.GetUserWithEmail(email);
+        }
+
+        public IEnumerable<UserInfoModel> GetAllUserOfRole(string role)
+        {
+            return from user in userRepository.GetAllUser() where user.Role == role select user;
         }
 
         public UserInfoModel? GetWithUsernameAndPassword(string username, string password)
         {
-            return userRepository.GetAll().Where(x => x.Username == username && x.Password == password).FirstOrDefault();
+            var user = userRepository.GetUserWithUsername(username);
+
+            Console.WriteLine(user);
+
+            if (user == null)
+            {
+                user = userRepository.GetUserWithEmail(username);
+
+                if (user == null)
+                {
+                    return null;
+                }
+            }
+
+            Console.WriteLine(user.Username);
+            Console.WriteLine(user.PasswordHash);
+            Console.WriteLine(HashPassword(password, user.Salt));
+
+            if (HashPassword(password, user.Salt) == user.PasswordHash)
+            {
+                return user;
+            }
+
+            return null;
+        }
+
+        public IEnumerable<UserInfoModel> GetRemovedUser()
+        {
+            return userRepository.GetAllUser().Where(x => x.IsRemoved == true);
+        }
+
+        public IEnumerable<UserInfoModel> GetUserRegisteredOn(DateOnly date)
+        {
+            return userRepository.GetAllUser().Where(x => DateOnly.FromDateTime((DateTime)x.JoinedDate!) == date);
         }
 
         public bool DeleteUser(int id, out string message)
@@ -38,13 +92,13 @@ namespace ClinicPlatformServices
             try 
             {
                 userRepository.DeleteUser(id);
-                message = "Delete user information Sucessfully";
+                message = "Delete user sucessfully";
                 return true;
             }
 
             catch (Exception ex)
             {
-                message = ex.Message;
+                message = ex.InnerException?.Message ?? ex.Message;
                 return false;
             }
         }
@@ -61,99 +115,6 @@ namespace ClinicPlatformServices
             return false;
         }
 
-        public ClinicStaffInfoModel? GetClinicStaffInformation(int staffId)
-        {
-            return userRepository.GetStaffInfo(staffId);
-        }
-
-        public CustomerInfoModel? GetCustomerInformation(int customerId)
-        {
-            return userRepository.GetCustomerInfo(customerId);
-        }
-
-        public ClinicStaffInfoModel? GetClinicStaffInformationWithUserId(int userId)
-        {
-            var tempt = userRepository.GetUser(userId);
-
-            if (tempt == null || tempt.Role != 2)
-            {
-                return null;
-            }
-
-            return userRepository.MapUserModelIntoStaffModel(tempt);
-        }
-
-        public CustomerInfoModel? GetCustomerInformationWithUserID(int userId)
-        {
-            var tempt = userRepository.GetUser(userId);
-
-            
-            if (tempt == null || tempt.Role != 3)
-            {
-                return null;
-            }
-
-            return userRepository.MapUserModelIntoCustomerModel(tempt);
-        }
-
-        public UserInfoModel? GetUserInformation(int userId)
-        {
-           return userRepository.GetUser(userId);
-        }
-
-        public UserInfoModel? GetUserInformationWithEmail(string email)
-        {
-            var SearchResult = userRepository.GetAll().Where(user => user.Email == email).ToList();
-
-            return SearchResult.FirstOrDefault();
-        }
-
-        public bool LoginAsAdmin(string username, string password, out UserInfoModel? info, out string message)
-        {
-            info = GetWithUsernameAndPassword(username, password);
-
-            if (info == null || info.Role != 1)
-            {
-                message = "Invalid Username or Password.";
-                return false;
-            }
-
-            message = $"Username and Password matched to user with Id {info.Id}";
-            return true;
-        }
-
-        public bool LoginAsClinicStaff(string username, string password, out ClinicStaffInfoModel? info, out string message)
-        {
-            var result = GetWithUsernameAndPassword(username, password);
-
-            if (result == null || result.Role != 2)
-            {
-                message = "Invalid Username or Password.";
-                info = null;
-                return false;
-            }
-
-            info = userRepository.MapUserModelIntoStaffModel(result!);
-            message = $"Username and Password matched to user with Id {info.Id}";
-            return true;
-        }
-
-        public bool LoginAsCustomer(string username, string password, out CustomerInfoModel? info, out string message)
-        {
-            var result = GetWithUsernameAndPassword(username, password);
-
-            if (result == null || result.Role != 3)
-            { 
-                message = "Invalid Username or Password.";
-                info = null;
-                return false;
-            }
-
-            info = userRepository.MapUserModelIntoCustomerModel(result!);
-            message = $"Username and Password matched to user with Id {info.Id}";
-            return true;
-        }
-
         /// <summary>
         ///     Basically three method in one but with extra sauce!
         /// </summary>
@@ -162,7 +123,7 @@ namespace ClinicPlatformServices
         /// <param name="message"></param>
         /// <param name="IsAdmin">Granting the registing user an admin if true regardless of their role</param>
         /// <returns><see cref="true"/> if register sucessfully or <see cref="false"/> if failed.</returns>
-        public bool RegisterAccount(UserRegistrationModel information, RoleModel.Roles role, out string message, bool IsAdmin = false)
+        public bool RegisterAccount(UserInfoModel information, string role, out string message, bool IsAdmin = false)
         {
 
             if (!CheckAccountAvailability(information.Username, information.Email, out message))
@@ -176,48 +137,54 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            if (!CheckValidPassword(information.Password))
+            if (!CheckValidPassword(information.PasswordHash))
             {
                 message = "Pass should contain at least 8 character and containing at least one uppercase, lowercase and number with maxium of 30 character.";
                 return false;
             }
 
-            if (role == RoleModel.Roles.Admin || IsAdmin)
-            {
-                UserInfoModel registerInfo = new UserInfoModel()
-                {
-                    Username = information.Username,
-                    Password = information.Password,
-                    Email = information.Email,
-                    Role = 1,
-                };
+            information.Salt = CreateSalt(64);
+            information.PasswordHash = HashPassword(information.PasswordHash, information.Salt);
+            information.Role = role;
 
-                UserInfoModel? newUser = userRepository.AddUser(registerInfo);
+            if (role == "admin" || IsAdmin)
+            {
+                information.Role = "Admin";
+                UserInfoModel? newUser = userRepository.AddUser(information);
 
                 if (newUser == null)
                 {
-                    message = "Failed while creating admin accoont";
+                    message = "Failed while creating admin account";
                     return false;
                 }
 
                 message = "Created admin account successfully";
                 return true;
             }
-            else if (role == RoleModel.Roles.Customer)
+            else if (role == "Customer")
             {
-                if (!RegisterCustomerAccount(information, out message))
+                UserInfoModel? newUser = userRepository.AddUser(information);
+
+                if (newUser == null)
                 {
+                    message = "Failed while creating Customer account";
                     return false;
                 }
 
+                message = "Created Customer account successfully";
                 return true;
             }
-            else if (role == RoleModel.Roles.ClinicStaff)
+            else if (role == "Dentist")
             {
-                if (!RegisterClinicStaffAccount(information, out message))
+                UserInfoModel? newUser = userRepository.AddUser(information);
+
+                if (newUser == null)
                 {
+                    message = "Failed while creating Dentist account";
                     return false;
                 }
+
+                message = "Created Dentist account successfully";
                 return true;
             }
             else
@@ -227,71 +194,8 @@ namespace ClinicPlatformServices
             }
         }
 
-        public bool RegisterClinicStaffAccount(UserRegistrationModel information, out string message)
-        {
-            try
-            {
-                UserInfoModel registerInfo = new UserInfoModel()
-                {
-                    Username = information.Username,
-                    Password = information.Password,
-                    Email = information.Email,
-                    Fullname = information.Username,
-                    Role = 2,
-                    ClinicId = information.Clinic,
-                    IsOwner = information.ClinicOwner
-                };
-
-                var result = userRepository.AddUser(registerInfo);
-
-                if (result == null)
-                {
-                    message = "Failed";
-                    return false;
-                }
-                message = "Success";
-                return true;
-            }
-            catch (Exception ex)
-            {
-                message = ex.InnerException?.Message ?? ex.Message;
-                return false;
-            }
-        }
-
-        public bool RegisterCustomerAccount(UserRegistrationModel information, out string message)
-        {
-            try
-            {
-                UserInfoModel registerInfo = new UserInfoModel()
-                {
-                    Username = information.Username,
-                    Password = information.Password,
-                    Email = information.Email,
-                    Fullname = information.Username,
-                    Role = 3,
-                };
-
-                var result = userRepository.AddUser(registerInfo);
-
-                if (result == null)
-                {
-                    message = "Failed";
-                    return false;
-                }
-                message = "Success";
-                return true;
-            }
-            catch (Exception ex)
-            {
-                message = ex.InnerException?.Message ?? ex.Message;
-                return false;
-            }
-        }
-
         public bool UpdateUserInformation(UserInfoModel information, out string message)
         {
-
             if (userRepository.UpdateUser(information) != null)
             {
                 message = "Update user information successfully";
@@ -302,7 +206,7 @@ namespace ClinicPlatformServices
             return false;
         }
 
-        public bool UpdatePasswordForUserWithId(int userId, string oldPassword, string newPassword, out string message)
+        public bool UpdatePasswordForUserWithId(int userId, string newPassword, out string message)
         {
             if (!CheckValidPassword(newPassword))
             {
@@ -310,26 +214,14 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            UserInfoModel? userInfo = GetUserInformation(userId);
+            UserInfoModel? userInfo = GetUserWithUserId(userId);
 
 
             if (userInfo != null)
             {
-                if (userInfo.Password != oldPassword)
-                {
-                    message = "Invalid user id or password provided.";
-                    return false;
-                }
+                userInfo.PasswordHash = HashPassword(newPassword, userInfo.Salt);
 
-                userInfo.Password = newPassword;
-
-                if (!UpdateUserInformation(userInfo, out message))
-                {
-                    return false;
-                }
-
-                message = "Update user password successfully";
-                return true;
+                return UpdateUserInformation(userInfo, out message);
             }
 
             message = $"User does not exist for Id {userId}";
@@ -344,7 +236,7 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            var AllUserInfo = userRepository.GetAll();
+            var AllUserInfo = userRepository.GetAllUser();
 
             if (AllUserInfo.Where(x => x.Username == username).Any())
             {
@@ -352,7 +244,7 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            if (AllUserInfo.Where(x => x.Email == email).Any())
+            if (AllUserInfo.Where(x => x.Email == email && !x.IsRemoved).Any())
             {
                 message = "Email is used by another account.";
                 return false;
@@ -364,29 +256,30 @@ namespace ClinicPlatformServices
 
         public bool ExistUser(int id)
         {
-            return userRepository.GetUser(id) == null;
+            return userRepository.GetUser(id) != null;
 
         }
 
         public bool ActivateUser(int id, out string message)
         {
-            UserInfoModel? user = GetUserInformation(id);
+            UserInfoModel? user = GetUserWithUserId(id);
 
             if (user==null)
             {
-                message = $"User does not exist for Id {id}";
+                message = $"User does not exist for Id {id}.";
                 return false;
             }
 
-            if (user.Status == true)
+            if (user.IsActive == true)
             {
-                message = "User account already activated";
+                message = "User account already activated.";
                 return false;
             }
 
-            user.Status = true;
-            if (!UpdateUserInformation(user, out message))
+            user.IsActive = true;
+            if (userRepository.UpdateUser(user) == null)
             {
+                message = "Failed while updating user information.";
                 return false;
             }
             message = "Success";
@@ -395,7 +288,7 @@ namespace ClinicPlatformServices
 
         public bool InactivateUser(int id, out string message)
         {
-            UserInfoModel? user = GetUserInformation(id);
+            UserInfoModel? user = GetUserWithUserId(id);
 
             if (user == null)
             {
@@ -403,18 +296,37 @@ namespace ClinicPlatformServices
                 return false;
             }
 
-            if (user.Status == false)
+            if (user.IsActive == false)
             {
                 message = "User account already inactivated";
                 return false;
             }
 
-            user.Status = false;
-            if (!UpdateUserInformation(user, out message))
+            user.IsActive = false;
+            if (userRepository.UpdateUser(user) == null)
             {
+                message = "Failed while updating user information.";
                 return false;
             }
             message = "Success";
+            return true;
+        }
+
+        public bool RemoveUser(int userId, out string message)
+        {
+            UserInfoModel? user = userRepository.GetUser(userId);
+
+            if (user == null)
+            {
+                message = "Can not find user to remove";
+                return false;
+            }
+
+            user.IsRemoved = true;
+
+            userRepository.UpdateUser(user);
+
+            message = $"Removed user {userId}!";
             return true;
         }
 
@@ -437,6 +349,29 @@ namespace ClinicPlatformServices
         }
 
         // Helper Functions
+        string HashPassword(string password, string salt)
+        {
+            SHA512 hashFunction = SHA512.Create();
+
+            var passwordByte = Encoding.UTF8.GetBytes(password + salt);
+
+            var hashedPassword = hashFunction.ComputeHash(passwordByte);
+
+            return Convert.ToBase64String(hashedPassword);
+        }
+
+        string CreateSalt(int size)
+        {
+            byte[] result = new byte[size];
+
+            using (var RNG = RandomNumberGenerator.Create())
+            {
+                RNG.GetBytes(result);
+            }
+
+            return Convert.ToBase64String(result);
+        }
+
         public bool CheckValidUsername(string? username)
         {
 
@@ -457,8 +392,5 @@ namespace ClinicPlatformServices
 
             return Regex.Match(password!, "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,30}$").Success;
         }
-
-        // Mappers
-        
     }
 }

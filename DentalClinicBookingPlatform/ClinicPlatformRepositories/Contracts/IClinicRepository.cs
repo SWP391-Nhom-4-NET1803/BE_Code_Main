@@ -9,7 +9,7 @@ namespace ClinicPlatformRepositories.Contracts
 {
     public interface IClinicRepository: IDisposable
     {
-        IEnumerable<ClinicInfoModel> GetAll();
+        IEnumerable<ClinicInfoModel> GetAllClinic(bool includeRemoved = true, bool includeUnverified = true);
 
         ClinicInfoModel? GetClinic(int clinicId);
 
@@ -18,9 +18,5 @@ namespace ClinicPlatformRepositories.Contracts
         ClinicInfoModel? UpdateClinic(ClinicInfoModel clinicInfo);
 
         void DeleteClinic(int clinicId);
-
-        void SaveChanges();
-
-        // Mappers
     }
 }

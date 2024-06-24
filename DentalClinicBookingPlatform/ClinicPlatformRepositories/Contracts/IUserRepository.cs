@@ -1,9 +1,9 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDTOs.UserModels;
+﻿using ClinicPlatformDTOs.UserModels;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -11,27 +11,21 @@ namespace ClinicPlatformRepositories.Contracts
 {
     public interface IUserRepository: IDisposable
     {
-        IEnumerable<UserInfoModel> GetAll();
-
+        IEnumerable<UserInfoModel> GetAllUser(bool includeRemoved = true, bool includeInactive = true);
         UserInfoModel? GetUser(int userId);
 
-        UserInfoModel? AddUser(UserInfoModel userInfo);
+        UserInfoModel? GetUserWithUsername(string username);
 
-        UserInfoModel? UpdateUser(UserInfoModel userInfo);
+        UserInfoModel? GetUserWithEmail(string email);
+
+        UserInfoModel? GetUserWithCustomerID(int customerId);
+
+        UserInfoModel? GetUserWithDentistID(int dentistId);
+
+        UserInfoModel? AddUser(UserInfoModel user);
+
+        UserInfoModel? UpdateUser(UserInfoModel user);
 
         void DeleteUser(int userId);
-
-        void SaveChanges();
-
-        // More specific items
-        CustomerInfoModel? GetCustomerInfo(int customerId);
-
-        ClinicStaffInfoModel? GetStaffInfo(int staffId);
-
-        // Mappers
-        UserInfoModel MapCustomerModelIntoUserModel(CustomerInfoModel customer);
-        UserInfoModel MapStaffModelIntoUserModel(ClinicStaffInfoModel staff);
-        CustomerInfoModel MapUserModelIntoCustomerModel(UserInfoModel customer);
-        ClinicStaffInfoModel MapUserModelIntoStaffModel(UserInfoModel staff);
     }
 }

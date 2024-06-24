@@ -1,7 +1,7 @@
-﻿using ClinicPlatformBusinessObject;
-using ClinicPlatformDAOs;
+﻿using ClinicPlatformDatabaseObject;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformRepositories.Contracts;
+using Microsoft.EntityFrameworkCore;
 using System.Globalization;
 using System.Numerics;
 
@@ -9,193 +9,104 @@ namespace ClinicPlatformRepositories
 {
     public class UserRepository : IUserRepository
     {
-        private readonly UserDAO userDAO;
+        private readonly DentalClinicPlatformContext context;
         private bool disposedValue;
 
-        public UserRepository()
+        public UserRepository(DentalClinicPlatformContext context)
         {
-            userDAO = new UserDAO();
-            
-        }
-
-        public IEnumerable<UserInfoModel> GetAll()
-        {
-            var mapped = from result in userDAO.GetAllUsers()
-                         select new UserInfoModel
-                         {
-                             Id = result.UserId,
-                             Username = result.Username,
-                             Password = result.Password,
-                             Email = result.Email,
-                             Fullname = result.Fullname,
-                             Phone = result.PhoneNumber,
-                             Status = result.Status,
-                             Role = result.RoleId,
-                             RoleName = result.Role.RoleName,
-
-                             CustomerId = result.Customer?.CustomerId,
-                             Sex = result.Customer?.Sex,
-                             Insurance = result.Customer?.Insurance,
-                             Birthdate = result.Customer?.BirthDate,
-
-                             ClinicStaffId = result.ClinicStaff?.StaffId,
-                             ClinicId = result.ClinicStaff?.ClinicId,
-                             IsOwner = result.ClinicStaff?.IsOwner ?? false,
-
-                         };
-
-            return mapped;
-        }
-
-        public UserInfoModel? GetUser(int userId)
-        {
-            User? result = userDAO.GetUser(userId);
-
-            if (result != null)
-            {
-                UserInfoModel mapped = new()
-                {
-                    Id = result.UserId,
-                    Username = result.Username, 
-                    Password = result.Password,
-                    Email = result.Email,
-                    Fullname = result.Fullname,
-                    Phone = result.PhoneNumber,
-                    Status = result.Status,
-                    Role = result.RoleId,
-                    RoleName = result.Role.RoleName,
-                    JoinedDate = result.CreationDate,
-
-                    CustomerId = result.Customer?.CustomerId,
-                    Sex = result.Customer?.Sex,
-                    Insurance = result.Customer?.Insurance,
-                    Birthdate = result.Customer?.BirthDate,
-                    
-                    ClinicStaffId = result.ClinicStaff?.StaffId,
-                    ClinicId = result.ClinicStaff?.ClinicId,
-                    IsOwner = result.ClinicStaff?.IsOwner ?? false,
-                };
-
-                return mapped;
-            }
-            return null;
+            this.context = context; 
         }
 
         public UserInfoModel? AddUser(UserInfoModel userInfo)
         {
-            User user = new()
-            {
-                Username = userInfo.Username!,
-                Password = userInfo.Password!,
-                Fullname = userInfo.Fullname,
-                Email = userInfo.Email,
-                PhoneNumber = userInfo.Phone,
-                Status = false,
-                CreationDate = DateTime.Now,
-            };
+            User user = MapToUser(userInfo);
 
-            if (userInfo.Role == 1 || userInfo.RoleName == "Admin") 
-            {
-                user.RoleId = 1;
-            }
-            else if (userInfo.Role == 2 || userInfo.RoleName == "ClinicStaff")
-            {
+            user.CreationTime = DateTime.Now;
 
-                user.RoleId = 2;
-                user.ClinicStaff = new ClinicStaff()
-                {
-                    ClinicId = userInfo.ClinicId,
-                    IsOwner = userInfo.IsOwner
-                };
-            }
-            else if (userInfo.Role == 3 || userInfo.RoleName == "Customer")
-            {
-                user.RoleId = 3;
-                user.Customer = new Customer()
-                {
-                    Insurance = userInfo.Insurance,
-                    Sex = userInfo.Sex,
-                    BirthDate = userInfo.Birthdate,
-                };
-            }
-            else
-            {
-                return null;
-            }
-
-            userDAO.AddUser(user);
-
-            return userInfo;
+            context.Users.Add(user);
+            context.SaveChanges();
+            return MapToUserInfo(user);
         }
 
-        public UserInfoModel? UpdateUser(UserInfoModel userInfo)
+        public IEnumerable<UserInfoModel> GetAllUser(bool includeRemoved = true, bool includeInactive = true)
         {
-            User? target = userDAO.GetUser(userInfo.Id);
+            IEnumerable<User> userList = context.Users.Include(x => x.Customer).Include(x => x.Dentist);
 
-            if (target != null)
+            Console.WriteLine($"{userList.Count()}");
+
+            if (!includeRemoved)
             {
+                userList = userList.Where(x => !x.Removed);
+            }
 
-                target.Username = userInfo.Username?? target.Username;
-                target.Password = userInfo.Password?? target.Password;
-                target.Fullname = userInfo.Fullname?? target.Password;
-                target.Email = userInfo.Email?? target.Email;
-                target.PhoneNumber = userInfo.Phone ?? target.PhoneNumber;
-                target.Status = userInfo.Status?? false;
+            if (!includeInactive)
+            {
+                userList = userList.Where(x => x.Active);
+            }
 
-                if (target.RoleId == 2)
-                {
-                    target.ClinicStaff!.ClinicId = userInfo.ClinicId;
-                    target.ClinicStaff!.IsOwner = userInfo.IsOwner;
-                }
+            return from user in userList.ToList() select MapToUserInfo(user);
+        } 
 
-                if (target.RoleId == 3)
-                {
-                    target.Customer!.BirthDate = userInfo.Birthdate ?? target.Customer.BirthDate;
-                    target.Customer!.Insurance = userInfo.Insurance ?? target.Customer.Insurance;
-                    target.Customer!.Sex = userInfo.Sex ?? target.Customer.Sex;
-                }
+        public UserInfoModel? GetUser(int userId)
+        {
+            User? user = context.Users.Find(userId);
 
-                userDAO.UpdateUser(target);
-                SaveChanges();
-
-                return userInfo;
+            if (user != null)
+            {
+                return MapToUserInfo(user);
             }
 
             return null;
+        }
+
+        public UserInfoModel? GetUserWithCustomerID(int customerId)
+        {
+            return GetAllUser().Where(x => x.CustomerId == customerId).FirstOrDefault();
+        }
+
+        public UserInfoModel? GetUserWithDentistID(int dentistId)
+        {
+
+            return GetAllUser().Where(x => x.DentistId == dentistId).FirstOrDefault();
+        }
+
+        public UserInfoModel? GetUserWithEmail(string email)
+        {
+            return GetAllUser().Where(x => x.Email == email).FirstOrDefault();
+        }
+
+        public UserInfoModel? GetUserWithUsername(string username)
+        {
+            var user = GetAllUser().Where(x => x.Username == username);
+
+            if (user != null)
+            {
+                Console.WriteLine(GetAllUser().FirstOrDefault().Username);
+            }
+
+            return user.FirstOrDefault();
         }
 
         public void DeleteUser(int userId)
         {
-            userDAO.DeleteUser(userId);
-        }
+            User? user = context.Users.Find(userId);
 
-        public CustomerInfoModel? GetCustomerInfo(int customerId)
-        {
-            var result = userDAO.GetCustomerByCustomerId(customerId);
-
-            if (result != null) 
+            if (user == null)
             {
-                return MapCustomerToCustomerModel(result);
+                throw new InvalidOperationException($"The user with provided Id {userId} does not exist!");
             }
 
-            return null;
+            user.Removed = true;
+
+            context.Users.Update(user);
+            context.SaveChanges();
         }
 
-        public ClinicStaffInfoModel? GetStaffInfo(int staffId)
+        public UserInfoModel? UpdateUser(UserInfoModel userInfo)
         {
-            var result = userDAO.GetStaffByStaffId(staffId);
-
-            if (result != null)
-            {
-                return MapClinicStaffToClinicStaffModel(result);
-            }
-
-            return null;
-        }
-
-        public void SaveChanges()
-        {
-            userDAO.SaveChanges();
+            context.Users.Update(MapToUser(userInfo));
+            context.SaveChanges();
+            return userInfo;
         }
 
         protected virtual void Dispose(bool disposing)
@@ -204,8 +115,9 @@ namespace ClinicPlatformRepositories
             {
                 if (disposing)
                 {
-                    userDAO.Dispose();
+                    context.Dispose();
                 }
+
                 disposedValue = true;
             }
         }
@@ -216,123 +128,79 @@ namespace ClinicPlatformRepositories
             GC.SuppressFinalize(this);
         }
 
-        private CustomerInfoModel MapCustomerToCustomerModel(Customer user)
+        User MapToUser(UserInfoModel userInfo)
         {
-            return new CustomerInfoModel()
+            User user = new User()
             {
-                Id = user.UserId,
-                CustomerId = user.CustomerId,
-                Username = user.User.Username,
-                Password = user.User.Password,
-                Fullname = user.User.Fullname,
-                Email = user.User.Email,
-                Phone = user.User.PhoneNumber,
-                Birthdate = user.BirthDate,
-                Insurance = user.Insurance,
-                Sex = user.Sex,
-                Role = user.User.RoleId,
-                JoinedDate = user.User.CreationDate,
-                Status = user.User.Status
+                Username = userInfo.Username,
+                PasswordHash = userInfo.PasswordHash,
+                Salt = userInfo.Salt,
+                Email = userInfo.Email,
+                Phone = userInfo.Phone,
+                Fullname = userInfo.Fullname,
+                Active = false,
+                Removed = false,
+                CreationTime = DateTime.UtcNow,
+                Role = userInfo.Role,
             };
+
+            if (userInfo.Role == "Admin")
+            {
+                user.Active = true;
+            }
+            else if (userInfo.Role == "Dentist")
+            {
+                user.Dentist = new Dentist()
+                {
+                    ClinicId = null,
+                    IsOwner = userInfo.IsOwner ?? false,
+                };
+            }
+            else if (userInfo.Role == "Customer")
+            {
+                user.Customer = new Customer()
+                {
+                    Birthdate = userInfo.Birthdate,
+                    Sex = userInfo.Sex,
+                    Insurance = userInfo.Insurance,
+                };
+            }
+
+            return user;
         }
 
-        private ClinicStaffInfoModel MapClinicStaffToClinicStaffModel(ClinicStaff user)
+        UserInfoModel MapToUserInfo(User user)
         {
-            return new ClinicStaffInfoModel()
+            UserInfoModel userInfo = new UserInfoModel()
             {
-                Id = user.UserId,
-                StaffId = user.StaffId,
-                Username = user.User.Username,
-                Password = user.User.Password,
-                Fullname = user.User.Fullname,
-                Email = user.User.Email,
-                Phone = user.User.PhoneNumber,
-                IsOwner = user.IsOwner,
-                ClinicId = user.ClinicId,
-                ClinicName = user.Clinic?.Name,
-                Role = user.User.RoleId,
-                JoinedDate = user.User.CreationDate,
-                Status = user.User.Status
+                Id = user.Id,
+                Username = user.Username,
+                Email = user.Email,
+                Fullname = user.Fullname!,
+                Phone = user.Phone!,
+                IsActive = user.Active,
+                IsRemoved = user.Removed,
+                JoinedDate = user.CreationTime,
+                PasswordHash = user.PasswordHash,
+                Salt = user.Salt,
+                Role = user.Role,
             };
-        }
 
-
-        public UserInfoModel MapCustomerModelIntoUserModel(CustomerInfoModel customer)
-        {
-            return new UserInfoModel()
+            if (user.Role == "Dentist")
             {
-                Id = customer.Id,
-                CustomerId = customer.CustomerId,
-                Username = customer.Username,
-                Password = customer.Password,
-                Role = customer.Role,
-                Fullname = customer.Fullname,
-                Email = customer.Email,
-                Phone = customer.Phone,
-                Insurance = customer.Insurance,
-                Birthdate = customer.Birthdate,
-                Sex = customer.Sex,
-                JoinedDate = customer.JoinedDate,
-                Status = customer.Status,
-            };
-        }
-
-        public UserInfoModel MapStaffModelIntoUserModel(ClinicStaffInfoModel staff)
-        {
-            return new UserInfoModel()
+                userInfo.DentistId = user.Dentist?.Id;
+                userInfo.ClinicId = user.Dentist?.ClinicId!;
+                userInfo.IsOwner = user.Dentist?.IsOwner ?? false;
+            }
+            else if (user.Role == "Customer")
             {
-                Id = staff.Id,
-                ClinicStaffId = staff.StaffId,
-                Username = staff.Username,
-                Password = staff.Password,
-                Role = staff.Role,
-                Fullname = staff.Fullname,
-                Email = staff.Email,
-                Phone = staff.Phone,
-                ClinicId = staff.ClinicId,
-                IsOwner = staff.IsOwner ?? false,
-                JoinedDate = staff.JoinedDate,
-                Status = staff.Status,
-            };
-        }
-
-        public CustomerInfoModel MapUserModelIntoCustomerModel(UserInfoModel customer)
-        {
-            return new CustomerInfoModel()
-            {
-                Id = customer.Id,
-                CustomerId = customer.CustomerId,
-                Username = customer.Username,
-                Password = customer.Password,
-                Role = customer.Role,
-                Fullname = customer.Fullname,
-                Email = customer.Email,
-                Phone = customer.Phone,
-                Insurance = customer.Insurance,
-                Birthdate = customer.Birthdate,
-                Sex = customer.Sex,
-                JoinedDate = customer.JoinedDate,
-                Status = customer.Status,
-            };
-        }
-
-        public ClinicStaffInfoModel MapUserModelIntoStaffModel(UserInfoModel staff)
-        {
-            return new ClinicStaffInfoModel()
-            {
-                Id = staff.Id,
-                StaffId = staff.ClinicStaffId ?? 0,
-                Username = staff.Username,
-                Password = staff.Password,
-                Role = staff.Role,
-                Fullname = staff.Fullname,
-                Email = staff.Email,
-                Phone = staff.Phone,
-                ClinicId = staff.ClinicId,
-                IsOwner = staff.IsOwner,
-                JoinedDate = staff.JoinedDate,
-                Status = staff.Status,
-            };
+                userInfo.CustomerId = user.Id;
+                userInfo.Insurance = user.Customer?.Insurance!;
+                userInfo.Sex = user.Customer?.Sex!;
+                userInfo.Birthdate = user.Customer?.Birthdate!;
+            }
+            
+            return userInfo;
         }
     }
 }

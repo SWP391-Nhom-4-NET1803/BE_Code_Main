@@ -1,5 +1,4 @@
 ﻿using ClinicPlatformDTOs.AuthenticationModels;
-using ClinicPlatformDTOs.RoleModels;
 using ClinicPlatformDTOs.UserModels;
 using System;
 using System.Collections.Generic;
@@ -10,7 +9,7 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformServices.Contracts
 {
-    public interface IAuthService: IDisposable
+    public interface IAuthService : IDisposable
     {
         string GenerateAccessToken(UserInfoModel user, int duration = 10);
 
@@ -18,7 +17,7 @@ namespace ClinicPlatformServices.Contracts
 
         UserInfoModel? ValidateAccessToken(string? token, out string message);
 
-        UserInfoModel? ValidateAccessToken(string token, RoleModel.Roles[] roles, out string message);
+        UserInfoModel? ValidateAccessToken(string token, string roles, out string message);
 
         AuthenticationTokenModel GenerateTokens(UserInfoModel user, int accessDuration = 10, int refreshDuration = 60);
 

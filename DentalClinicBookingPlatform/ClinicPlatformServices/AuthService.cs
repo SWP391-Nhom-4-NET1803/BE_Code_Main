@@ -1,5 +1,4 @@
 ﻿using ClinicPlatformDTOs.AuthenticationModels;
-using ClinicPlatformDTOs.RoleModels;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformServices.Contracts;
@@ -26,7 +25,7 @@ namespace ClinicPlatformServices
         private string TokenKey;
         private string Issuer;
 
-        public AuthService(IConfiguration config, IUserRepository userRepository) 
+        public AuthService(IConfiguration config, IUserRepository userRepository)
         {
             this.configuration = config;
             this.userRepository = userRepository;
@@ -74,7 +73,7 @@ namespace ClinicPlatformServices
                 rng.GetBytes(randomNumber);
 
                 // We add random data for extra "protection"
-                string PlainInfo = $"{randomNumber[0].ToString()}|{user.Username}|{expirationTime}|{randomNumber[1].ToString()}";
+                string PlainInfo = $"{randomNumber[0]}|{user.Username}|{expirationTime}|{randomNumber[1]}";
                 byte[] bytesInfo = Encoding.UTF8.GetBytes(PlainInfo);
 
                 return Convert.ToBase64String(bytesInfo);
@@ -112,9 +111,6 @@ namespace ClinicPlatformServices
 
             var TokenHandler = new JwtSecurityTokenHandler();
 
-            string TokenKey = configuration.GetSection("JWT:Key").Value!;
-            string Issuer = configuration.GetSection("JWT:Issuer").Value!;
-
             var validatior = new TokenValidationParameters()
             {
                 ValidateIssuer = true,
@@ -135,6 +131,7 @@ namespace ClinicPlatformServices
                 int userId = int.Parse(Token.Claims.First(x => x.Type == "id").Value);
 
                 message = "Valid token";
+
                 return userRepository.GetUser(userId);
             }
             catch (SecurityTokenExpiredException)
@@ -153,8 +150,8 @@ namespace ClinicPlatformServices
             return null;
         }
 
-        public UserInfoModel? ValidateAccessToken(string token, RoleModel.Roles[] roles, out string message)
-        {
+        public UserInfoModel? ValidateAccessToken(string token, string roles, out string message)
+
             if (token == null)
             {
                 message = "No token provided";
@@ -183,7 +180,10 @@ namespace ClinicPlatformServices
                 int userId = int.Parse(Token.Claims.First(x => x.Type == "id").Value);
                 string userRole = Token.Claims.First(x => x.Type == "role").Value;
 
-                if (roles.Length > 0 && !roles.Contains((RoleModel.Roles)int.Parse(userRole)))
+
+                var roleList = roles.Split(",");
+
+                if (roles.Length > 0 && !roleList.Contains(userRole))
                 {
                     throw new Exception("Unauthorized!");
                 }

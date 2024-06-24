@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\ClinicPlatformDTOs\ClinicPlatformDTOs.csproj" />
+    <ProjectReference Include="..\ClinicPlatformDTOs\ClinicPlatformObjects.csproj" />
     <ProjectReference Include="..\ClinicPlatformRepositories\ClinicPlatformRepositories.csproj" />
   </ItemGroup>
 

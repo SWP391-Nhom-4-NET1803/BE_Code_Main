@@ -8,13 +8,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		local_config.json = local_config.json
 	EndProjectSection
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClinicPlatformBusinessObject", "DentalClinicBookingPlatform\ClinicPlatformBusinessObject\ClinicPlatformBusinessObject.csproj", "{8B1B705B-4165-4F7A-A96B-63C03D89B7E5}"
-EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClinicPlatformDAOs", "DentalClinicBookingPlatform\ClinicPlatformDAOs\ClinicPlatformDAOs.csproj", "{20DED9FB-EFD9-4A6F-B06D-12B8CE4924D5}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClinicPlatformDatabaseObject", "DentalClinicBookingPlatform\ClinicPlatformBusinessObject\ClinicPlatformDatabaseObject.csproj", "{8B1B705B-4165-4F7A-A96B-63C03D89B7E5}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "DentalClinicBookingPlatform", "DentalClinicBookingPlatform", "{3CE94026-E62A-434A-BCDA-01C6EAF7A47E}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClinicPlatformDTOs", "DentalClinicBookingPlatform\ClinicPlatformDTOs\ClinicPlatformDTOs.csproj", "{62802B1A-A232-43D9-A273-63EB824D17B8}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClinicPlatformObjects", "DentalClinicBookingPlatform\ClinicPlatformDTOs\ClinicPlatformObjects.csproj", "{62802B1A-A232-43D9-A273-63EB824D17B8}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ClinicPlatformRepositories", "DentalClinicBookingPlatform\ClinicPlatformRepositories\ClinicPlatformRepositories.csproj", "{46556A7E-7879-4480-A382-24B1743255C3}"
 EndProject
@@ -34,6 +32,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Services", "DentalClinicBoo
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WebAPI", "DentalClinicBookingPlatform_Old\WebAPI\WebAPI.csproj", "{BDFF559B-A8A2-4EE8-9383-5060552A5784}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestProject", "TestProject\TestProject.csproj", "{1E955694-3C58-4BCE-8972-119B36D07BC6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -44,10 +44,6 @@ Global
 		{8B1B705B-4165-4F7A-A96B-63C03D89B7E5}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{8B1B705B-4165-4F7A-A96B-63C03D89B7E5}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{8B1B705B-4165-4F7A-A96B-63C03D89B7E5}.Release|Any CPU.Build.0 = Release|Any CPU
-		{20DED9FB-EFD9-4A6F-B06D-12B8CE4924D5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{20DED9FB-EFD9-4A6F-B06D-12B8CE4924D5}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{20DED9FB-EFD9-4A6F-B06D-12B8CE4924D5}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{20DED9FB-EFD9-4A6F-B06D-12B8CE4924D5}.Release|Any CPU.Build.0 = Release|Any CPU
 		{62802B1A-A232-43D9-A273-63EB824D17B8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{62802B1A-A232-43D9-A273-63EB824D17B8}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{62802B1A-A232-43D9-A273-63EB824D17B8}.Release|Any CPU.ActiveCfg = Release|Any CPU
@@ -84,13 +80,16 @@ Global
 		{BDFF559B-A8A2-4EE8-9383-5060552A5784}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BDFF559B-A8A2-4EE8-9383-5060552A5784}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BDFF559B-A8A2-4EE8-9383-5060552A5784}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1E955694-3C58-4BCE-8972-119B36D07BC6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1E955694-3C58-4BCE-8972-119B36D07BC6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1E955694-3C58-4BCE-8972-119B36D07BC6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1E955694-3C58-4BCE-8972-119B36D07BC6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{8B1B705B-4165-4F7A-A96B-63C03D89B7E5} = {3CE94026-E62A-434A-BCDA-01C6EAF7A47E}
-		{20DED9FB-EFD9-4A6F-B06D-12B8CE4924D5} = {3CE94026-E62A-434A-BCDA-01C6EAF7A47E}
 		{62802B1A-A232-43D9-A273-63EB824D17B8} = {3CE94026-E62A-434A-BCDA-01C6EAF7A47E}
 		{46556A7E-7879-4480-A382-24B1743255C3} = {3CE94026-E62A-434A-BCDA-01C6EAF7A47E}
 		{369FCBA4-DE4A-4C9F-88C5-9F422E53F478} = {3CE94026-E62A-434A-BCDA-01C6EAF7A47E}
@@ -100,6 +99,7 @@ Global
 		{85AFA9E6-1667-4F4F-931E-8B8B6532E8FA} = {A01C3891-C9FD-4038-8D69-BEC0B1845468}
 		{D165C81A-9181-4677-873B-34D24A463F66} = {A01C3891-C9FD-4038-8D69-BEC0B1845468}
 		{BDFF559B-A8A2-4EE8-9383-5060552A5784} = {A01C3891-C9FD-4038-8D69-BEC0B1845468}
+		{1E955694-3C58-4BCE-8972-119B36D07BC6} = {3CE94026-E62A-434A-BCDA-01C6EAF7A47E}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {CC990A86-8927-4064-BDA0-58445643A92E}

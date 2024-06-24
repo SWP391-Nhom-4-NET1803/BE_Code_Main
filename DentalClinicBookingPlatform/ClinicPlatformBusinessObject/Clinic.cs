@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace ClinicPlatformBusinessObject;
+namespace ClinicPlatformDatabaseObject;
 
 public partial class Clinic
 {
@@ -11,29 +11,29 @@ public partial class Clinic
 
     public string Address { get; set; } = null!;
 
+    public string Description { get; set; } = null!;
+
+    public string Phone { get; set; } = null!;
+
+    public string Email { get; set; } = null!;
+
     public TimeOnly OpenHour { get; set; }
 
     public TimeOnly CloseHour { get; set; }
 
-    public string? Description { get; set; }
+    public bool Working { get; set; }
 
-    public string Email { get; set; } = null!;
-
-    public string Phone { get; set; } = null!;
-
-    public bool Status { get; set; }
+    public string Status { get; set; } = null!;
 
     public int OwnerId { get; set; }
 
-    public virtual ICollection<Booking> Bookings { get; set; } = new List<Booking>();
-
-    public virtual ICollection<Certification> Certifications { get; set; } = new List<Certification>();
+    public virtual ICollection<Appointment> Appointments { get; set; } = new List<Appointment>();
 
     public virtual ICollection<ClinicService> ClinicServices { get; set; } = new List<ClinicService>();
 
-    public virtual ICollection<ClinicStaff> ClinicStaffs { get; set; } = new List<ClinicStaff>();
+    public virtual ICollection<ClinicSlot> ClinicSlots { get; set; } = new List<ClinicSlot>();
+
+    public virtual ICollection<Dentist> Dentists { get; set; } = new List<Dentist>();
 
     public virtual User Owner { get; set; } = null!;
-
-    public virtual ICollection<ScheduledSlot> ScheduledSlots { get; set; } = new List<ScheduledSlot>();
 }

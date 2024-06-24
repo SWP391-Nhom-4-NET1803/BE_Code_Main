@@ -20,18 +20,7 @@ namespace ClinicPlatformServices
             this.scheduleRepository = scheduleRepository;
         }
 
-        public bool RegisterClinicSlot(ClinicSlotRegistrationModel slotInfo, out string message)
-        {
-            return AddNewClinicSlot(new ClinicSlotInfoModel()
-            {
-                ClinicId = slotInfo.ClinicId,
-                MaxAppointment = slotInfo.MaxAppointment,
-                SlotId = slotInfo.SlotId,
-                Weekday = slotInfo.Weekday
-            }, out message);
-        }
-
-        public bool AddNewClinicSlot(ClinicSlotInfoModel slotInfo, out string message)
+        public ClinicSlotInfoModel? AddNewClinicSlot(ClinicSlotInfoModel slotInfo, out string message)
         {
             // Some shit happens when I dont do this. (State change tracking)
             slotInfo.ClinicSlotId = null;
@@ -39,7 +28,7 @@ namespace ClinicPlatformServices
             if (slotInfo.Weekday == null || slotInfo.ClinicId == null || slotInfo.SlotId == null)
             {
                 message = $"Information missing: {(slotInfo.Weekday == null ? "Weekday, " : "")} {(slotInfo.SlotId == null ? "SlotId, " : "")} {(slotInfo.ClinicId == null ? "ClinicId, " : "")}";
-                return false;
+                return null;
             }
 
             var allSlot = scheduleRepository.GetAllClinicSlot();
@@ -48,13 +37,13 @@ namespace ClinicPlatformServices
             if (allSlot.Any(x => x.ClinicId == slotInfo.ClinicId && x.SlotId == slotInfo.SlotId && x.Weekday == (byte) slotInfo.Weekday!))
             {
                 message = $"Clinic {slotInfo.ClinicId} already has created this slot.";
-                return false;
+                return null;
             }
 
             if (allSlot.Any(x => x.ClinicId == slotInfo.ClinicId && x.SlotId == slotInfo.SlotId && x.Weekday == (byte)slotInfo.Weekday!))
             {
                 message = $"Clinic {slotInfo.ClinicId} already has created this slot.";
-                return false;
+                return null;
             }
 
             message = "";
@@ -72,7 +61,7 @@ namespace ClinicPlatformServices
             }
 
             message = "Successfully added new base slot definition";
-            return scheduleRepository.AddSlot(slotInfo);
+            return scheduleRepository.AddSlot(slotInfo) != null;
         }
 
         public SlotInfoModel? TryAddNewSlot(SlotInfoModel slotInfo, out string message)
@@ -110,9 +99,14 @@ namespace ClinicPlatformServices
             return scheduleRepository.GetAllClinicSlot();
         }
 
-        public IEnumerable<ClinicSlotInfoModel> GetAllWithMaxAppointment(int clinicId, int max)
+        public IEnumerable<ClinicSlotInfoModel> GetAllWithMaxCheckup(int clinicId, int max)
         {
-            return scheduleRepository.GetAllClinicSlot().Where(x => x.ClinicId == clinicId && x.MaxAppointment <= max);
+            return scheduleRepository.GetAllClinicSlot().Where(x => x.ClinicId == clinicId && x.MaxCheckup <= max);
+        }
+
+        public IEnumerable<ClinicSlotInfoModel> GetAllWithMaxTreatment(int clinicId, int max)
+        {
+            return scheduleRepository.GetAllClinicSlot().Where(x => x.ClinicId == clinicId && x.MaxTreatment <= max);
         }
 
         public ClinicSlotInfoModel? GetClinicSlotById(Guid slotId)
@@ -130,12 +124,12 @@ namespace ClinicPlatformServices
             return scheduleRepository.GetAllClinicSlot().Where(x => x.StartTime < start && end < x.EndTime && x.ClinicId == clinicId);
         }
 
-        public bool UpdateClinicSlot(ClinicSlotInfoModel slotInfo, out string message)
+        public ClinicSlotInfoModel? UpdateClinicSlot(ClinicSlotInfoModel slotInfo, out string message)
         {
             if (slotInfo.ClinicSlotId == null)
             {
                 message = $"Missing required information: {(slotInfo.ClinicSlotId == null ? "ClinicSlotId" : "")}.";
-                return false;
+                return null;
             }
 
             var clinicSlot = scheduleRepository.GetClinicSlot((Guid) slotInfo.ClinicSlotId!);
@@ -143,7 +137,7 @@ namespace ClinicPlatformServices
             if (clinicSlot == null)
             {
                 message = $"Slot information not found for Id {slotInfo.ClinicSlotId}.";
-                return false;
+                return null;
             }
 
             if (slotInfo.SlotId != null)
@@ -153,13 +147,14 @@ namespace ClinicPlatformServices
                 if (baseSlot == null)
                 {
                     message = "New slot Id is not found for {slotInfo.SlotId}";
-                    return false;
+                    return null;
                 }
                 clinicSlot.SlotId = clinicSlot.SlotId;
             }
 
-            clinicSlot.MaxAppointment = slotInfo.MaxAppointment ?? slotInfo.MaxAppointment;
-            clinicSlot.Weekday = slotInfo.Weekday ?? slotInfo.MaxAppointment;
+            clinicSlot.MaxCheckup = slotInfo.MaxCheckup;
+            clinicSlot.MaxTreatment = slotInfo.MaxTreatment;
+            clinicSlot.Weekday = slotInfo.Weekday;
 
             message = "Updated clinic slot!";
             return scheduleRepository.UpdateClinicSlot(clinicSlot!);
@@ -187,7 +182,7 @@ namespace ClinicPlatformServices
             }
 
             message = "Updated clinic slot!";
-            return scheduleRepository.UpdateSlot(clinicSlot!);
+            return scheduleRepository.UpdateSlot(clinicSlot!) != null;
         }
 
         protected virtual void Dispose(bool disposing)
