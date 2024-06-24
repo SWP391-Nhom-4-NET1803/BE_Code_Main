@@ -32,7 +32,7 @@ namespace ClinicPlatformWebAPI.Controllers
             this.clinicServiceService = clinicServiceService;
         }
 
-        [HttpGet]
+        [HttpGet("users")]
         public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetUsers()
         {
             IEnumerable<UserInfoModel> user = userService.GetUsers();
@@ -48,7 +48,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(ResponseBody);
         }
 
-        [HttpGet]
+        [HttpGet("clinics")]
         public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> GetClinics([FromQuery] int page = 1)
         {
             return Ok(new HttpResponseModel()
@@ -88,6 +88,28 @@ namespace ClinicPlatformWebAPI.Controllers
 
                 return Ok(response);
             }
+        }
+
+        [HttpGet("service/categories")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ServiceCategoryModel>>> GetAllCategory()
+        {
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = clinicServiceService.GetAllCategory()
+            });
+        }
+
+        [HttpPost("service/categories")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ServiceCategoryModel>>> AddCategory([FromBody] string categoryName)
+        {
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = clinicServiceService.GetAllCategory()
+            });
         }
 
     }
