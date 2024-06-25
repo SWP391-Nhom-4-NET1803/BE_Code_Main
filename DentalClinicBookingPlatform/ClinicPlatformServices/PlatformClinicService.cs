@@ -319,7 +319,7 @@ namespace ClinicPlatformServices
             GC.SuppressFinalize(this);
         }
 
-        public ServiceCategoryModel? AddServiceCategory(ServiceCategoryModel service, out string message)
+        public ClinicServiceCategoryModel? AddServiceCategory(ClinicServiceCategoryModel service, out string message)
         {
             if (clinicServiceRepository.GetAllServiceCategory().Any(x => x.Name == service.Name))
             {
@@ -339,7 +339,7 @@ namespace ClinicPlatformServices
             return null;
         }
 
-        public ServiceCategoryModel? UpdateServiceCategory(ServiceCategoryModel service, out string message)
+        public ClinicServiceCategoryModel? UpdateServiceCategory(ClinicServiceCategoryModel service, out string message)
         {
             if (clinicServiceRepository.GetAllServiceCategory().Any(x => x.Name == service.Name))
             {
@@ -347,7 +347,7 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            ServiceCategoryModel? serviceCategory = clinicServiceRepository.UpdateServiceCategory(service);
+            ClinicServiceCategoryModel? serviceCategory = clinicServiceRepository.UpdateServiceCategory(service);
 
             if (serviceCategory != null)
             {
@@ -359,7 +359,7 @@ namespace ClinicPlatformServices
             return null;
         }
 
-        public IEnumerable<ServiceCategoryModel> GetServiceCategories()
+        public IEnumerable<ClinicServiceCategoryModel> GetServiceCategories()
         {
             return clinicServiceRepository.GetAllServiceCategory();
         }

@@ -20,7 +20,7 @@ namespace ClinicPlatformRepositories
             this.context = context;
         }
 
-        public ServiceCategoryModel? AddServiceCategory(ServiceCategoryModel service)
+        public ClinicServiceCategoryModel? AddServiceCategory(ClinicServiceCategoryModel service)
         {
             if (service.Name.IsNullOrEmpty())
             {
@@ -39,6 +39,7 @@ namespace ClinicPlatformRepositories
             };
 
             context.ServiceCategories.Add(newService);
+            context.SaveChanges();
 
             service.Id = newService.Id;
 
@@ -63,25 +64,6 @@ namespace ClinicPlatformRepositories
 
         }
 
-        public IEnumerable<ClinicServiceInfoModel> GetAll(int clinicId)
-        {
-            return from service in context.ClinicServices.ToList()
-                   join category in context.ServiceCategories on service.CategoryId equals category.Id
-                   where service.ClinicId == clinicId
-                   select new ClinicServiceInfoModel()
-                   {
-                       ClinicServiceId = service.Id,
-                       Price = service.Price,
-                       ClinicId = clinicId,
-                       Available = service.Available,
-                       CategoryId = category.Id,
-                       Removed = service.Removed,
-                       Description= service.Description,
-                       Name = service.CustomName ?? category.Name
-                       
-                   };
-        }
-
         public IEnumerable<ClinicServiceInfoModel> GetAllClinicService()
         {
             return from service in context.ClinicServices
@@ -94,26 +76,28 @@ namespace ClinicPlatformRepositories
                        Description = service.Description,
                        Name = service.CustomName ?? category.Name,
                        CategoryId = category.Id,
+                       Available = service.Available,
+                       Removed = service.Removed
                    };
         }
 
-        public IEnumerable<ServiceCategoryModel> GetAllServiceCategory()
+        public IEnumerable<ClinicServiceCategoryModel> GetAllServiceCategory()
         {
             return from category in context.ServiceCategories
-                   select new ServiceCategoryModel()
+                   select new ClinicServiceCategoryModel()
                    {
                        Name = category.Name,
                        Id = category.Id,
                    };
         }
 
-        public ServiceCategoryModel? GetServiceCategory(int categoryId)
+        public ClinicServiceCategoryModel? GetServiceCategory(int categoryId)
         {
             var result = context.ServiceCategories.Find(categoryId);
 
             if (result != null)
             {
-                return new ServiceCategoryModel() { Id = result.Id, Name = result.Name };
+                return new ClinicServiceCategoryModel() { Id = result.Id, Name = result.Name };
             }
             return null;
         }
@@ -140,7 +124,7 @@ namespace ClinicPlatformRepositories
             return null;
         }
 
-        public ServiceCategoryModel? UpdateServiceCategory(ServiceCategoryModel serviceInfo)
+        public ClinicServiceCategoryModel? UpdateServiceCategory(ClinicServiceCategoryModel serviceInfo)
         {
             ServiceCategory? service = context.ServiceCategories.Find((int)serviceInfo.Id);
             
@@ -150,7 +134,7 @@ namespace ClinicPlatformRepositories
                 //service.Available = serviceInfo.Available
 
                 context.ServiceCategories.Update(service);
-                return new ServiceCategoryModel
+                return new ClinicServiceCategoryModel
                 {
                     Id = service.Id,
                     Name = service.Name

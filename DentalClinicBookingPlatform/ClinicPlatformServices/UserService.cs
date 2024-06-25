@@ -188,9 +188,24 @@ namespace ClinicPlatformServices
             }
         }
 
-        public UserInfoModel UpdateUserInformation(UserInfoModel information, out string message)
+        public UserInfoModel? UpdateUserInformation(UserInfoModel information, out string message)
         {
-            UserInfoModel user = userRepository.UpdateUser(information);
+            var AllUserInfo = userRepository.GetAllUser();
+
+            if (AllUserInfo.Where(x => x.Username == information.Username && x.Id != information.Id).Any())
+            {
+                message = "Username is taken by another account.";
+                return null;
+            }
+
+            if (AllUserInfo.Where(x => x.Email == information.Email && x.Id != information.Id && !x.IsRemoved).Any())
+            {
+                message = "Email is used by another account.";
+                return null;
+            }
+
+
+            UserInfoModel? user = userRepository.UpdateUser(information);
             if (user != null)
             {
                 message = "Update user information successfully";
@@ -198,7 +213,7 @@ namespace ClinicPlatformServices
             }
 
             message = "Update user information failed";
-            return null ;
+            return null;
         }
 
         public bool UpdatePasswordForUserWithId(int userId, string newPassword, out string message)

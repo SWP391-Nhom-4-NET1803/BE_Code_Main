@@ -18,9 +18,9 @@ namespace ClinicPlatformServices.Contracts
         bool DeleteClinic(int clinicId);
 
 
-        ServiceCategoryModel? AddServiceCategory(ServiceCategoryModel service, out string message);
-        ServiceCategoryModel? UpdateServiceCategory(ServiceCategoryModel service, out string message);
-        IEnumerable<ServiceCategoryModel> GetServiceCategories();
+        ClinicServiceCategoryModel? AddServiceCategory(ClinicServiceCategoryModel service, out string message);
+        ClinicServiceCategoryModel? UpdateServiceCategory(ClinicServiceCategoryModel service, out string message);
+        IEnumerable<ClinicServiceCategoryModel> GetServiceCategories();
 
 
         ClinicServiceInfoModel? GetClinicServiceWithId(Guid id);

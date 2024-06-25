@@ -18,6 +18,7 @@ namespace ClinicPlatformRepositories
         {
             Slot slotInfo = MapToSlot(slot);
             context.Slots.Add(slotInfo);
+            context.SaveChanges();
 
             return MapSlotToSlotModel(slotInfo);
         }
@@ -83,6 +84,9 @@ namespace ClinicPlatformRepositories
             ClinicSlot slotInfo = MapToClinicSlot(slot);
 
             context.ClinicSlots.Add(slotInfo);
+            context.SaveChanges();
+
+            slotInfo.Time = context.Slots.Find(slotInfo.TimeId)!;
 
             return MapToClinicSlotModel(slotInfo);
         }
@@ -93,7 +97,7 @@ namespace ClinicPlatformRepositories
 
             if (result != null)
             {
-                result.Time = context.Slots.Find(result.SlotId)!;
+                result.Time = context.Slots.Find(result.TimeId)!;
 
                 return MapToClinicSlotModel(result); 
             }
@@ -118,13 +122,26 @@ namespace ClinicPlatformRepositories
                    };
         }
 
-        public ClinicSlotInfoModel UpdateClinicSlot(ClinicSlotInfoModel slot)
+        public ClinicSlotInfoModel? UpdateClinicSlot(ClinicSlotInfoModel slot)
         {
-            var slotInfo = MapToClinicSlot(slot);
+            var slotInfo = context.ClinicSlots.Find(slot.ClinicSlotId);
 
-            context.ClinicSlots.Update(slotInfo);
+            if (slotInfo != null)
+            {
+                slotInfo.ClinicId = slot.ClinicId;
+                slotInfo.Weekday = (byte) slot.Weekday;
+                slotInfo.MaxCheckup = slot.MaxCheckup;
+                slotInfo.MaxTreatment = slot.MaxTreatment;
+                slotInfo.Status = slot.Status;
+                slotInfo.TimeId = slot.SlotId;
+
+                context.ClinicSlots.Update(slotInfo);
+                context.SaveChanges();
           
-            return MapToClinicSlotModel(slotInfo);
+                return MapToClinicSlotModel(slotInfo);
+            }
+
+            return null;
         }
 
         public bool DeleteClinicSlot(Guid slotId)

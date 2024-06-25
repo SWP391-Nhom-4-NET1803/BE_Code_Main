@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformDTOs.ClinicModels
 {
-    public class ClinicCategoryModel
+    public class ClinicServiceCategoryModel
     {
         public int Id { get; set; }
         public string Name { get; set; } = null!;

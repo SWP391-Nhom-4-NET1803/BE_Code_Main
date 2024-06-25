@@ -31,7 +31,7 @@ namespace ClinicPlatformDTOs.UserModels
         // Dentist table
         public int? DentistId { get; set; }
         public int? ClinicId { get; set; }
-        public bool? IsOwner { get; set; }
+        public bool IsOwner { get; set; } = false;
 
 
         public const string Admin = "Admin";
