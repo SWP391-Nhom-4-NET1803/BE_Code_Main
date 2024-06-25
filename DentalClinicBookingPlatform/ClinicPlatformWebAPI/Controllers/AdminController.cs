@@ -1,5 +1,6 @@
 ﻿using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformDTOs.UserModels;
+using ClinicPlatformObjects.ServiceModels;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
@@ -10,24 +11,24 @@ namespace ClinicPlatformWebAPI.Controllers
 {
     [Route("api/admin")]
     [ApiController]
-    [Authorize(Roles = "Admin")]
+    //[Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private IUserService userService;
         private IClinicService clinicService;
         //private ITokenService tokenService;
         private IBookingService bookingService;
-        private IPaymentService paymentService;
+        //private IPaymentService paymentService;
         private IScheduleService scheduleService;
         private IClinicServiceService clinicServiceService;
 
-        public AdminController(IUserService userService, IClinicService clinicService, IBookingService bookingService, IPaymentService paymentService, IScheduleService scheduleService, IClinicServiceService clinicServiceService)
+        public AdminController(IUserService userService, IClinicService clinicService, IBookingService bookingService, IScheduleService scheduleService, IClinicServiceService clinicServiceService)
         {
             this.userService = userService;
             this.clinicService = clinicService;
             //this.tokenService = tokenService;
             this.bookingService = bookingService;
-            this.paymentService = paymentService;
+            //this.paymentService = paymentService;
             this.scheduleService = scheduleService;
             this.clinicServiceService = clinicServiceService;
         }
@@ -58,7 +59,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("clinic/verify/{clinicId}")]
-        public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> VerifyClinicStatus([FromQuery] int clinicId)
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> VerifyClinicStatus(int clinicId)
         {
             ClinicInfoModel? clinic = clinicService.GetClinicWithId(clinicId);
 
@@ -91,7 +92,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("service/categories")]
-        public ActionResult<IHttpResponseModel<IEnumerable<ServiceCategoryModel>>> GetAllCategory()
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicServiceCategoryModel>>> GetAllCategory()
         {
             return Ok(new HttpResponseModel
             {
@@ -102,14 +103,35 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPost("service/categories")]
-        public ActionResult<IHttpResponseModel<IEnumerable<ServiceCategoryModel>>> AddCategory([FromBody] string categoryName)
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicServiceCategoryModel>>> AddCategory([FromBody] ClinicServiceCategoryRegistrationModel category)
         {
-            return Ok(new HttpResponseModel
+            ClinicServiceCategoryModel clinicCategory = new ClinicServiceCategoryModel()
             {
-                StatusCode = 200,
-                Message = "Success",
-                Content = clinicServiceService.GetAllCategory()
-            });
+                Name = category.Name,
+            };
+
+            if(clinicServiceService.AddServiceCategory(clinicCategory, out var message))
+            {
+                return Ok(new HttpResponseModel
+                {
+                    StatusCode = 200,
+                    Message = "Success",
+                    Detail = message,
+                    Content = clinicServiceService.GetAllCategory()
+                });
+            }
+            else
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Message = "Success",
+                    Content = message,
+                });
+            }
+
+
+            
         }
 
     }

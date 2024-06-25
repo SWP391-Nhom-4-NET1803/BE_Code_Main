@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ClinicPlatformDTOs.UserModels
+namespace ClinicPlatformObjects.UserModels.DentistModel
 {
     public class DentistInfoViewModel
     {
@@ -16,7 +16,6 @@ namespace ClinicPlatformDTOs.UserModels
         public bool IsActive { get; set; }
         public DateTime? JoinedDate { get; set; }
         public int? ClinicId { get; set; }
-        public string? ClinicName { get; set; }
         public bool IsOwner { get; set; }
     }
 }

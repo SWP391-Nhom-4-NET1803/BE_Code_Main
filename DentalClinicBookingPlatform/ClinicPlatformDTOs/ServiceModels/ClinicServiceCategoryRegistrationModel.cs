@@ -4,11 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ClinicPlatformDTOs.ClinicModels
+namespace ClinicPlatformObjects.ServiceModels
 {
-    public class ServiceCategoryModel
+    public class ClinicServiceCategoryRegistrationModel
     {
-        public int Id { get; set; }
         public string Name { get; set; } = null!;
     }
 }

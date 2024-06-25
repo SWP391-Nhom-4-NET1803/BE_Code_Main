@@ -17,10 +17,10 @@ namespace ClinicPlatformRepositories.Contracts
         bool DeleteClinicService(Guid clinicServiceId);
 
         // Service "Type"
-        IEnumerable<ServiceCategoryModel> GetAllServiceCategory();
-        ServiceCategoryModel? GetServiceCategory(int categoryId);
-        ServiceCategoryModel? AddServiceCategory(ServiceCategoryModel category);
-        ServiceCategoryModel? UpdateServiceCategory(ServiceCategoryModel categoryId);
+        IEnumerable<ClinicServiceCategoryModel> GetAllServiceCategory();
+        ClinicServiceCategoryModel? GetServiceCategory(int categoryId);
+        ClinicServiceCategoryModel? AddServiceCategory(ClinicServiceCategoryModel category);
+        ClinicServiceCategoryModel? UpdateServiceCategory(ClinicServiceCategoryModel categoryId);
         bool DeleteServiceCategory(int categoryId);
     }
 }

@@ -70,24 +70,42 @@ namespace ClinicPlatformServices
             return passed != 0 ? true : false;
         }
 
-        public bool AddServiceCategory(ServiceCategoryModel service, out string message)
+        public bool AddServiceCategory(ClinicServiceCategoryModel service, out string message)
         {
-            throw new NotImplementedException();
+            if (clinicServiceRepository.GetAllServiceCategory().Any(s => s.Name == service.Name))
+            {
+                message = "There is already exist this service category";
+                return false;
+            }
+
+            clinicServiceRepository.AddServiceCategory(service);
+
+            message = "Added service category successfully.";
+            return true;
         }
 
-        public bool DeleteClinicServices(Guid clinicServiceId, out string message)
+        public bool RemoveClinicServices(Guid clinicServiceId, out string message)
         {
-            throw new NotImplementedException();
+            ClinicServiceInfoModel? service = clinicServiceRepository.GetClinicService(clinicServiceId);
+
+            if (service == null)
+            {
+                message = "Service not found!";
+                return false;
+            }
+
+            service.Removed = true;
+            clinicServiceRepository.UpdateClinicService(service);
+
+            message = "Successfully removed clinic service";
+            return true;
+
+
         }
 
-        public bool DeleteClinicServices(IEnumerable<Guid> clinicServiceId, out string message)
+        public IEnumerable<ClinicServiceCategoryModel> GetAllCategory()
         {
-            throw new NotImplementedException();
-        }
-
-        public IEnumerable<ServiceCategoryModel> GetAllCategory()
-        {
-            throw new NotImplementedException();
+            return clinicServiceRepository.GetAllServiceCategory();
         }
 
         public IEnumerable<ClinicServiceInfoModel> GetAllClinicService(int clinicId)
@@ -95,7 +113,7 @@ namespace ClinicPlatformServices
             return clinicServiceRepository.GetAllClinicService().Where(x => x.ClinicId == clinicId);
         }
 
-        public ServiceCategoryModel? GetCategory(int serviceId)
+        public ClinicServiceCategoryModel? GetCategory(int serviceId)
         {
             return clinicServiceRepository.GetServiceCategory(serviceId);
         }
@@ -110,7 +128,7 @@ namespace ClinicPlatformServices
             return clinicServiceRepository.GetAllClinicService().Where(x => x.CategoryId == serviceId && minimum < x.Price && x.Price < maximum);
         }
 
-        public bool UpdateCategory(ServiceCategoryModel service, out string message)
+        public bool UpdateCategory(ClinicServiceCategoryModel service, out string message)
         {
             throw new NotImplementedException();
         }

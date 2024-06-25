@@ -111,7 +111,7 @@ namespace ClinicPlatformRepositories
                 if (target.Role == "Dentist")
                 {
                     target.Dentist!.ClinicId = userInfo.ClinicId;
-                    target.Dentist!.IsOwner = userInfo.IsOwner ?? false;
+                    target.Dentist!.IsOwner = userInfo.IsOwner;
                 }
 
                 if (target.Role == "Customer")
@@ -177,7 +177,7 @@ namespace ClinicPlatformRepositories
                     Id = userInfo.DentistId ?? 0,
                     UserId = userInfo.Id,
                     ClinicId = userInfo.ClinicId,
-                    IsOwner = userInfo.IsOwner ?? false,
+                    IsOwner = userInfo.IsOwner,
                 };
             }
             else if (userInfo.Role == "Customer")

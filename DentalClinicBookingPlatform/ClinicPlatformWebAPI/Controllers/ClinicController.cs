@@ -3,6 +3,8 @@ using ClinicPlatformDTOs.SlotModels;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformObjects.ClinicModels;
 using ClinicPlatformObjects.ServiceModels;
+using ClinicPlatformObjects.UserModels.CustomerModel;
+using ClinicPlatformObjects.UserModels.DentistModel;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.ModelMapper;
 using ClinicPlatformWebAPI.Helpers.Models;
@@ -31,34 +33,28 @@ namespace ClinicPlatformWebAPI.Controllers
             this.clinicServiceService = clinicServiceService;
         }
 
-        [HttpPost("staff/register")]
+        [HttpGet("staff")]
         [Authorize(Roles = "Dentist")]
-        public ActionResult<HttpResponseModel> RegisterClinicStaff([FromBody] UserRegistrationModel userInfo)
+        public ActionResult<IHttpResponseModel<DentistInfoViewModel>> GetDentistInformation()
         {
+            UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
 
-            UserInfoModel? user = userService.RegisterAccount(UserInfoMapper.FromRegistration(userInfo), "Dentist", out var message);
-
-            if (user==null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed",
-                    Detail = message,
-                });
-            }
+            IEnumerable<DentistInfoViewModel> dentistList = from user in userService.GetUsers().Where( x=> x.ClinicId == invoker.ClinicId) select UserInfoMapper.ToDentistView(user);
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
+                Message = "Success",
+                Content = dentistList
             });
         }
 
         [HttpGet("staff/{dentistId}")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<IHttpResponseModel<DentistInfoViewModel>> GetDentistInformation(int dentistId)
         {
+            UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
+
             UserInfoModel? dentist = userService.GetDentistWithDentistId(dentistId);
 
             if (dentist == null)
@@ -69,7 +65,16 @@ namespace ClinicPlatformWebAPI.Controllers
                     Message = "User not found",
                     Detail = $"User does not exist for dentistId {dentistId}!"
                 });
+            }
 
+            if (invoker.ClinicId != dentist.ClinicId || !invoker.IsOwner)
+            {
+                return Unauthorized(new HttpResponseModel()
+                {
+                    StatusCode = 403,
+                    Message = "Unauthorized",
+                    Detail = $"User does not exist for dentistId {dentistId}!"
+                });
             }
 
             return Ok(new HttpResponseModel()
@@ -138,6 +143,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPost("register")]
+        [AllowAnonymous]
         public ActionResult<HttpResponseModel> RegisterClinic([FromBody] ClinicRegistrationModel info)
         {
 
@@ -184,7 +190,7 @@ namespace ClinicPlatformWebAPI.Controllers
             }
 
             userInfo.ClinicId = clinic.Id;
-            UserInfoModel user = userService.UpdateUserInformation(userInfo, out message);
+            UserInfoModel? user = userService.UpdateUserInformation(userInfo, out message);
 
             if (user == null)
             {
@@ -209,6 +215,28 @@ namespace ClinicPlatformWebAPI.Controllers
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> UpdateClinicInformation(int id, [FromBody] ClinicInfoUpdateModel clinicUpdateInfo)
         {
+            UserInfoModel invoker = (UserInfoModel) HttpContext.Items["user"]!;
+
+            if (!invoker.IsOwner)
+            {
+                return Unauthorized(new HttpResponseModel
+                {
+                    StatusCode = 403,
+                    Message = "Unauthorized",
+                    Detail = "This is clinic owner available only feature!"
+                });
+            }
+
+            if (invoker.ClinicId != clinicUpdateInfo.Id)
+            {
+                return Unauthorized(new HttpResponseModel
+                {
+                    StatusCode = 403,
+                    Message = "Unauthorized",
+                    Detail = "You can only change your clinic information!"
+                });
+            }
+
             ClinicInfoModel? clinicInfo = clinicService.GetClinicWithId(id);
 
             if (clinicInfo == null)
@@ -233,50 +261,35 @@ namespace ClinicPlatformWebAPI.Controllers
 
             var Invoker = (UserInfoModel)HttpContext.Items["user"]!;
 
-            if (Invoker.IsOwner ?? false && Invoker.ClinicId == id)
-            {
-                clinicInfo.Name = clinicUpdateInfo.Name;
-                clinicInfo.Description = clinicUpdateInfo.Description;
-                clinicInfo.Address = clinicUpdateInfo.Address;
-                clinicInfo.Email = clinicUpdateInfo.Email;
-                clinicInfo.Phone = clinicUpdateInfo.Phone;
-                clinicInfo.OpenHour = clinicUpdateInfo.OpenHour;
-                clinicInfo.CloseHour = clinicUpdateInfo.CloseHour;
+            clinicInfo.Name = clinicUpdateInfo.Name;
+            clinicInfo.Description = clinicUpdateInfo.Description;
+            clinicInfo.Address = clinicUpdateInfo.Address;
+            clinicInfo.Email = clinicUpdateInfo.Email;
+            clinicInfo.Phone = clinicUpdateInfo.Phone;
+            clinicInfo.OpenHour = clinicUpdateInfo.OpenHour;
+            clinicInfo.CloseHour = clinicUpdateInfo.CloseHour;
 
-                clinicInfo = clinicService.UpdateClinicInformation(clinicInfo, out var message);
+            clinicInfo = clinicService.UpdateClinicInformation(clinicInfo, out var message);
                 
-                if (clinicInfo == null)
-                {
-                    return BadRequest(new HttpResponseModel()
-                    {
-                        StatusCode = 400,
-                        Message = "Bad Request",
-                        Detail = message,
-                    });
-                }
-                else
-                {
-                    return Ok(new HttpResponseModel()
-                    {
-                        StatusCode = 200,
-                        Message = "Updated sucessfully",
-                        Detail = $"Information updated for clinic {clinicInfo.Id}",
-                        Content = clinicInfo
-                    });
-                }
-            }
-            else
+            if (clinicInfo == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
                     Message = "Bad Request",
-                    Detail = "User is not an owner of this clinic.",
+                    Detail = message,
                 });
             }
-
-
-            
+            else
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Message = "Updated sucessfully",
+                    Detail = $"Information updated for clinic {clinicInfo.Id}",
+                    Content = clinicInfo
+                });
+            }
         }
 
         [HttpPut("activate/{id}")]

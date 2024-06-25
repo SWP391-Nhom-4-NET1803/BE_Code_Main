@@ -23,8 +23,6 @@ namespace ClinicPlatformWebAPI.Middlewares.Authentication
                 context.Items.Add("user", user);
             }
 
-            
-
             return next(context);
         }
     }

@@ -43,7 +43,7 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
         {
             return new ClinicServiceInfoModel
             {
-                Name = model.ServiceName,
+                Name = model.ServiceName ?? "",
                 Description = model.ServiceDescription,
                 Price = model.servicePrice,
                 ClinicId = model.clinicId,

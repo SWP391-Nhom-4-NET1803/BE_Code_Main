@@ -22,31 +22,24 @@ namespace ClinicPlatformServices
 
         public ClinicSlotInfoModel? AddNewClinicSlot(ClinicSlotInfoModel slotInfo, out string message)
         {
-            // Some shit happens when I dont do this. (State change tracking)
             slotInfo.ClinicSlotId = null;
-
-            if (slotInfo.Weekday == null || slotInfo.ClinicId == null || slotInfo.SlotId == null)
-            {
-                message = $"Information missing: {(slotInfo.Weekday == null ? "Weekday, " : "")} {(slotInfo.SlotId == null ? "SlotId, " : "")} {(slotInfo.ClinicId == null ? "ClinicId, " : "")}";
-                return null;
-            }
-
+            
             var allSlot = scheduleRepository.GetAllClinicSlot();
             var allBaseSlot = scheduleRepository.GetAllSlot();
 
-            if (allSlot.Any(x => x.ClinicId == slotInfo.ClinicId && x.SlotId == slotInfo.SlotId && x.Weekday == (byte) slotInfo.Weekday!))
+            if (allSlot.Any(x => x.ClinicId == slotInfo.ClinicId && x.SlotId == slotInfo.SlotId && x.Weekday == slotInfo.Weekday!))
             {
                 message = $"Clinic {slotInfo.ClinicId} already has created this slot.";
                 return null;
             }
 
-            if (allSlot.Any(x => x.ClinicId == slotInfo.ClinicId && x.SlotId == slotInfo.SlotId && x.Weekday == (byte)slotInfo.Weekday!))
+            if (allSlot.Any(x => x.ClinicId == slotInfo.ClinicId && x.SlotId == slotInfo.SlotId && x.Weekday == slotInfo.Weekday!))
             {
                 message = $"Clinic {slotInfo.ClinicId} already has created this slot.";
                 return null;
             }
 
-            message = "";
+            message = "Created slot successfully.";
             return scheduleRepository.AddClinicSlot(slotInfo);
         }
 
@@ -140,17 +133,15 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            if (slotInfo.SlotId != null)
-            {
-                var baseSlot = scheduleRepository.GetSlot((int)slotInfo.SlotId);
 
-                if (baseSlot == null)
-                {
-                    message = "New slot Id is not found for {slotInfo.SlotId}";
-                    return null;
-                }
-                clinicSlot.SlotId = clinicSlot.SlotId;
+            var baseSlot = scheduleRepository.GetSlot((int)slotInfo.SlotId);
+
+            if (baseSlot == null)
+            {
+                message = "New slot Id is not found for {slotInfo.SlotId}";
+                return null;
             }
+            clinicSlot.SlotId = clinicSlot.SlotId;
 
             clinicSlot.MaxCheckup = slotInfo.MaxCheckup;
             clinicSlot.MaxTreatment = slotInfo.MaxTreatment;

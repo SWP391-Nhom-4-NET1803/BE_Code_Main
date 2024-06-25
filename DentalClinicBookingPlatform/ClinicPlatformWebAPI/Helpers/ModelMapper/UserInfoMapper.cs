@@ -1,4 +1,6 @@
 ﻿using ClinicPlatformDTOs.UserModels;
+using ClinicPlatformObjects.UserModels.CustomerModel;
+using ClinicPlatformObjects.UserModels.DentistModel;
 
 namespace ClinicPlatformWebAPI.Helpers.ModelMapper
 {
@@ -61,21 +63,30 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
                 Phone = userInfo.Phone,
                 Fullname = userInfo.Fullname,
                 ClinicId = userInfo.ClinicId,
-                IsOwner = userInfo.IsOwner ?? false,
+                IsOwner = userInfo.IsOwner,
                 JoinedDate = userInfo.JoinedDate,
                 IsActive = userInfo.IsActive,
             };
         }
 
-        public static UserInfoModel FromRegistration(UserRegistrationModel userInfo)
+        public static UserInfoModel FromRegistration(CustomerRegistrationModel userInfo)
         {
             return new UserInfoModel
             {
                 Email = userInfo.Email,
                 Username = userInfo.Username,
                 PasswordHash = userInfo.Password,
-                IsOwner = userInfo.ClinicOwner,
-                ClinicId = userInfo.Clinic,
+            };
+        }
+
+        public static UserInfoModel FromRegistration(DentistRegistrationModel userInfo)
+        {
+            return new UserInfoModel
+            {
+                Email = userInfo.Email,
+                Username = userInfo.Username,
+                PasswordHash = userInfo.Password,
+                Fullname = userInfo.Fullname
             };
         }
     }
