@@ -54,7 +54,7 @@ namespace ClinicPlatformServices
             var user = userRepository.GetUserWithUsername(username);
 
 
-            if (user is UserInfoModel)
+              
 
             if (user == null)
             {
@@ -65,13 +65,8 @@ namespace ClinicPlatformServices
                     return null;
                 }
             }
-
-            if (HashPassword(password, user.Salt) == user.PasswordHash)
-            {
-                return user;
-            }
-
-            return null;
+            
+            return HashPassword(password, user.Salt) == user.PasswordHash ? user : null;
         }
 
         public IEnumerable<UserInfoModel> GetRemovedUser()
