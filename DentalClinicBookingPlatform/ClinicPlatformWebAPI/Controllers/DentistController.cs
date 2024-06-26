@@ -176,7 +176,7 @@ namespace ClinicPlatformWebAPI.Controllers
             user.IsActive = true;
             user.IsOwner = false;
                 
-            user = userService.RegisterAccount(UserInfoMapper.FromRegistration(dentistInfo), "Dentist", out var message);
+            user = userService.RegisterAccount(user, "Dentist", out var message);
 
             if (user == null)
             {
