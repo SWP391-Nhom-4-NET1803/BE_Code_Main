@@ -11,7 +11,7 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
-    [Route("api/invoker")]
+    [Route("api/dentist")]
     [ApiController]
     public class DentistController : ControllerBase
     {
@@ -36,13 +36,13 @@ namespace ClinicPlatformWebAPI.Controllers
         [Authorize(Roles = "Dentist")]
         public ActionResult<IHttpResponseModel<DentistInfoViewModel>> GetDentistInfo() 
         {
-            UserInfoModel dentist = (UserInfoModel)HttpContext.Items["user"]!;
+            UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
 
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
                 Message = "Success",
-                Content = UserInfoMapper.ToDentistView(dentist)
+                Content = UserInfoMapper.ToDentistView(invoker)
             });
         }
 
@@ -50,7 +50,7 @@ namespace ClinicPlatformWebAPI.Controllers
         [Authorize(Roles = "Dentist")]
         public ActionResult<IHttpResponseModel<DentistInfoViewModel>> UpdateDentistInfo(DentistUpdateModel updatedInfo)
         {
-            UserInfoModel? invoker = (UserInfoModel)HttpContext.Items["user"]!;
+            UserInfoModel? invoker = (HttpContext.Items["user"] as UserInfoModel)!;
 
             if (invoker.Id != updatedInfo.Id)
             {
@@ -69,7 +69,7 @@ namespace ClinicPlatformWebAPI.Controllers
 
             invoker = userService.UpdateUserInformation(invoker, out var message);
 
-            if (invoker == null)
+            if (invoker is null)
             {
                 return BadRequest(new HttpResponseModel
                 {
@@ -93,11 +93,73 @@ namespace ClinicPlatformWebAPI.Controllers
 
         // ======================= Clinic Owner ========================================
 
+        [HttpGet("staff")]
+        [Authorize(Roles = "Dentist")]
+        public ActionResult<IHttpResponseModel<DentistInfoViewModel>> GetDentistInformation()
+        {
+            UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
+
+            if (!invoker.IsOwner)
+            {
+                return Unauthorized(new HttpResponseModel()
+                {
+                    StatusCode = 403,
+                    Message = "Unauthorized",
+                    Detail = "You don't have permission to access the resource"
+                });
+            }
+
+            IEnumerable<DentistInfoViewModel> dentistList = from user in userService.GetUsers().Where(x => x.ClinicId == invoker.ClinicId && !x.IsRemoved) select UserInfoMapper.ToDentistView(user);
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = dentistList
+            });
+        }
+
+        [HttpGet("staff/{dentistId}")]
+        [Authorize(Roles = "Dentist")]
+        public ActionResult<IHttpResponseModel<DentistInfoViewModel>> GetDentistInformation(int dentistId)
+        {
+            UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
+
+            UserInfoModel? dentist = userService.GetDentistWithDentistId(dentistId);
+
+            if (dentist == null || dentist.IsRemoved)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "User not found",
+                    Detail = $"User does not exist for dentistId {dentistId}!"
+                });
+            }
+
+            if (invoker.ClinicId != dentist.ClinicId || !invoker.IsOwner)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 404,
+                    Message = "User not found",
+                    Detail = $"User does not exist for dentistId {dentistId}!"
+                });
+            }
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = UserInfoMapper.ToDentistView(dentist)
+            });
+        }
+
         [HttpPost("staff/register")]
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> RegisterClinicStaff([FromBody] DentistRegistrationModel dentistInfo)
         {
-            UserInfoModel invoker = (UserInfoModel) HttpContext.Items["user"]!;
+            UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
 
             if (!invoker.IsOwner)
             {
@@ -134,15 +196,15 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpPut("deactivate")]
+        [HttpPut("staff/deactivate")]
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> DeactivateDentistAccount(int dentistId)
         {
-            UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
+            UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
 
             UserInfoModel? target = userService.GetDentistWithDentistId(dentistId);
 
-            if (target == null)
+            if (target == null || target.IsRemoved)
             {
                 return BadRequest(new HttpResponseModel
                 {
@@ -152,39 +214,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
 
-            if (invoker.ClinicId == target.ClinicId && invoker.IsOwner)
-            {
-                if (!target.IsActive)
-                {
-                    return BadRequest(new HttpResponseModel
-                    {
-                        StatusCode = 400,
-                        Message = $"Update failed",
-                        Detail = "Dentist account is already actived!"
-                    });
-                }
-
-                target.IsActive = false;
-                target = userService.UpdateUserInformation(target, out var message);
-
-                if (target == null)
-                {
-                    return BadRequest(new HttpResponseModel
-                    {
-                        StatusCode = 400,
-                        Message = $"Update failed",
-                        Detail = message
-                    });
-                }
-
-                return Ok(new HttpResponseModel
-                {
-                    StatusCode = 200,
-                    Message = $"Updated successfully",
-                    Detail = "Deactivated invoker account"
-                });
-            }
-            else
+            if (invoker.ClinicId != target.ClinicId || !invoker.IsOwner)
             {
                 return Unauthorized(new HttpResponseModel
                 {
@@ -193,9 +223,39 @@ namespace ClinicPlatformWebAPI.Controllers
                     Detail = $"You can not update the target resource!."
                 });
             }
+            if (!target.IsActive)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Message = $"Update failed",
+                    Detail = "Dentist account is already actived!"
+                });
+            }
+
+            target.IsActive = false;
+            target = userService.UpdateUserInformation(target, out var message);
+
+            if (target == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Message = $"Update failed",
+                    Detail = message
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Message = $"Updated successfully",
+                Detail = "Deactivated dentist account"
+            });
+            
         }
 
-        [HttpPut("activate")]
+        [HttpPut("staff/activate")]
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> ActivateDentistAccount(int dentistId)
         {
@@ -203,7 +263,7 @@ namespace ClinicPlatformWebAPI.Controllers
 
             UserInfoModel? target = userService.GetDentistWithDentistId(dentistId);
 
-            if (target == null)
+            if (target == null || target.IsRemoved)
             {
                 return BadRequest(new HttpResponseModel
                 {
@@ -256,7 +316,7 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
-        [HttpDelete]
+        [HttpDelete("staff")]
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> RemoveDentistAccount(int dentistId)
         {

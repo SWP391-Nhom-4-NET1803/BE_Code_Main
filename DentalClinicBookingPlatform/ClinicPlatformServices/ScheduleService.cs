@@ -141,11 +141,12 @@ namespace ClinicPlatformServices
                 message = "New slot Id is not found for {slotInfo.SlotId}";
                 return null;
             }
-            clinicSlot.SlotId = clinicSlot.SlotId;
 
+            clinicSlot.SlotId = clinicSlot.SlotId;
             clinicSlot.MaxCheckup = slotInfo.MaxCheckup;
             clinicSlot.MaxTreatment = slotInfo.MaxTreatment;
             clinicSlot.Weekday = slotInfo.Weekday;
+            clinicSlot.Status = slotInfo.Status;
 
             message = "Updated clinic slot!";
             return scheduleRepository.UpdateClinicSlot(clinicSlot!);

@@ -56,10 +56,12 @@ namespace ClinicPlatformRepositories
             {
                 return null;
             }
-
+            
             ClinicService newClinicService = MapToClinicService(clinicServiceInfo);
 
             context.ClinicServices.Add(newClinicService);
+            context.SaveChanges();
+
             return MapToClinicServiceModel(newClinicService);
 
         }
@@ -134,6 +136,8 @@ namespace ClinicPlatformRepositories
                 //service.Available = serviceInfo.Available
 
                 context.ServiceCategories.Update(service);
+                context.SaveChanges();
+
                 return new ClinicServiceCategoryModel
                 {
                     Id = service.Id,
@@ -158,6 +162,8 @@ namespace ClinicPlatformRepositories
                 clinicService.CategoryId = serviceInfo.CategoryId;
 
                 context.ClinicServices.Update(clinicService);
+                context.SaveChanges();
+
                 return MapToClinicServiceModel(clinicService);
             }
 
@@ -188,6 +194,7 @@ namespace ClinicPlatformRepositories
             {
                 service.Removed = true;
                 context.ClinicServices.Update(service);
+                context.SaveChanges();
 
                 return true;
             }

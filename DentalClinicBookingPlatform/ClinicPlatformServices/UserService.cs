@@ -53,6 +53,9 @@ namespace ClinicPlatformServices
         {
             var user = userRepository.GetUserWithUsername(username);
 
+
+            if (user is UserInfoModel)
+
             if (user == null)
             {
                 user = userRepository.GetUserWithEmail(username);
@@ -133,7 +136,7 @@ namespace ClinicPlatformServices
 
             if (!CheckValidPassword(information.PasswordHash))
             {
-                message = "Pass should contain at least 8 character and containing at least one uppercase, lowercase and number with maxium of 30 character.";
+                message = "Password should contain at least 8 character and containing at least one uppercase, lowercase and number with maxium of 30 character.";
                 return null;
             }
 
@@ -192,18 +195,17 @@ namespace ClinicPlatformServices
         {
             var AllUserInfo = userRepository.GetAllUser();
 
-            if (AllUserInfo.Where(x => x.Username == information.Username && x.Id != information.Id).Any())
+            if (AllUserInfo.Any(x => x.Username == information.Username && x.Id != information.Id))
             {
                 message = "Username is taken by another account.";
                 return null;
             }
 
-            if (AllUserInfo.Where(x => x.Email == information.Email && x.Id != information.Id && !x.IsRemoved).Any())
+            if (AllUserInfo.Any(x => x.Email == information.Email && x.Id != information.Id && !x.IsRemoved))
             {
                 message = "Email is used by another account.";
                 return null;
             }
-
 
             UserInfoModel? user = userRepository.UpdateUser(information);
             if (user != null)
