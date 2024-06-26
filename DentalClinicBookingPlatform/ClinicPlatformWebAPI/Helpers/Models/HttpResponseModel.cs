@@ -14,10 +14,14 @@ namespace ClinicPlatformWebAPI.Helpers.Models
         public string? Detail { get; set; } = string.Empty;
         public object? Content { get; set; } = null;
 
+
         public HttpResponseModel() { }
-        public HttpResponseModel(object content)
+        public HttpResponseModel(int StatusCode, string? Message, string? Detail, object? Content)
         {
-            Content = content;
+            this.StatusCode = StatusCode;
+            this.Message = Message;
+            this.Detail = Detail;
+            this.Content = Content;
         }
 
         override public string ToString()

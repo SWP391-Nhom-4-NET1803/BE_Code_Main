@@ -447,7 +447,6 @@ namespace ClinicPlatformServices
 
                 message = "Failed to enable clinic service!";
                 return false;
-               
             }
 
             message = $"Can not find the specific clinic service {clinicServiceId}";

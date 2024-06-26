@@ -33,58 +33,6 @@ namespace ClinicPlatformWebAPI.Controllers
             this.clinicServiceService = clinicServiceService;
         }
 
-        [HttpGet("staff")]
-        [Authorize(Roles = "Dentist")]
-        public ActionResult<IHttpResponseModel<DentistInfoViewModel>> GetDentistInformation()
-        {
-            UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
-
-            IEnumerable<DentistInfoViewModel> dentistList = from user in userService.GetUsers().Where( x=> x.ClinicId == invoker.ClinicId) select UserInfoMapper.ToDentistView(user);
-
-            return Ok(new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "Success",
-                Content = dentistList
-            });
-        }
-
-        [HttpGet("staff/{dentistId}")]
-        [Authorize(Roles = "Dentist")]
-        public ActionResult<IHttpResponseModel<DentistInfoViewModel>> GetDentistInformation(int dentistId)
-        {
-            UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
-
-            UserInfoModel? dentist = userService.GetDentistWithDentistId(dentistId);
-
-            if (dentist == null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "User not found",
-                    Detail = $"User does not exist for dentistId {dentistId}!"
-                });
-            }
-
-            if (invoker.ClinicId != dentist.ClinicId || !invoker.IsOwner)
-            {
-                return Unauthorized(new HttpResponseModel()
-                {
-                    StatusCode = 403,
-                    Message = "Unauthorized",
-                    Detail = $"User does not exist for dentistId {dentistId}!"
-                });
-            }
-
-            return Ok(new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "Success",
-                Content = UserInfoMapper.ToDentistView(dentist)
-            });
-        }
-
         [HttpGet("{id}")]
         public ActionResult<IHttpResponseModel<ClinicInfoModel>> GetClinicInformation(int id)
         {
@@ -211,9 +159,9 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpPut("{id}")]
+        [HttpPut]
         [Authorize(Roles = "Dentist")]
-        public ActionResult<HttpResponseModel> UpdateClinicInformation(int id, [FromBody] ClinicInfoUpdateModel clinicUpdateInfo)
+        public ActionResult<HttpResponseModel> UpdateClinicInformation([FromBody] ClinicInfoUpdateModel clinicUpdateInfo)
         {
             UserInfoModel invoker = (UserInfoModel) HttpContext.Items["user"]!;
 
@@ -237,7 +185,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 });
             }
 
-            ClinicInfoModel? clinicInfo = clinicService.GetClinicWithId(id);
+            ClinicInfoModel? clinicInfo = clinicService.GetClinicWithId(clinicUpdateInfo.Id);
 
             if (clinicInfo == null)
             {
@@ -248,18 +196,6 @@ namespace ClinicPlatformWebAPI.Controllers
                     Detail = "No clinic were found with provided Id",
                 });
             }
-
-            if (id != clinicInfo.Id)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Bad Request",
-                    Detail = "clinic id provided is different from the updated information",
-                });
-            }
-
-            var Invoker = (UserInfoModel)HttpContext.Items["user"]!;
 
             clinicInfo.Name = clinicUpdateInfo.Name;
             clinicInfo.Description = clinicUpdateInfo.Description;
@@ -296,6 +232,16 @@ namespace ClinicPlatformWebAPI.Controllers
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> ActivateClinic(int id)
         {
+            UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
+
+            if (!invoker.IsOwner)
+            {
+                return Unauthorized(new HttpResponseModel
+                {
+                    Message = "Unauthorized",
+                    Detail = "Unknown"
+                });
+            }
 
             if (!clinicService.ActivateClinic(id, out var message))
             {
@@ -356,122 +302,6 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 200,
                 Message = "Success",
                 Detail = $"Clinic {id} has been removed."
-            });
-        }
-
-        [HttpPost("service/add")]
-        public ActionResult<HttpResponseModel> AddClinicService([FromBody] ClinicServiceRegistrationModel serviceInfo)
-        {
-            ClinicServiceInfoModel? service = ClinicMapper.MapToServiceInfo(serviceInfo);
-
-            service = clinicServiceService.AddClinicService(service, out var message);
-
-            if (service == null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Bad Request",
-                    Detail = message,
-                });
-            }
-            else
-            {
-                return Ok(new HttpResponseModel()
-                {
-                    StatusCode = 200,
-                    Message = "Service added sucessfully",
-                    Detail = $"{message}",
-                });
-            }
-        }
-
-        [HttpPost("service/add-batch")]
-        public ActionResult<HttpResponseModel> AddClinicServices([FromBody] IEnumerable<ClinicServiceInfoModel> serviceInfo)
-        {
-            if (!clinicServiceService.AddClinicServices(serviceInfo, out var message))
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Bad Request",
-                    Detail = message,
-                });
-            }
-            else
-            {
-                return Ok(new HttpResponseModel()
-                {
-                    StatusCode = 200,
-                    Message = "Service added sucessfully",
-                    Detail = message,
-                });
-            }
-        }
-
-        [HttpPut("service/update")]
-        public ActionResult<HttpResponseModel> UpdateClinicService([FromBody] ClinicServiceInfoModel serviceInfo)
-        {
-            var clinicServiceInfo = clinicService.UpdateClinicService(serviceInfo, out var message);
-
-            if (clinicService == null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed while updating services",
-                    Detail = message,
-                });
-            }
-            else
-            {
-                return Ok(new HttpResponseModel()
-                {
-                    StatusCode = 200,
-                    Message = "Service added sucessfully",
-                    Detail = $"Updated service information!",
-                    Content = clinicServiceInfo
-                });
-            }
-        }
-
-        [HttpDelete("service/{clinicServiceId}/on")]
-        public ActionResult<HttpResponseModel> EnableService(Guid clinicServiceId)
-        {
-            if (clinicService.EnableClinicService(clinicServiceId, out var message))
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed to remove clinic service",
-                    Detail = message
-                });
-            }
-
-            return Ok(new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "Service removed",
-            });
-        }
-
-        [HttpPut("service/{clinicServiceId}/off")]
-        public ActionResult<HttpResponseModel> DisableService(Guid clinicServiceId)
-        {
-            if (clinicService.DisableClinicService(clinicServiceId, out var message))
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed to remove clinic service",
-                    Detail = message
-                });
-            }
-
-            return Ok(new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "Service removed",
             });
         }
     }

@@ -8,6 +8,7 @@ using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -60,12 +61,7 @@ namespace ClinicPlatformWebAPI.Controllers
 
             if (clinic == null)
             {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Clinic not found.",
-                    Detail = $"Can not find clinic information for id {slotInfo.ClinicId}"
-                });
+                return BadRequest(new HttpResponseModel(400,"Clinic not found.", $"Can not find clinic information for id {slotInfo.ClinicId}", null));
             }
 
             if (!invoker.IsOwner || invoker.ClinicId != clinic.Id)
@@ -74,11 +70,15 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     StatusCode = 400,
                     Message = "Failed adding clinic slot.",
-                    Detail = $"User lacking priviledges"
+                    Detail = $"User lacking priviledges."
                 });
             }
 
-            ClinicSlotInfoModel? slot = scheduleService.AddNewClinicSlot(ClinicMapper.MapToSlotInfo(slotInfo), out var message);
+            ClinicSlotInfoModel? slot = ClinicMapper.MapToSlotInfo(slotInfo);
+
+            slot.Status = true;
+
+            slot = scheduleService.AddNewClinicSlot(slot, out var message);
 
             if (slot != null)
             {
@@ -141,8 +141,8 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
-        [HttpPut("slot/enable")]
-        public ActionResult<HttpResponseModel> EndableSlot([FromQuery] Guid slotId)
+        [HttpPut("slot/{slotId}/enable")]
+        public ActionResult<HttpResponseModel> EnableSlot(Guid slotId)
         {
             ClinicSlotInfoModel? slot = scheduleService.GetClinicSlotById(slotId);
 
@@ -156,7 +156,6 @@ namespace ClinicPlatformWebAPI.Controllers
             }
 
             slot.Status = true;
-
             slot = scheduleService.UpdateClinicSlot(slot, out var message);
 
             if (slot != null)
@@ -179,8 +178,8 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
-        [HttpPut("slot/disable")]
-        public ActionResult<HttpResponseModel> DisableSlot([FromQuery] Guid slotId)
+        [HttpPut("slot/{slotId}/disable")]
+        public ActionResult<HttpResponseModel> DisableSlot(Guid slotId)
         {
             ClinicSlotInfoModel? slot = scheduleService.GetClinicSlotById(slotId);
 
