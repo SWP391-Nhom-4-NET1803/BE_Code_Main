@@ -19,7 +19,7 @@ namespace ClinicPlatformServices.Contracts
         IEnumerable<AppointmentInfoModel> GetAllClinicBooking(int clinicId, bool includeCancelled = false);
         IEnumerable<AppointmentInfoModel> GetAllCustomerBooking(int customerId, bool includeCancelled = false);
         IEnumerable<AppointmentInfoModel> GetAllDentistBooking(int dentistId, bool includeCancelled = false);
-        IEnumerable<AppointmentInfoModel> GetAllBookingOnDay(DateOnly date);
+        IEnumerable<AppointmentInfoModel> GetAllBookingOnDay(DateOnly date, bool includeCanclled = false);
         AppointmentInfoModel? CancelBooking(Guid id, out string message);
         AppointmentInfoModel? ChangeDate(Guid bookId, DateOnly newDate, out string message);
         AppointmentInfoModel? ChangeSlot(Guid bookId, Guid clinicSlotId, out string message);
@@ -30,7 +30,12 @@ namespace ClinicPlatformServices.Contracts
         BookedServiceInfoModel? GetBookedService(Guid bookId);
 
         bool DeleteBookingInformation(Guid bookId, out string messgae);
-        
+
+        public bool DentistIsAvailableOn(DateOnly date, Guid slotId, int dentistId, out string message);
+
+        public bool DentistIsFreeForCheckupOn(DateOnly date, Guid slotId, int dentistId, out string message);
+        public bool DentistIsFreeForTreatmentOn(DateOnly date, Guid slotId, int dentistId, out string message);
+
         IEnumerable<AppointmentInfoModel> FilterBookList(IEnumerable<AppointmentInfoModel> list, DateOnly? start = null, DateOnly? end = null, bool includeCanceledOrFinished = false, int? page_size = null, int? page = null);
 
     }

@@ -14,7 +14,7 @@ namespace ClinicPlatformDTOs.BookingModels
         public int CustomerId { get; set; }
         public int DentistId { get; set; }
         public int ClinicId { get; set; }
-        public Guid? ServiceId { get; set; } = null;
+        public Guid ServiceId { get; set; }
         public int MaxRecurring { get; set; } = 0;
         public Guid? OrginialAppointment { get; set; } = null!;
         public string Status { get; set; } = "booked";

@@ -16,6 +16,6 @@ namespace ClinicPlatformObjects.BookingModels
 
         public Guid ClinicServiceId { get; set; }
 
-        public int ServiceCategory { get; set; }
+        public int ServiceCategoryId { get; set; }
     }
 }

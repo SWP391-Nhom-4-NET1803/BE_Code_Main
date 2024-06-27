@@ -23,6 +23,7 @@ namespace ClinicPlatformDTOs.BookingModels
         public int AppointmentFee { get; set; }
         public string Note { get; set; } = null!;
         public int CyleCount { get; set; }
+        public Guid SelectedService {  get; set; }
 
         public const string Checkup = "checkup";
         public const string Treatment = "treatment";
