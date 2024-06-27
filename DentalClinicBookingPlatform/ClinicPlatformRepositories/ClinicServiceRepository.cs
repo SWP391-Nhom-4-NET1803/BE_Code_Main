@@ -125,6 +125,8 @@ namespace ClinicPlatformRepositories
                     Price = result.Price,
                     CategoryId = result.CategoryId,
                     Name = result.CustomName ?? category.Name,
+                    Available = result.Available,
+                    Removed = result.Removed,
                 };
             }
 
