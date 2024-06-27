@@ -18,7 +18,8 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
                 CyleCount = registration.MaxRecurring,
                 OriginalAppoinment = registration.OrginialAppointment,
                 Status = registration.Status,
-                Type = registration.AppointmentType
+                Type = registration.AppointmentType,
+                SelectedService = registration.ServiceId,
             };
         }
     }
