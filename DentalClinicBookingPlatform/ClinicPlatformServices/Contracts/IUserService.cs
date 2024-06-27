@@ -16,7 +16,9 @@ namespace ClinicPlatformServices.Contracts
 
         UserInfoModel? GetUserWithEmail(string email);
 
-        UserInfoModel? GetDentistWithDentistId(int dentistId);
+        UserInfoModel? GetUserWithDentistId(int dentistId);
+
+        IEnumerable<UserInfoModel>? GetAllUserWithClinicId(int clinicId);
 
         IEnumerable<UserInfoModel> GetRemovedUser();
 
