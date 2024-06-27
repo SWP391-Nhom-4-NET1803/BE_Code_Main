@@ -23,6 +23,7 @@ namespace ClinicPlatformServices
         private readonly IConfiguration configuration;
         private readonly IUserRepository userRepository;
         private string TokenKey;
+        private string GoogleO2Auth;
         private string Issuer;
 
         public AuthService(IConfiguration config, IUserRepository userRepository)
@@ -31,6 +32,7 @@ namespace ClinicPlatformServices
             this.userRepository = userRepository;
             TokenKey = configuration.GetSection("JWT:Key").Value!;
             Issuer = configuration.GetSection("JWT:Issuer").Value!;
+            GoogleO2Auth = configuration.GetSection("GoogleO2Auth:Token").Value!;
         }
 
         public string GenerateAccessToken(UserInfoModel user, int duration = 10)
@@ -93,12 +95,52 @@ namespace ClinicPlatformServices
 
         public IEnumerable<Claim> GetPrincipalsFromGoogleToken(string token)
         {
-            throw new NotImplementedException();
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = false,
+                ValidateAudience = false, //you might want to validate the audience and issuer depending on your use case
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(GoogleO2Auth)),
+                //ValidIssuer = _config.GetValue<string>("JWT:Issuer")!,
+                ValidateLifetime = false //here we are saying that we don't care about the token's expiration date
+            };
+
+            SecurityToken securityToken = tokenHandler.ReadToken(token);
+
+            var jwtSecurityToken = securityToken as JwtSecurityToken;
+
+            if (jwtSecurityToken == null)
+                throw new SecurityTokenException("Invalid token");
+
+            return jwtSecurityToken.Claims;
         }
 
         public ClaimsPrincipal GetPrincipalsFromToken(string token)
         {
-            throw new NotImplementedException();
+            var tokenHandler = new JwtSecurityTokenHandler();
+
+            var tokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = false, //you might want to validate the audience and issuer depending on your use case
+                ValidateIssuerSigningKey = true,
+                IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TokenKey)),
+                ValidIssuer = Issuer,
+                ValidateLifetime = false //here we are saying that we don't care about the token's expiration date
+            };
+
+            SecurityToken securityToken;
+
+            var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+
+            var jwtSecurityToken = securityToken as JwtSecurityToken;
+
+            if (jwtSecurityToken == null || !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))
+                throw new SecurityTokenException("Invalid token");
+
+            return principal;
         }
 
         public UserInfoModel? ValidateAccessToken(string? token, out string message)

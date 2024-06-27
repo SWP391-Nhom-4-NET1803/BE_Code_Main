@@ -1,10 +1,12 @@
 ﻿using ClinicPlatformDTOs.AuthenticationModels;
+using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using System.Security.Claims;
+using System.Text;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -48,6 +50,36 @@ namespace ClinicPlatformWebAPI.Controllers
 
         }
 
+
+        [HttpPost("refresh")]
+        public ActionResult<IHttpResponseModel<AuthenticationTokenModel>> RefreshToken([FromBody] AuthenticationTokenModel tokens)
+        {
+            try
+            {
+                string[] refreshTokenParts = Encoding.UTF8.GetString(Convert.FromBase64String(tokens.RefreshToken)).Split("|");
+
+                if (DateTime.Compare(DateTime.Parse(refreshTokenParts[2]), DateTime.UtcNow) < 0)
+                {
+                    return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Refresh Token is expired" });
+                }
+
+                var principals = authService.GetPrincipalsFromToken(tokens.AccessToken);
+
+                Claim userIdClaim = principals.Claims.First(claim => claim.Type == "id");
+
+                UserInfoModel user = userService.GetUserWithUserId(int.Parse(userIdClaim.Value))!;
+
+                var token = authService.GenerateTokens(user);
+
+                return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Authorized", Content = token });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Error while refreshing the user tokens", Detail = ex.Message });
+            }
+
+        }
+
         [HttpPost("login-google")]
         [AllowAnonymous]
         public ActionResult<IHttpResponseModel<AuthenticationTokenModel>> LoginGoogle([FromBody] GoogleAuthenticationModel loginInfo)
@@ -60,29 +92,28 @@ namespace ClinicPlatformWebAPI.Controllers
                 Console.WriteLine($"{claim.Type} : {claim.Value}  ({claim.ValueType})");
             }
 
-            string userEmail = userPrincipal.First(x => x.Type == "Email").Value;
+            string userEmail = userPrincipal.First(x => x.Type == "email").Value;
 
-            bool isValidUser = true;
+            UserInfoModel? user = userService.GetUserWithEmail(userEmail);
 
-            if (isValidUser)
+            if (user == null)
             {
-                return Ok(new HttpResponseModel()
+                string username = "User" + userPrincipal.First(x => x.Type == "nbf").Value;
+
+                user = userService.RegisterAccount(new UserInfoModel { Username=username, Email = userEmail, PasswordHash=username }, "Customer", out var message);
+
+                if (user == null)
                 {
-                    StatusCode = 200,
-                    Message = "Login Successfully",
-                    //Content = authService.GenerateTokens(user!)
-                });
-            }
-            else
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 200,
-                    Message = "Login Failed",
-                    Detail = "Invalid user or username"
-                });
+                    return BadRequest(new HttpResponseModel() { StatusCode = 500, Message = "Internal Server Error", Content = message });
+                };
             }
 
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Login Successfully",
+                Content = authService.GenerateTokens(user!)
+            });
         }
     }
 }

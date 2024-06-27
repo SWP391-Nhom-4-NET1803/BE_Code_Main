@@ -285,7 +285,7 @@ namespace ClinicPlatformWebAPI.Controllers
                     });
                 }
 
-                target.IsActive = false;
+                target.IsActive = true;
                 target = userService.UpdateUserInformation(target, out var message);
 
                 if (target == null)
@@ -302,7 +302,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     StatusCode = 200,
                     Message = $"Updated successfully",
-                    Detail = "Deactivated invoker account"
+                    Detail = "Activated dentist account"
                 });
             }
             else

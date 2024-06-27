@@ -11,7 +11,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
-    [Route("api/services")]
+    [Route("api/service")]
     [ApiController]
     [Authorize(Roles = "Dentist")]
     public class ClinicServiceController : ControllerBase
