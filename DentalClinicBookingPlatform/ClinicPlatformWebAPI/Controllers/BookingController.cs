@@ -1,12 +1,15 @@
 ﻿using ClinicPlatformDTOs.BookingModels;
 using ClinicPlatformDTOs.ClinicModels;
+using ClinicPlatformDTOs.SlotModels;
 using ClinicPlatformObjects.BookingModels;
+using ClinicPlatformObjects.UserModels.DentistModel;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.ModelMapper;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -53,6 +56,31 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
+        [HttpGet("staff/{id}")]
+        public ActionResult<IHttpResponseModel<IEnumerable<AppointmentViewModel>>> GetClinicStaffAppointments(int id, DateOnly? from_date, DateOnly? to_date, TimeOnly? from_time, TimeOnly? to_time, bool requestOldItems = true, int? page_size = null, int? page_index = null)
+        {
+            if (userService.GetUserWithDentistId(id) == null)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "Failed",
+                    Detail = $"Unknown clinic staff with staff Id {id}"
+                });
+            }
+
+            var result = bookingService.GetAllDentistBooking(id);
+
+            result = bookingService.FilterBookList(result, from_date, to_date, requestOldItems, page_size, page_index);
+
+            return Ok(new HttpResponseModel()
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = from item in result select ConvertToBookingView(item)
+            });
+        }
+
         [HttpGet("customer/{id}")]
         public ActionResult<IHttpResponseModel<IEnumerable<AppointmentViewModel>>> GetCustomerAppointments(int id, DateOnly? from_date, DateOnly? to_date, TimeOnly? from_time, TimeOnly? to_time, bool requestOldItems = true, int? page_size = null, int? page_index = null)
         {
@@ -77,89 +105,11 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpGet("staff/{id}")]
-        public ActionResult<IHttpResponseModel<IEnumerable<AppointmentViewModel>>> GetClinicStaffAppointments(int id, DateOnly? from_date, DateOnly? to_date, TimeOnly? from_time, TimeOnly? to_time, bool requestOldItems = true, int? page_size = null, int? page_index = null)
-        {
-            if (userService.GetDentistWithDentistId(id) == null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed",
-                    Detail = $"Unknown clinic staff with staff Id {id}"
-                });
-            }
 
-            var result = bookingService.GetAllDentistBooking(id);
-
-            result = bookingService.FilterBookList(result, from_date, to_date, requestOldItems, page_size, page_index);
-
-            return Ok(new HttpResponseModel()
-            {
-                StatusCode = 200,
-                Message = "Success",
-                Content = from item in result select ConvertToBookingView(item)
-            });
-        }
-
-        [HttpPost("create-schedule")]
+        [HttpPost("staff/create-schedule")]
         public ActionResult<HttpResponseModel> CreateNewSchedule([FromBody] AppointmentRegistrationModel bookInfo, [FromQuery] AppointmentSetting setting)
         {
-            // Validate request information (I really want to find a better way)
-            var clinicInfo = clinicService.GetClinicWithId(bookInfo.ClinicId);
-
-            if (clinicInfo == null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed",
-                    Detail = "The selected clinic does not exist."
-                });
-            }
-
-            var dentistInfo = userService.GetDentistWithDentistId(bookInfo.DentistId);
-
-            if (dentistInfo == null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed",
-                    Detail = "The selected dentist does not exist."
-                });
-            }
-
-            if (dentistInfo.ClinicId != clinicInfo.Id)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed",
-                    Detail = "Can not book an appointment because the chosen dentist does not work in the selected clinic."
-                });
-            }
-
-            if (bookInfo.ServiceId != null)
-            {
-                var serviceInfo = clinicService.GetClinicServiceWithId((Guid)bookInfo.ServiceId);
-
-                if (serviceInfo == null || serviceInfo.ClinicId != clinicInfo.Id)
-                {
-                    return BadRequest(new HttpResponseModel()
-                    {
-                        StatusCode = 400,
-                        Message = "Failed",
-                        Detail = "The selected service does not exist for the current clinic"
-                    });
-                }
-            }
-
-            AppointmentInfoModel? appointment = AppointmentMapper.MapToAppointment(bookInfo);
-
-            appointment = bookingService.CreateNewBooking(bookInfo, out var message);
-
-            
+            AppointmentInfoModel? appointment = bookingService.CreateNewBooking(bookInfo, out var message);
 
             if (appointment != null)
             {
@@ -178,7 +128,7 @@ namespace ClinicPlatformWebAPI.Controllers
 
                 return Ok(new HttpResponseModel()
                 {
-                    StatusCode = 400,
+                    StatusCode = 200,
                     Message = "Success",
                     Detail = "Created schedule!"
                 });
@@ -197,66 +147,17 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpPost("customer/book")]
         public ActionResult<HttpResponseModel> CreateNewCustomerAppointment([FromBody] AppointmentRegistrationModel bookInfo)
         {
-            // Validate request information (I really want to find a better way)
-            var clinicInfo = clinicService.GetClinicWithId(bookInfo.ClinicId);
-
-            if (clinicInfo == null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed",
-                    Detail = "The selected clinic does not exist."
-                });
-            }
-
-            var dentistInfo = userService.GetDentistWithDentistId(bookInfo.DentistId);
-
-            if (dentistInfo == null)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed",
-                    Detail = "The selected dentist does not exist."
-                });
-            }
-            
-            if (dentistInfo.ClinicId != clinicInfo.Id)
-            {
-                return BadRequest(new HttpResponseModel()
-                {
-                    StatusCode = 400,
-                    Message = "Failed",
-                    Detail = "Can not book an appointment because the chosen dentist does not work in the selected clinic."
-                });
-            }
-            
-            if (bookInfo.ServiceId != null)
-            {
-                var serviceInfo = clinicService.GetClinicServiceWithId((Guid) bookInfo.ServiceId);
-
-                if (serviceInfo == null || serviceInfo.ClinicId != clinicInfo.Id)
-                {
-                    return BadRequest(new HttpResponseModel()
-                    {
-                        StatusCode = 400,
-                        Message = "Failed",
-                        Detail = "The selected service does not exist for the current clinic"
-                    });
-                }
-            }
-
-            AppointmentInfoModel? appointment = AppointmentMapper.MapToAppointment(bookInfo);
-
-            appointment = bookingService.CreateNewBooking(bookInfo, out var message);
+            bookInfo.Status = "pending";
+            AppointmentInfoModel? appointment = bookingService.CreateNewBooking(bookInfo, out var message);
 
             if (appointment != null)
             {
                 return Created(nameof(CreateNewCustomerAppointment), new HttpResponseModel()
                 {
                     StatusCode = 201,
-                    Message = "Success"
+                    Message = "Success",
+                    Detail = $"Created a booking for customer {appointment.CustomerId}!",
+                    Content = appointment
                 });
             }
             else
@@ -270,12 +171,95 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
+        [HttpGet("available/{clinicId}/service")]
+        public ActionResult<IHttpResponseModel<IEnumerable<DentistInfoViewModel>>> GetClinicService(int clinicId)
+        {
+            if (clinicService.GetClinicWithId(clinicId) == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Message = "Not found",
+                    Detail = $"No clinic with Id {clinicId} was found.",
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = clinicServiceServivce.GetAllClinicService(clinicId).Where(x => x.Available && !x.Removed)
+            });
+        }
+
+        [HttpGet("available/{clinicId}/dentist")]
+        public ActionResult<IHttpResponseModel<IEnumerable<DentistInfoViewModel>>> GetFreeSlotOn(int clinicId)
+        {
+            if (clinicService.GetClinicWithId(clinicId) == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Message = "Not found",
+                    Detail = $"No clinic with Id {clinicId} was found.",
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Content = from dentist in userService.GetAllUserWithClinicId(clinicId).Where(x => x.IsActive && !x.IsRemoved) select UserInfoMapper.ToDentistView(dentist)
+            });
+        }
+
+        [HttpGet("available/weekly")]
+        public ActionResult<IHttpResponseModel<Dictionary<int, List<ClinicSlotInfoModel>>>> GetDate(int clinicId)
+        {
+            if (clinicService.GetClinicWithId(clinicId) == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Message = "Not found",
+                    Detail = $"No clinic with Id {clinicId} was found.",
+                });
+            }
+
+            var availableSlot = scheduleService.GetAllClinicSlot(clinicId).Where(x => x.Status).OrderBy(x => x.Weekday).ThenBy(x => x.StartTime);
+
+            // Good ol dictionary...
+            Dictionary<int, List<ClinicSlotInfoModel>> clinicSlotByWeekday = new Dictionary<int, List<ClinicSlotInfoModel>>();
+
+            foreach (var slot in availableSlot)
+            {
+
+                if (!clinicSlotByWeekday.ContainsKey(slot.Weekday))
+                {
+                    clinicSlotByWeekday.Add(slot.Weekday, new List<ClinicSlotInfoModel>() { slot });
+                }
+                else
+                {
+                    clinicSlotByWeekday[slot.Weekday].Add(slot);
+                }
+                        
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Message = "Success",
+                Detail = $"Found {availableSlot.Count()} available slot.",
+                Content = clinicSlotByWeekday
+            });
+        }
+
         private AppointmentViewModel ConvertToBookingView(AppointmentInfoModel bookModel)
         {
 
             var clinicInfo = clinicService.GetClinicWithId(bookModel.ClinicId!)!;
             var customerInfo = userService.GetUserWithCustomerId(bookModel.CustomerId!)!;
-            var dentistInfo = userService.GetDentistWithDentistId(bookModel.DentistId!)!;
+            var dentistInfo = userService.GetUserWithDentistId(bookModel.DentistId!)!;
             var clinicSlotInfo = scheduleService.GetClinicSlotById(bookModel.ClinicSlotId!)!;
 
             BookedServiceInfoModel? service = bookingService.GetBookedService(bookModel.Id);

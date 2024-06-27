@@ -12,17 +12,29 @@ namespace ClinicPlatformServices
     public class ScheduleService : IScheduleService
     {
         private readonly IScheduleRepository scheduleRepository;
+        private readonly IBookingRepository bookingRepository;
+        private readonly IUserRepository userRepository;
+        private readonly IClinicRepository clinicRepository;
 
         private bool disposedValue;
 
-        public ScheduleService(IScheduleRepository scheduleRepository)
+        public ScheduleService(IScheduleRepository scheduleRepository, IBookingRepository bookingRepository, IUserRepository userRepository, IClinicRepository clinicRepository)
         {
             this.scheduleRepository = scheduleRepository;
+            this.bookingRepository = bookingRepository;
+            this.userRepository = userRepository;
+            this.clinicRepository = clinicRepository;
         }
 
         public ClinicSlotInfoModel? AddNewClinicSlot(ClinicSlotInfoModel slotInfo, out string message)
         {
             slotInfo.ClinicSlotId = null;
+
+            if (slotInfo.MaxCheckup < 0 || slotInfo.MaxTreatment < 0)
+            {
+                message = "Maximum checkup or maximum treatment can not be smaller than 0";
+                return null;
+            }
             
             var allSlot = scheduleRepository.GetAllClinicSlot();
             var allBaseSlot = scheduleRepository.GetAllSlot();
@@ -125,6 +137,13 @@ namespace ClinicPlatformServices
                 return null;
             }
 
+            var clinic = clinicRepository.GetClinic(slotInfo.ClinicId);
+
+            if (clinic == null)
+            {
+                message = $"No information found for clinic with Id {slotInfo.ClinicId}";
+            }
+
             var clinicSlot = scheduleRepository.GetClinicSlot((Guid) slotInfo.ClinicSlotId!);
 
             if (clinicSlot == null)
@@ -132,7 +151,6 @@ namespace ClinicPlatformServices
                 message = $"Slot information not found for Id {slotInfo.ClinicSlotId}.";
                 return null;
             }
-
 
             var baseSlot = scheduleRepository.GetSlot((int)slotInfo.SlotId);
 
@@ -150,6 +168,40 @@ namespace ClinicPlatformServices
 
             message = "Updated clinic slot!";
             return scheduleRepository.UpdateClinicSlot(clinicSlot!);
+        }
+
+        public List<ClinicSlotInfoModel>? AvailableSlotOnDate(DateTime date, int dentistId, bool forTreatment, out string message) 
+        {
+            var dentist = userRepository.GetUserWithDentistID(dentistId);
+
+            if (dentist == null)
+            {
+                message = "Can not find dentist information";
+                return null;
+            }
+
+
+            var allBooking = bookingRepository.GetAll().Where(x => x.AppointmentDate == DateOnly.FromDateTime(date) && x.DentistId == dentistId && x.Status != "canceled");
+
+            var allClinicSlot = scheduleRepository.GetAllClinicSlot().Where(x => x.ClinicId == dentist.ClinicId && x.Weekday == ((int)date.DayOfWeek)).ToList();
+
+            for ( var i = allClinicSlot.Count() - 1; i >= 0 ; i--)
+            {
+                ClinicSlotInfoModel temptSlot = allClinicSlot.ElementAt(i);
+
+                if (forTreatment && temptSlot.MaxTreatment <= allBooking.Where(x => x.ClinicSlotId == temptSlot.ClinicSlotId && x.Type == "treatment").Count())
+                {
+                    allClinicSlot.Remove(temptSlot);
+                }
+                else if (temptSlot.MaxCheckup <= allBooking.Where(x => x.ClinicSlotId == temptSlot.ClinicSlotId && x.Type == "checkup").Count())
+                {
+                    allClinicSlot.Remove(temptSlot);
+                }
+            }
+
+            message = $"On {date.ToString("dddd")} {date.Month} {date.Year}, dentist {dentist.Fullname} has {allClinicSlot.Count()} available slots.";
+
+            return allClinicSlot;
         }
 
         public bool UpdateSlot(SlotInfoModel slotInfo, out string message)

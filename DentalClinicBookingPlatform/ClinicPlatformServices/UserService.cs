@@ -12,11 +12,13 @@ namespace ClinicPlatformServices
     public class UserService: IUserService
     {
         private readonly IUserRepository userRepository;
+        private readonly IClinicRepository clinicRepository;
         private bool disposedValue;
 
-        public UserService(IUserRepository repository)
+        public UserService(IUserRepository repository, IClinicRepository clinicRepository)
         {
             userRepository = repository;
+            this.clinicRepository = clinicRepository;
         }
 
         public IEnumerable<UserInfoModel> GetUsers()
@@ -34,9 +36,22 @@ namespace ClinicPlatformServices
             return userRepository.GetUserWithCustomerID(customerId);
         }
 
-        public UserInfoModel? GetDentistWithDentistId(int dentistId)
+        public UserInfoModel? GetUserWithDentistId(int dentistId)
         {
             return userRepository.GetUserWithDentistID(dentistId);
+        }
+
+        public IEnumerable<UserInfoModel>? GetAllUserWithClinicId(int clinicId)
+        {
+
+            var clinic = clinicRepository.GetClinic(clinicId);
+
+            if (clinic == null)
+            {
+                return null;
+            }
+
+            return userRepository.GetAllUser().Where(x => x.ClinicId == clinicId);
         }
 
         public UserInfoModel? GetUserWithEmail(string email)

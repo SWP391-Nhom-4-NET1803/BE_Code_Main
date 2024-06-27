@@ -102,11 +102,23 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("slot/update")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> UpdateClinicSlot([FromBody] ClinicSlotUpdateModel slotInfo)
         {
+            UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
+
             ClinicSlotInfoModel? slot = scheduleService.GetClinicSlotById(slotInfo.slotId);
 
-            if (slot == null)
+            if (!invoker.IsOwner)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Message = "There are no slot with the given ID found."
+                });
+            }
+
+            if (slot == null || slot.ClinicId != invoker.ClinicId)
             {
                 return BadRequest(new HttpResponseModel()
                 {

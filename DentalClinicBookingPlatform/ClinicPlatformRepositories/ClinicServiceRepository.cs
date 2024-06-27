@@ -108,7 +108,12 @@ namespace ClinicPlatformRepositories
         {
             var result = context.ClinicServices.Find(clinicServiceId);
 
-            var category = result != null ? context.ServiceCategories.Find(result.CategoryId) : null;
+            if (result == null)
+            {
+                return null;
+            }
+
+            var category = context.ServiceCategories.Find(result.CategoryId);
 
             if (category != null && result != null)
             {

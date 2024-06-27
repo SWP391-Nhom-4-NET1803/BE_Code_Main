@@ -216,6 +216,108 @@ namespace ClinicPlatformServices
             return bookInfo;
         }
 
+        public AppointmentInfoModel? ChangeAppointmentDate(Guid bookId, DateOnly newDate, out string message)
+        {
+            AppointmentInfoModel? bookInfo = bookingRepository.GetBooking((Guid)bookId);
+
+            if (bookInfo == null)
+            {
+                message = $"No booking information for Id {bookId}";
+                return null;
+            }
+
+            if (bookInfo.Status == "finished" && bookInfo.Status == "canceled")
+            {
+                message = $"Can not change a finished or canceled appointment!";
+                return null;
+            }
+
+            var AppointmentOnSlot = bookingRepository.GetAll().Where(x => x.AppointmentDate == newDate && x.ClinicSlotId == bookInfo.ClinicSlotId && x.DentistId == bookInfo.DentistId);
+            var slotInfo = scheduleRepository.GetClinicSlot(bookInfo.ClinicSlotId);
+
+            if (slotInfo == null)
+            {
+                message = "Slot info not found";
+                return null;
+            }
+
+            if (bookInfo.Type == "checkup" && AppointmentOnSlot.Where(x => x.Type == "checkup").Count() < slotInfo.MaxCheckup
+                || bookInfo.Type == "treatment" && AppointmentOnSlot.Where(x => x.Type == "treatment").Count() < slotInfo.MaxCheckup)
+            {
+                bookInfo.AppointmentDate = (DateOnly)newDate;
+            }
+
+            else 
+            {
+                bookInfo.AppointmentDate = (DateOnly)newDate;
+            }
+
+            bookInfo = bookingRepository.UpdateBookingInfo(bookInfo);
+
+            if (bookInfo != null)
+            {
+                message = "Successfully updated appointment date";
+            }
+            else
+            {
+                message = "Error";
+            }
+            
+            return bookInfo;
+        }
+
+        public AppointmentInfoModel? ChangeAppointmentSlot(Guid bookId, Guid slotId, out string message)
+        {
+            AppointmentInfoModel? bookInfo = bookingRepository.GetBooking((Guid)bookId);
+
+            if (bookInfo == null)
+            {
+                message = $"No booking information for Id {bookId}";
+                return null;
+            }
+
+            if (bookInfo.Status == "finished" && bookInfo.Status == "canceled")
+            {
+                message = $"Can not change a finished or canceled appointment!";
+                return null;
+            }
+
+            var slotInfo = scheduleRepository.GetClinicSlot(bookInfo.ClinicSlotId);
+
+            if (slotInfo == null)
+            {
+                message = "Slot info not found";
+                return null;
+            }
+
+            var AppointmentOnSlot = bookingRepository.GetAll().Where(x => x.ClinicSlotId == slotId && x.ClinicSlotId == bookInfo.ClinicSlotId && x.DentistId == bookInfo.DentistId);
+            
+
+            if (bookInfo.Type == "checkup" && AppointmentOnSlot.Where(x => x.Type == "checkup").Count() < slotInfo.MaxCheckup 
+                || bookInfo.Type == "treatment" && AppointmentOnSlot.Where(x => x.Type == "treatment").Count() < slotInfo.MaxCheckup)
+            {
+                bookInfo.ClinicSlotId = slotId;
+            }
+            else
+            {
+                message = "This slot is already fully booked";
+                return null;
+            }
+
+            bookInfo = bookingRepository.UpdateBookingInfo(bookInfo);
+
+            if (bookInfo != null)
+            {
+                message = "Successfully updated appointment slot";
+            }
+            else
+            {
+                message = "Error";
+            }
+
+            return bookInfo;
+        }
+
         public AppointmentInfoModel? ChangeDentist(Guid bookId, int dentistId, out string message)
         {
             AppointmentInfoModel? bookInfo;
@@ -234,10 +336,28 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            bookInfo.DentistId = dentistId;
-            bookingRepository.UpdateBookingInfo(bookInfo);
-            message = $"Changed dentist for this booking.";
-            return bookInfo;
+            var appointmentSlot = scheduleRepository.GetClinicSlot(bookInfo.ClinicSlotId);
+
+            if (appointmentSlot == null)
+            {
+                message = $"Can not find clinic slot information";
+                return null;
+            }
+
+            var count = GetAllDentistBooking(dentistId, true).Where(x => x.AppointmentDate == bookInfo.AppointmentDate && x.ClinicSlotId == bookInfo.ClinicSlotId && x.DentistId == dentistId);
+
+            if ((bookInfo.Type == "checkup" && count.Where(x => x.Type == "checkup").Count() < appointmentSlot.MaxCheckup) ||
+                (bookInfo.Type == "treatment" && count.Where(x => x.Type == "treatment").Count() < appointmentSlot.MaxTreatment))
+            {
+                bookInfo.DentistId = dentistId;
+                bookInfo = bookingRepository.UpdateBookingInfo(bookInfo);
+
+                message = "Successfully updated booking information";
+                return bookInfo;
+            }
+
+            message = "Can not change bookRegistrationInfo assgined clinic staff.";
+            return null;
         }
 
         public AppointmentInfoModel? ChangeService(Guid bookId, Guid clinicServiceId, out string message)
@@ -316,38 +436,76 @@ namespace ClinicPlatformServices
         }
 
         // Create
-        public AppointmentInfoModel? CreateNewBooking(AppointmentRegistrationModel bookInfo, out string message)
+        public AppointmentInfoModel? CreateNewBooking(AppointmentRegistrationModel bookRegistrationInfo, out string message)
         {
 
             var book = new AppointmentInfoModel()
             {
-                Type = bookInfo.AppointmentType,
-                Status = "booked",
+                Type = bookRegistrationInfo.AppointmentType,
+                Status = bookRegistrationInfo.Status,
                 CyleCount = 0,
-                OriginalAppoinment = bookInfo.OrginialAppointment,
-                AppointmentDate = bookInfo.AppointmentDate,
-                ClinicSlotId = bookInfo.TimeSlotId,
-                CustomerId = bookInfo.CustomerId,
-                DentistId = bookInfo.DentistId,
-                ClinicId = bookInfo.ClinicId,
+                OriginalAppoinment = bookRegistrationInfo.OrginialAppointment,
+                AppointmentDate = bookRegistrationInfo.AppointmentDate,
+                ClinicSlotId = bookRegistrationInfo.TimeSlotId,
+                CustomerId = bookRegistrationInfo.CustomerId,
+                DentistId = bookRegistrationInfo.DentistId,
+                ClinicId = bookRegistrationInfo.ClinicId,
                 CreationTime = DateTime.Now,
             };
 
-            if (bookInfo.AppointmentDate < DateOnly.FromDateTime(DateTime.Now))
+            if (bookRegistrationInfo.AppointmentDate < DateOnly.FromDateTime(DateTime.Now))
             {
                 message = "Can not book an appointment in the past!";
                 return null;
             }
 
-            ClinicSlotInfoModel? slotInfo = scheduleRepository.GetClinicSlot(bookInfo.TimeSlotId);
+            UserInfoModel? customer = userRepository.GetUserWithCustomerID(bookRegistrationInfo.CustomerId);
 
-            if (slotInfo == null)
+            if (customer == null)
             {
-                message = "Can not find the slot for this appointment";
+                message = "Can not find the customer information";
                 return null;
             }
 
-            ClinicServiceInfoModel? service = clinicServiceRepository.GetClinicService((Guid)bookInfo.ServiceId!);
+            UserInfoModel? dentist = userRepository.GetUserWithDentistID(bookRegistrationInfo.DentistId);
+
+            if (dentist == null)
+            {
+                message = "Can not find the dentist information";
+                return null;
+            }
+
+            ClinicInfoModel? clinic = clinicRepository.GetClinic(bookRegistrationInfo.ClinicId);
+
+            if (clinic == null)
+            {
+                message = "Can not find the clinic information";
+                return null;
+            }
+
+            ClinicSlotInfoModel? slotInfo = scheduleRepository.GetClinicSlot(bookRegistrationInfo.TimeSlotId);
+
+            if (slotInfo == null)
+            {
+                message = "Can not find the clinic slot";
+                return null;
+            }
+
+            if (slotInfo.ClinicId != clinic.Id)
+            {
+                message = "This slot does not belong to the chosen clinic";
+                return null;
+            }
+
+            int count = GetAllBookingOnDay(bookRegistrationInfo.AppointmentDate).Where(x => x.ClinicId == bookRegistrationInfo.ClinicId && x.DentistId  == dentist.DentistId && x.Type == bookRegistrationInfo.AppointmentType).Count();
+
+            if (bookRegistrationInfo.AppointmentType == "treatement" && count >= slotInfo.MaxTreatment || bookRegistrationInfo.AppointmentType == "checkup" && count >= slotInfo.MaxCheckup )
+            {
+                message = "This slot is fully booked and unavailable for this date";
+                return null;
+            }
+
+            ClinicServiceInfoModel? service = clinicServiceRepository.GetClinicService((Guid)bookRegistrationInfo.ServiceId!);
 
             if (service == null)
             {
@@ -355,21 +513,35 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            if (service.ClinicId != bookInfo.ClinicId)
+            if (service.ClinicId != clinic.Id)
             {
                 message = "This service does not belong to the chosen clinic";
                 return null;
             }
+            
+            book.AppointmentFee = service.Price;
 
             book = bookingRepository.CreateNewBooking(book);
 
             if (book != null)
             {
-                message = $"Created new bookInfo for customer {bookInfo.CustomerId}";
+                var bookedService = new BookedServiceInfoModel
+                {
+                    AppointmentId = book.Id,
+                    ClinicServiceId = bookRegistrationInfo.ServiceId,
+                    Name = service.Name,
+                    Price = service.Price,
+                };
+
+                bookedService = bookingRepository.AddBookingService(bookedService);
+
+                book.SelectedService = bookedService.ClinicServiceId;
+
+                message = $"Created new bookRegistrationInfo for customer {bookRegistrationInfo.CustomerId}";
                 return book;
             }
 
-            message = "Failed to create new bookInfo";
+            message = "Failed to create new bookRegistrationInfo";
             return null;
         }
 
@@ -394,7 +566,7 @@ namespace ClinicPlatformServices
             return bookingRepository.GetAll();
         }
 
-        public IEnumerable<AppointmentInfoModel> GetAllBookingOnDay(DateOnly date)
+        public IEnumerable<AppointmentInfoModel> GetAllBookingOnDay(DateOnly date, bool includeCanceled = false)
         {
             return bookingRepository.GetAll().Where(x => x.AppointmentDate == date);
         }
@@ -423,78 +595,6 @@ namespace ClinicPlatformServices
         public AppointmentInfoModel? GetBooking(Guid id)
         {
             return bookingRepository.GetBooking(id);
-        }
-
-        public AppointmentInfoModel? updateBookingDate(Guid appointmentId, DateOnly newDate, out string message)
-        {
-            if (newDate < DateOnly.FromDateTime(DateTime.Now))
-            {
-                message = "Can not set the new appointnment date in the pass";
-                return null;
-            }
-
-            var appointment = bookingRepository.GetBooking(appointmentId);
-
-            if (appointment == null)
-            {
-                message = $"No appointment found with Id {appointmentId}";
-                return null;
-            }
-
-            appointment.AppointmentDate = newDate;
-
-            appointment = bookingRepository.UpdateBookingInfo(appointment);
-
-            message = "Successfully updated booking information";
-            return appointment;
-        }
-
-        public AppointmentInfoModel? updateBookingDentist(Guid appointmentId, int dentistId, out string message)
-        {
-            var appointment = bookingRepository.GetBooking(appointmentId);
-
-            if (appointment == null)
-            {
-                message = $"No appointment found with Id {appointmentId}";
-                return null;
-            }
-
-            var dentist = userRepository.GetUserWithDentistID(dentistId);
-
-            if (dentist == null)
-            {
-                message = $"No dentist found with Id {dentistId}";
-                return null;
-            }
-
-            if (dentist.ClinicId != appointment.ClinicId)
-            {
-                message = $"The dentist does not work in the clinic that has this appointment";
-                return null;
-            }
-            
-            var appointmentSlot = scheduleRepository.GetClinicSlot(appointment.ClinicSlotId);
-
-            if (appointmentSlot == null)
-            {
-                message = $"Can not find clinic slot information";
-                return null;
-            }
-            
-            var count = GetAllDentistBooking(dentistId, true).Where(x => x.AppointmentDate == appointment.AppointmentDate && x.ClinicSlotId == appointment.ClinicSlotId && x.DentistId == dentistId);
-
-            if ( (appointment.Type == "checkup" && count.Where(x => x.Type == "checkup").Count() < appointmentSlot.MaxCheckup) ||
-                (appointment.Type == "treatment" && count.Where(x => x.Type == "treatment").Count() < appointmentSlot.MaxTreatment))
-            {
-                appointment.DentistId = dentistId;
-                appointment = bookingRepository.UpdateBookingInfo(appointment);
-
-                message = "Successfully updated booking information";
-                return appointment;
-            }
-
-            message = "Can not change appointment assgined clinic staff.";
-            return null;
         }
 
         public AppointmentInfoModel? updateBookingSlot(Guid appointmentId, Guid newSlot, out string message)
@@ -549,6 +649,96 @@ namespace ClinicPlatformServices
         {
             Dispose(disposing: true);
             GC.SuppressFinalize(this);
+        }
+
+        public bool DentistIsAvailableOn(DateOnly date, Guid slotId, int dentistId, out string message)
+        {
+            UserInfoModel? dentist = userRepository.GetUserWithDentistID(dentistId);
+
+            if (dentist == null)
+            {
+                message = $"Can not find dentist with Id {dentistId}";
+                return false;
+            }
+
+            ClinicSlotInfoModel? clinicSlot = scheduleRepository.GetClinicSlot(slotId);
+
+            if (clinicSlot == null || clinicSlot.ClinicId != dentist.ClinicId)
+            {
+                message = $"Unavailable slot with Id {slotId}!";
+                return false;
+            }
+
+            IEnumerable<AppointmentInfoModel> appointments = GetAllDentistBooking(dentistId).Where(x => x.AppointmentDate == date && x.Status != "canceled");
+
+            if (clinicSlot.MaxCheckup > appointments.Where(x => x.Type == "checkup").Count() || clinicSlot.MaxTreatment > appointments.Where(x => x.Type == "treatment").Count()) 
+            {
+                message = "Available!";
+                return true;
+            }
+
+            message = "Unavailable!";
+            return false;
+        }
+
+        public bool DentistIsFreeForCheckupOn(DateOnly date, Guid slotId, int dentistId, out string message)
+        {
+            UserInfoModel? dentist = userRepository.GetUserWithDentistID(dentistId);
+
+            if (dentist == null)
+            {
+                message = $"Unavailable dentist with Id {dentistId}";
+                return false;
+            }
+
+            ClinicSlotInfoModel? clinicSlot = scheduleRepository.GetClinicSlot(slotId);
+
+            if (clinicSlot == null || clinicSlot.ClinicId != dentist.ClinicId)
+            {
+                message = $"Unavailable slot with Id {slotId}!";
+                return false;
+            }
+
+            IEnumerable<AppointmentInfoModel> appointments = GetAllDentistBooking(dentistId).Where(x => x.AppointmentDate == date && x.Status != "canceled");
+
+            if (clinicSlot.MaxCheckup > appointments.Where(x => x.Type == "checkup").Count())
+            {
+                message = "Available!";
+                return true;
+            }
+
+            message = "Unavailable!";
+            return false;
+        }
+
+        public bool DentistIsFreeForTreatmentOn(DateOnly date, Guid slotId, int dentistId, out string message)
+        {
+            UserInfoModel? dentist = userRepository.GetUserWithDentistID(dentistId);
+
+            if (dentist == null)
+            {
+                message = $"Unavailable dentist with Id {dentistId}";
+                return false;
+            }
+
+            ClinicSlotInfoModel? clinicSlot = scheduleRepository.GetClinicSlot(slotId);
+
+            if (clinicSlot == null || clinicSlot.ClinicId != dentist.ClinicId)
+            {
+                message = $"Unavailable slot with Id {slotId}!";
+                return false;
+            }
+
+            IEnumerable<AppointmentInfoModel> appointments = GetAllDentistBooking(dentistId).Where(x => x.AppointmentDate == date && x.Status != "canceled");
+
+            if (clinicSlot.MaxTreatment > appointments.Where(x => x.Type == "treatment").Count())
+            {
+                message = "Available!";
+                return true;
+            }
+
+            message = "Unavailable!";
+            return false;
         }
 
         public IEnumerable<AppointmentInfoModel> FilterBookList(IEnumerable<AppointmentInfoModel> list, DateOnly? start = null, DateOnly? end = null, bool includeCancelled = false, int? page_size = null, int? page = null)

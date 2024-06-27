@@ -26,6 +26,7 @@ namespace ClinicPlatformServices.Contracts
 
         ClinicSlotInfoModel? UpdateClinicSlot(ClinicSlotInfoModel slotInfo, out string message);
 
+        public List<ClinicSlotInfoModel>? AvailableSlotOnDate(DateTime date, int dentistId, bool forTreatment, out string message);
         bool DeleteClinicSlot(Guid slotId);
 
         // Just dont, It's useless.

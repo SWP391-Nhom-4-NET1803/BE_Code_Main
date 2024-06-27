@@ -218,7 +218,7 @@ namespace ClinicPlatformRepositories
             }
             else if (user.Role == "Customer")
             {
-                userInfo.CustomerId = user.Id;
+                userInfo.CustomerId = user.Customer?.Id;
                 userInfo.Insurance = user.Customer?.Insurance!;
                 userInfo.Sex = user.Customer?.Sex!;
                 userInfo.Birthdate = user.Customer?.Birthdate!;

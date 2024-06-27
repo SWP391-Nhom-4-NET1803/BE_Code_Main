@@ -125,7 +125,7 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
 
-            UserInfoModel? dentist = userService.GetDentistWithDentistId(dentistId);
+            UserInfoModel? dentist = userService.GetUserWithDentistId(dentistId);
 
             if (dentist == null || dentist.IsRemoved)
             {
@@ -202,7 +202,7 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
 
-            UserInfoModel? target = userService.GetDentistWithDentistId(dentistId);
+            UserInfoModel? target = userService.GetUserWithDentistId(dentistId);
 
             if (target == null || target.IsRemoved)
             {
@@ -261,7 +261,7 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
 
-            UserInfoModel? target = userService.GetDentistWithDentistId(dentistId);
+            UserInfoModel? target = userService.GetUserWithDentistId(dentistId);
 
             if (target == null || target.IsRemoved)
             {
@@ -322,7 +322,7 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             UserInfoModel invoker = (UserInfoModel)HttpContext.Items["user"]!;
 
-            UserInfoModel? target = userService.GetDentistWithDentistId(dentistId);
+            UserInfoModel? target = userService.GetUserWithDentistId(dentistId);
 
             if (target == null)
             {
