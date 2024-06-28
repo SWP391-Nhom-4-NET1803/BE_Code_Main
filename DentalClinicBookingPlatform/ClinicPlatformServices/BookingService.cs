@@ -574,8 +574,8 @@ namespace ClinicPlatformServices
         public IEnumerable<AppointmentInfoModel> GetAllClinicBooking(int clinicId, bool includeCancelled = false)
         {
             var clinicBooking = bookingRepository.GetAll().Where(x => x.ClinicId == clinicId);
-            
-            return includeCancelled ? clinicBooking : FilterBookList(clinicBooking);
+
+            return clinicBooking;
         }
 
         public IEnumerable<AppointmentInfoModel> GetAllCustomerBooking(int customerId, bool includeCancelled = false)
