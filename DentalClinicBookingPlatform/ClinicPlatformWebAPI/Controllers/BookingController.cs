@@ -77,7 +77,7 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 StatusCode = 200,
                 Message = "Success",
-                Content = from item in result select ConvertToBookingView(item)
+                Content = result
             });
         }
 
@@ -101,7 +101,7 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 StatusCode = 200,
                 Message = "Success",
-                Content = from item in result select ConvertToBookingView(item)
+                Content = result
             });
         }
 
