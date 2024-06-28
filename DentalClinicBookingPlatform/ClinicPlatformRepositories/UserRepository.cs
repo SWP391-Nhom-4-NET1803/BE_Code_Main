@@ -30,7 +30,7 @@ namespace ClinicPlatformRepositories
 
         public IEnumerable<UserInfoModel> GetAllUser(bool includeRemoved = true, bool includeInactive = true)
         {
-            IEnumerable<User> userList = context.Users.Include(x => x.Customer).Include(x => x.Dentist);
+            IEnumerable<User> userList = context.Users.Include(x => x.Customer).Include(x => x.Dentist).ToList();
 
             if (!includeRemoved)
             {

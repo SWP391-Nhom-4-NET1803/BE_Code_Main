@@ -15,12 +15,20 @@ namespace ClinicPlatformDTOs.BookingModels
         public int DentistId { get; set; }
         public int ClinicId { get; set; }
         public Guid ServiceId { get; set; }
+
+        // ================ This information only used for periodic schedule
         public int MaxRecurring { get; set; } = 0;
+        public string RecurringType { get; set; } = Weekly;
         public Guid? OrginialAppointment { get; set; } = null!;
         public string Status { get; set; } = "booked";
+
+
 
         public const string Checkup = "checkup";
         public const string Treatment = "treatment";
 
+        public const string Weekly = "weekly";
+        public const string Monthly = "monthly";
+        public const string Yearly = "yearly";
     }
 }
