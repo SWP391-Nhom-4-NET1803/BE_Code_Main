@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace ClinicPlatformServices
 {
-    internal class PaymentService : IPaymentService
+    public class PaymentService : IPaymentService
     {
         private bool disposedValue;
 

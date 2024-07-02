@@ -42,12 +42,43 @@ namespace ClinicPlatformRepositories
                 userList = userList.Where(x => x.Active);
             }
 
-            return from user in userList.ToList() select MapToUserInfo(user);
+            return userList.Select(x => MapToUserInfo(x));
         } 
 
         public IEnumerable<UserInfoModel> GetUserWithRole(string role) 
         {
-            return context.Users.Where(x => x.Role == role).Select(x => MapToUserInfo(x)).ToList();
+            return context.Users
+                .Include(x=> x.Customer)
+                .Include(x => x.Dentist)
+                .Where(x => x.Role == role)
+                .Select(x => MapToUserInfo(x)).ToList();
+        }
+
+        public IEnumerable<UserInfoModel> GetUserWithCreationDate(DateOnly date)
+        {
+            return context.Users
+                .Include(x => x.Customer)
+                .Include(x => x.Dentist)
+                .Where(x => DateOnly.FromDateTime(x.CreationTime) == date)
+                .Select(x => MapToUserInfo(x));
+        }
+
+        public IEnumerable<UserInfoModel> GetRemovedUsers()
+        {
+            return context.Users
+                .Include(x => x.Customer)
+                .Include(x => x.Dentist)
+                .Where(x => x.Removed)
+                .Select(x => MapToUserInfo(x));
+        }
+
+        public IEnumerable<UserInfoModel> GetUnactivatedUser() 
+        {
+            return context.Users
+                .Include(x => x.Customer)
+                .Include(x => x.Dentist)
+                .Where(x => !x.Active)
+                .Select(x => MapToUserInfo(x));
         }
 
         public UserInfoModel? GetUser(int userId)

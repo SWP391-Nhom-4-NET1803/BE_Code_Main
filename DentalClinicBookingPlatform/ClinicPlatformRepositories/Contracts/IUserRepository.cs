@@ -13,7 +13,13 @@ namespace ClinicPlatformRepositories.Contracts
     {
         IEnumerable<UserInfoModel> GetAllUser(bool includeRemoved = true, bool includeInactive = true);
 
-        public IEnumerable<UserInfoModel> GetUserWithRole(string role);
+        IEnumerable<UserInfoModel> GetUserWithRole(string role);
+
+        IEnumerable<UserInfoModel> GetUserWithCreationDate(DateOnly date);
+
+        IEnumerable<UserInfoModel> GetRemovedUsers();
+
+        IEnumerable<UserInfoModel> GetUnactivatedUser();
 
         UserInfoModel? GetUser(int userId);
 

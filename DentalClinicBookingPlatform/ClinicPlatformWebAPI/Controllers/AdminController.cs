@@ -23,8 +23,9 @@ namespace ClinicPlatformWebAPI.Controllers
         //private IPaymentService paymentService;
         private IScheduleService scheduleService;
         private IClinicServiceService clinicServiceService;
+        private IAdminService adminService;
 
-        public AdminController(IUserService userService, IClinicService clinicService, IBookingService bookingService, IScheduleService scheduleService, IClinicServiceService clinicServiceService)
+        public AdminController(IUserService userService, IClinicService clinicService, IBookingService bookingService, IScheduleService scheduleService, IClinicServiceService clinicServiceService, IAdminService adminService)
         {
             this.userService = userService;
             this.clinicService = clinicService;
@@ -33,6 +34,7 @@ namespace ClinicPlatformWebAPI.Controllers
             //this.paymentService = paymentService;
             this.scheduleService = scheduleService;
             this.clinicServiceService = clinicServiceService;
+            this.adminService = adminService;
         }
 
         [HttpGet("users")]
@@ -174,7 +176,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("summary")]
-        public ActionResult<HttpResponseModel> GetSummaryInfo([FromQuery][Required]DateOnly? from,[FromQuery][Required] DateOnly? to)
+        public ActionResult<HttpResponseModel> GetSummaryInfo([FromQuery]DateOnly? from,[FromQuery] DateOnly? to)
         {
 
             if (from == null || to == null)
@@ -184,7 +186,7 @@ namespace ClinicPlatformWebAPI.Controllers
                     StatusCode = 400,
                     Success = false,
                     Message = "Success",
-                    Content = null,
+                    Content = adminService.GetTodaySummaryReport(),
                 });
             }
 
@@ -197,18 +199,13 @@ namespace ClinicPlatformWebAPI.Controllers
                     Message = $"Can not proccess request be cause {from.Value.ToString("dd/mm/yyyy")} is after {to.Value.ToString("dd/mm/yyyy")}"
                 });
             }
-
-            var AllTimeBook = bookingService.GetAllBooking();
-
-            Dictionary<DateOnly, AdminSumarizedInfo> responseData = new();
             
-
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
                 Success = true, 
                 Message = "Success",
-                Content = responseData,
+                Content = adminService.GetReportInDateRange((DateOnly)from, (DateOnly)to)
             });
         }
 
