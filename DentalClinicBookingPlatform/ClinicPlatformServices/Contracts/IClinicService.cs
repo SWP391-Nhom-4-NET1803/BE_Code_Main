@@ -11,8 +11,8 @@ namespace ClinicPlatformServices.Contracts
         IEnumerable<ClinicInfoModel> GetClinicWithName(string name);
         ClinicInfoModel? GetClinicWithOwnerId(int ownerId);
         ClinicInfoModel? UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message);
-        bool InactivateClinic(int clinicId, out string message);
-        bool ActivateClinic(int clinicId, out string message);
+        ClinicInfoModel? InactivateClinic(int clinicId, out string message);
+        ClinicInfoModel? ActivateClinic(int clinicId, out string message);
         bool IsClinicNameAvailable(string name);
         bool IsClinicCurrentlyWorking(int ClinicId, out string message);
         bool DeleteClinic(int clinicId);
@@ -30,8 +30,8 @@ namespace ClinicPlatformServices.Contracts
         
         ClinicServiceInfoModel? AddClinicService(ClinicServiceInfoModel clinicService, out string message);
         ClinicServiceInfoModel? UpdateClinicService(ClinicServiceInfoModel clinicService, out string message);
-        bool DisableClinicService(Guid clinicServiceId, out string message);
-        bool EnableClinicService(Guid clinicServiceId, out string message);
+        ClinicServiceInfoModel? DisableClinicService(Guid clinicServiceId, out string message);
+        ClinicServiceInfoModel? EnableClinicService(Guid clinicServiceId, out string message);
         bool DeleteClinicServices(Guid clinicServiceId, out string message);
     }
 }

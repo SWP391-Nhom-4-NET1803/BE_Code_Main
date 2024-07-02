@@ -1,11 +1,13 @@
 ﻿using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformDTOs.UserModels;
+using ClinicPlatformObjects.ReportModels;
 using ClinicPlatformObjects.ServiceModels;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using System.ComponentModel.DataAnnotations;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -41,8 +43,8 @@ namespace ClinicPlatformWebAPI.Controllers
             var ResponseBody = new HttpResponseModel()
             {
                 StatusCode = 200,
-                Message = "Get info success",
-                Detail = $"Total records: {user.Count()}",
+                Success = true,
+                Message = "Total records: {user.Count()}",
                 Content = user
             };
 
@@ -54,7 +56,45 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             return Ok(new HttpResponseModel()
             {
+                StatusCode = 200,
+                Message = $"Showing page {page}.",
                 Content = clinicService.GetAllClinic(20, page - 1)
+            });
+        }
+
+        [HttpGet("customer")]
+        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetCustomer([FromQuery] int pageSize = 20, [FromQuery] int page = 1)
+        {
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Success = true,
+                Message = $"Showing page {page}.",
+                Content = userService.GetAllUserOfRole("Customer").Skip(pageSize * (page - 1)).Take(pageSize).ToList()
+            });
+        }
+
+        [HttpGet("clinic-owners")]
+        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetClinicOwners([FromQuery] int pageSize = 20, [FromQuery] int page = 1)
+        {
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Success = true,
+                Message = $"Showing page {page}.",
+                Content = userService.GetAllUserOfRole("Dentist").Where(x => x.IsOwner).Skip(pageSize*(page - 1)).Take(pageSize).ToList()
+            });
+        }
+
+        [HttpGet("dentist")]
+        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetDentists(int clinicId, [FromQuery] int pageSize = 20, [FromQuery] int page = 1)
+        {
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Success = true,
+                Message = $"Showing page {page}.",
+                Content = userService.GetAllUserOfRole("Dentist").Where(x => !x.IsOwner).Skip(pageSize * (page - 1)).Take(pageSize).ToList()
             });
         }
 
@@ -68,25 +108,25 @@ namespace ClinicPlatformWebAPI.Controllers
             if (clinic == null)
             {
                 response.StatusCode = 400;
+                response.Success = false;
                 response.Message = $"Can not find clinic with Id {clinicId}";
                 return BadRequest(response);
             }
             else if (clinic.Status == "verified" || clinic.Status == "removed")
             {
                 response.StatusCode = 400;
+                response.Success = false;
                 response.Message = "Can not verify this clinic!";
                 return BadRequest(response);
             }
             else
             {
                 clinic.Status = "verified";
-
                 clinicService.UpdateClinicInformation(clinic, out _);
 
                 response.StatusCode = 200;
                 response.Message = "Updated clinic status!";
-                response.Detail = "Clinic information verified!";
-
+                response.Success = true;
                 return Ok(response);
             }
         }
@@ -97,6 +137,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = clinicServiceService.GetAllCategory()
             });
@@ -115,8 +156,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel
                 {
                     StatusCode = 200,
-                    Message = "Success",
-                    Detail = message,
+                    Success = true,
+                    Message = message,
                     Content = clinicServiceService.GetAllCategory()
                 });
             }
@@ -125,13 +166,50 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
+                    Success = false,
+                    Message = message,
+                    Content = null,
+                });
+            }
+        }
+
+        [HttpGet("summary")]
+        public ActionResult<HttpResponseModel> GetSummaryInfo([FromQuery][Required]DateOnly? from,[FromQuery][Required] DateOnly? to)
+        {
+
+            if (from == null || to == null)
+            {
+                return Ok(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
                     Message = "Success",
-                    Content = message,
+                    Content = null,
                 });
             }
 
+            if (from > to)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = $"Can not proccess request be cause {from.Value.ToString("dd/mm/yyyy")} is after {to.Value.ToString("dd/mm/yyyy")}"
+                });
+            }
 
+            var AllTimeBook = bookingService.GetAllBooking();
+
+            Dictionary<DateOnly, AdminSumarizedInfo> responseData = new();
             
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Success = true, 
+                Message = "Success",
+                Content = responseData,
+            });
         }
 
     }

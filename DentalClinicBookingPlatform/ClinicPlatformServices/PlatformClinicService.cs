@@ -1,5 +1,6 @@
 ﻿using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformDTOs.Comparator;
+using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformRepositories;
 using ClinicPlatformRepositories.Contracts;
 using ClinicPlatformServices.Contracts;
@@ -68,6 +69,13 @@ namespace ClinicPlatformServices
             if (top > 0)
             {
                 result = result.Take(top).ToList();
+            }
+
+            foreach(var item in result)
+            {
+                UserInfoModel ownerInfo = userRepository.GetUser(item.OwnerId)!;
+
+                item.OwnerName = ownerInfo.Fullname;
             }
 
             return result;
@@ -224,20 +232,20 @@ namespace ClinicPlatformServices
             return false;
         }
 
-        public bool InactivateClinic(int clinicId, out string message)
+        public ClinicInfoModel? InactivateClinic(int clinicId, out string message)
         {
             var clinic = clinicRepository.GetClinic(clinicId);
 
             if (clinic == null)
             {
                 message = "Clinic not found";
-                return false;
+                return null;
             }
 
             if (!clinic.Working)
             {
                 message = "The clinic is already inactive";
-                return false;
+                return null;
             }
 
             clinic.Working = false;
@@ -245,27 +253,27 @@ namespace ClinicPlatformServices
             if (clinicRepository.UpdateClinic(clinic) == null)
             {
                 message = "Error while updating clinic status";
-                return false;
+                return null;
             }
 
             message = "Successfully deactivated clinic";
-            return true;
+            return clinic;
         }
 
-        public bool ActivateClinic(int clinicId, out string message)
+        public ClinicInfoModel? ActivateClinic(int clinicId, out string message)
         {
             var clinic = clinicRepository.GetClinic(clinicId);
 
             if (clinic == null)
             {
                 message = "Clinic not found";
-                return false;
+                return null;
             }
 
             if (clinic.Working)
             {
                 message = "The clinic is already active";
-                return false;
+                return null;
             }
 
             clinic.Working= true;
@@ -273,11 +281,11 @@ namespace ClinicPlatformServices
             if (clinicRepository.UpdateClinic(clinic) == null)
             {
                 message = "Error while updating clinic status";
-                return false;
+                return null;
             }
 
             message = "Successfully activated clinic";
-            return true;
+            return clinic;
         }
 
         public bool IsClinicNameAvailable(string name)
@@ -404,7 +412,7 @@ namespace ClinicPlatformServices
             throw new NotImplementedException();
         }
 
-        public bool DisableClinicService(Guid clinicServiceId, out string message)
+        public ClinicServiceInfoModel? DisableClinicService(Guid clinicServiceId, out string message)
         {
             ClinicServiceInfoModel? clinicService = clinicServiceRepository.GetClinicService(clinicServiceId);
 
@@ -414,22 +422,15 @@ namespace ClinicPlatformServices
 
                 clinicService = clinicServiceRepository.UpdateClinicService(clinicService);
 
-                if (clinicService != null)
-                {
-                    message = $"Enabled clinic service {clinicServiceId}";
-                    return true;
-                }
-
-                message = "Failed to enable clinic service!";
-                return false;
-
+                message = clinicService != null ? $"Disabled clinic service {clinicServiceId}" : "Failed to disable clinic service!";
+                return clinicService;
             }
 
             message = $"Can not find the specific clinic service {clinicServiceId}";
-            return false;
+            return null;
         }
 
-        public bool EnableClinicService(Guid clinicServiceId, out string message)
+        public ClinicServiceInfoModel? EnableClinicService(Guid clinicServiceId, out string message)
         {
             ClinicServiceInfoModel? clinicService = clinicServiceRepository.GetClinicService(clinicServiceId);
 
@@ -439,18 +440,12 @@ namespace ClinicPlatformServices
 
                 clinicService = clinicServiceRepository.UpdateClinicService(clinicService);
 
-                if (clinicService != null)
-                {
-                    message = $"Enabled clinic service {clinicServiceId}";
-                    return true;
-                }
-
-                message = "Failed to enable clinic service!";
-                return false;
+                message = clinicService != null ? $"Enabled clinic service {clinicServiceId}" : "Failed to enable clinic service!";
+                return clinicService;
             }
 
             message = $"Can not find the specific clinic service {clinicServiceId}";
-            return false;
+            return null;
         }
 
         public bool DeleteClinicServices(Guid clinicServiceId, out string message)
@@ -460,7 +455,6 @@ namespace ClinicPlatformServices
             if (clinicService != null)
             {
                 clinicService.Removed = true;
-
                 clinicService = clinicServiceRepository.UpdateClinicService(clinicService);
 
                 if (clinicService != null)
@@ -471,7 +465,6 @@ namespace ClinicPlatformServices
 
                 message = "Failed to delete the clinic service!";
                 return false;
-
             }
 
             message = $"Can not find the specific clinic service {clinicServiceId}";

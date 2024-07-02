@@ -11,16 +11,16 @@ namespace ClinicPlatformWebAPI.Helpers.Models
     {
         public int StatusCode { get; set; }
         public string? Message { get; set; } = string.Empty;
-        public string? Detail { get; set; } = string.Empty;
+        public bool Success { get; set; }
         public object? Content { get; set; } = null;
 
 
         public HttpResponseModel() { }
-        public HttpResponseModel(int StatusCode, string? Message, string? Detail, object? Content)
+        public HttpResponseModel(int StatusCode, string? Message, bool Success, object? Content)
         {
             this.StatusCode = StatusCode;
             this.Message = Message;
-            this.Detail = Detail;
+            this.Success = Success;
             this.Content = Content;
         }
 

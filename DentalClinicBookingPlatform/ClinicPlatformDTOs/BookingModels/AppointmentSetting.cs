@@ -9,10 +9,12 @@ namespace ClinicPlatformDTOs.BookingModels
     public class AppointmentSetting
     {
         public int MaxRecurring { get; set; } = 0;
-        public int RepeatYear { get; set; }
-        public int RepeatMonth { get; set; }
-        public int RepeatWeek { get; set; }
-        public int RepeatDay { get; set; }
-        public int DateOfWeek { get; set; }
+        public int TimeSpan { get; set; } = 0;
+        public string RepeatType { get; set; } = string.Empty;
+
+        public const string Daily = "daily";
+        public const string Weekly = "weekly";
+        public const string Monthly = "monthly";
+        public const string Yearly = "yearly";
     }
 }

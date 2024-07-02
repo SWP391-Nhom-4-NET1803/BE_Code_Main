@@ -35,6 +35,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = clinicServiceService.GetAllClinicService(clinicId)
             });
@@ -51,14 +52,15 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = "Failed",
-                    Detail = $"Can not find clinic service {id}"
+                    Success = false,
+                    Message = $"Can not find clinic service {id}"
                 });
             }
 
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = service
             });
@@ -76,8 +78,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Bad Request",
-                    Detail = message,
+                    Success = false,
+                    Message = message,
                 });
             }
             else
@@ -85,8 +87,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Service added sucessfully",
-                    Detail = $"{message}",
+                    Success = true,
+                    Message = $"{message}",
                     Content = service
                 });
             }
@@ -100,8 +102,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Bad Request",
-                    Detail = message,
+                    Success = false,
+                    Message = message,
                 });
             }
             else
@@ -109,8 +111,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Service added sucessfully",
-                    Detail = message,
+                    Success = true,
+                    Message = message,
                 });
             }
         }
@@ -125,8 +127,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed while updating services",
-                    Detail = message,
+                    Success = false,
+                    Message = message,
                 });
             }
             else
@@ -134,8 +136,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Service added sucessfully",
-                    Detail = $"Updated service information!",
+                    Success = true,
+                    Message = $"Updated service information!",
                     Content = clinicServiceInfo
                 });
             }
@@ -144,40 +146,45 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpPut("{clinicServiceId}/activate")]
         public ActionResult<HttpResponseModel> EnableService(Guid clinicServiceId)
         {
-            if (clinicService.EnableClinicService(clinicServiceId, out var message))
+            var clinicState = clinicService.EnableClinicService(clinicServiceId, out var message);
+
+
+            if (clinicState != null)
             {
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Service activated",
-                    Detail = message
+                    Success = true,
+                    Message = message
                 });
             }
             return BadRequest(new HttpResponseModel()
             {
                 StatusCode = 400,
-                Message = "Failed to activate service",
-                Detail = message
+                Success = false,
+                Message = message
             });
         }
 
         [HttpPut("{clinicServiceId}/deactivate")]
         public ActionResult<HttpResponseModel> DisableService(Guid clinicServiceId)
         {
-            if (clinicService.DisableClinicService(clinicServiceId, out var message))
+            var clinicState = clinicService.DisableClinicService(clinicServiceId, out var message);
+
+            if (clinicState != null)
             {
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Service disabled",
-                    Detail = message
+                    Success= true,
+                    Message = message
                 });
             }
             return BadRequest(new HttpResponseModel()
             {
                 StatusCode = 400,
-                Message = "Failed to deactivate service",
-                Detail = message
+                Success = false,
+                Message = message
             });
 
         }

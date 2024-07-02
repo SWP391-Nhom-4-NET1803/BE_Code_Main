@@ -40,17 +40,18 @@ namespace ClinicPlatformWebAPI.Controllers
 
             if (clinicInfo == null || clinicInfo.Status == "removed")
             {
-                return NotFound(new HttpResponseModel()
+                return NotFound(new HttpResponseModel
                 {
                     StatusCode = 404,
-                    Message = $"Notfound",
-                    Detail = $"Clinic not found for Id {id}",
+                    Success = false,
+                    Message = $"Clinic not found for Id {id}",
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Clinic found",
                 Content = clinicInfo
             });
@@ -85,6 +86,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = result
             });
@@ -106,18 +108,13 @@ namespace ClinicPlatformWebAPI.Controllers
                 
             userInfo = userService.RegisterAccount(userInfo, "Dentist", out var message);
 
-            if (userInfo == null || userInfo.IsOwner == false)
+            if (userInfo == null)
             {
-                string errorReason = "Error while getting user information: ";
-
-                errorReason += (userInfo == null ? message : "");
-                errorReason += (!userInfo?.IsOwner ?? false  ? "User is not a clinic owner" : "");
-
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed to create new clinic",
-                    Detail = $"{errorReason}"
+                    Success = false,
+                    Message = message
                 });
             }
 
@@ -132,8 +129,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed to create new clinic",
-                    Detail = message
+                    Success = false,
+                    Message =  message
                 });
             }
 
@@ -145,16 +142,16 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed to update user info",
-                    Detail = message
+                    Success = false,
+                    Message =  message
                 });
             }
             
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
-                Message = "Success",
-                Detail = "Succesfully created new clinic",
+                Success = true,
+                Message = "Succesfully created new clinic",
                 Content = clinic
             });
         }
@@ -170,8 +167,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Unauthorized(new HttpResponseModel
                 {
                     StatusCode = 403,
-                    Message = "Unauthorized",
-                    Detail = "This is clinic owner available only feature!"
+                    Success = false,
+                    Message = "This is clinic owner available only feature!"
                 });
             }
 
@@ -180,8 +177,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Unauthorized(new HttpResponseModel
                 {
                     StatusCode = 403,
-                    Message = "Unauthorized",
-                    Detail = "You can only change your clinic information!"
+                    Success = false,
+                    Message = "You can only change your clinic information!"
                 });
             }
 
@@ -192,8 +189,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Bad Request",
-                    Detail = "No clinic were found with provided Id",
+                    Success = false,
+                    Message = "No clinic were found with provided Id"
                 });
             }
 
@@ -212,8 +209,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Bad Request",
-                    Detail = message,
+                    Success = false,
+                    Message = message,
                 });
             }
             else
@@ -221,8 +218,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Updated sucessfully",
-                    Detail = $"Information updated for clinic {clinicInfo.Id}",
+                    Success = true,
+                    Message = $"Information updated for clinic {clinicInfo.Id}",
                     Content = clinicInfo
                 });
             }
@@ -238,26 +235,29 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 return Unauthorized(new HttpResponseModel
                 {
+                    StatusCode = 403,
+                    Success=false,
                     Message = "Unauthorized",
-                    Detail = "Unknown"
                 });
             }
 
-            if (!clinicService.ActivateClinic(id, out var message))
+            var clinicInfo = clinicService.ActivateClinic(id, out var message);
+
+            if (clinicInfo == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Clinic activision failed",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
-                Message = "Success",
-                Detail = $"Clinic {id} has been activated."
+                Success = false,
+                Message = $"Clinic {id} has been activated."
             });
         }
 
@@ -265,34 +265,62 @@ namespace ClinicPlatformWebAPI.Controllers
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> InactivateClinic(int id)
         {
+            UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
 
-            if (!clinicService.InactivateClinic(id, out var message))
+            if (!invoker.IsOwner)
             {
-                return BadRequest(new HttpResponseModel()
+                return Unauthorized(new HttpResponseModel
                 {
-                    StatusCode = 400,
-                    Message = "Clinic deactivation failed",
-                    Detail = message
+                    StatusCode = 403,
+                    Success = false,
+                    Message = "Unauthorized",
                 });
             }
 
-            return Ok(new HttpResponseModel()
+            var clinicInfo = clinicService.InactivateClinic(id, out var message);
+
+            if (clinicInfo == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = message,
+                    Content = clinicInfo
+                });
+            }
+
+            return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
-                Message = "Success",
-                Detail = $"Clinic {id} has been deactivated."
+                Success = true,
+                Message = $"Clinic {id} has been deactivated.",
+                Content = clinicInfo
             });
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> RemoveClinic(int id)
         {
-            
+            UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
+
+            if (!invoker.IsOwner)
+            {
+                return Unauthorized(new HttpResponseModel
+                {
+                    StatusCode = 403,
+                    Success = false,
+                    Message = "Unauthorized",
+                });
+            }
+
             if (!clinicService.DeleteClinic(id)) // Please consider using status or flags instead.
             {
-                return BadRequest(new HttpResponseModel()
+                return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
+                    Success = false,
                     Message = "Clinic removal failed",
                 });
             }
@@ -300,8 +328,8 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
-                Message = "Success",
-                Detail = $"Clinic {id} has been removed."
+                Success = true,
+                Message = $"Clinic {id} has been removed."
             });
         }
     }

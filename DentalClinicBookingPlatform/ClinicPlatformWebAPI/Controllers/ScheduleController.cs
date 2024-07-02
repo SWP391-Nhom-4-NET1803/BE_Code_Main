@@ -45,8 +45,8 @@ namespace ClinicPlatformWebAPI.Controllers
             return BadRequest(new HttpResponseModel()
             {
                 StatusCode = 400,
-                Message = "Failed getting clinic info",
-                Detail = $"There are no clinic with Id {id} exist."
+                Success = false,
+                Message = $"There are no clinic with Id {id} exist."
             });
         }
 
@@ -61,7 +61,12 @@ namespace ClinicPlatformWebAPI.Controllers
 
             if (clinic == null)
             {
-                return BadRequest(new HttpResponseModel(400,"Clinic not found.", $"Can not find clinic information for id {slotInfo.ClinicId}", null));
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = $"Can not find clinic information for id {slotInfo.ClinicId}"
+                });
             }
 
             if (!invoker.IsOwner || invoker.ClinicId != clinic.Id)
@@ -69,8 +74,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed adding clinic slot.",
-                    Detail = $"User lacking priviledges."
+                    Success = false,
+                    Message = $"User lacking priviledges."
                 });
             }
 
@@ -85,8 +90,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Success",
-                    Detail = message,
+                    Success = true,
+                    Message = message,
                     Content = slot
                 });
             }
@@ -95,8 +100,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed adding clinic slot.",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
         }
@@ -138,8 +143,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Success",
-                    Detail = message,
+                    Success = true,
+                    Message = message,
                 });
             }
             else
@@ -147,8 +152,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed updating slot info.",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
         }
@@ -163,6 +168,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
+                    Success = false,
                     Message = "There are no slot with the given ID found."
                 });
             }
@@ -175,8 +181,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Success",
-                    Detail = message,
+                    Success = true,
+                    Message = message,
                 });
             }
             else
@@ -184,8 +190,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed updating slot info.",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
         }
@@ -200,6 +206,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
+                    Success = false,
                     Message = "There are no slot with the given ID found."
                 });
             }
@@ -213,8 +220,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Success",
-                    Detail = message,
+                    Success = true,
+                    Message = message,
                 });
             }
             else
@@ -222,8 +229,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed updating slot info.",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
         }
@@ -235,7 +242,8 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 return Ok(new HttpResponseModel()
                 {
-                    StatusCode = 400,
+                    StatusCode = 200,
+                    Success = true,
                     Message = "Success"
                 });
             }
@@ -244,6 +252,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
+                    Success = false,
                     Message = "Slot deletion failed",
                 });
             }

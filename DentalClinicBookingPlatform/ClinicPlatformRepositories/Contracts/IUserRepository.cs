@@ -12,6 +12,9 @@ namespace ClinicPlatformRepositories.Contracts
     public interface IUserRepository: IDisposable
     {
         IEnumerable<UserInfoModel> GetAllUser(bool includeRemoved = true, bool includeInactive = true);
+
+        public IEnumerable<UserInfoModel> GetUserWithRole(string role);
+
         UserInfoModel? GetUser(int userId);
 
         UserInfoModel? GetUserWithUsername(string username);

@@ -34,6 +34,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
+                    Success = true,
                     Message = "Login Successfully",
                     Content = authService.GenerateTokens(user!)
                 });
@@ -43,8 +44,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Login Failed",
-                    Detail = "Invalid user or username"
+                    Success = false,
+                    Message = "Invalid user or username"
                 });
             }
 
@@ -60,7 +61,12 @@ namespace ClinicPlatformWebAPI.Controllers
 
                 if (DateTime.Compare(DateTime.Parse(refreshTokenParts[2]), DateTime.UtcNow) < 0)
                 {
-                    return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Refresh Token is expired" });
+                    return BadRequest(new HttpResponseModel
+                    { 
+                        StatusCode = 400, 
+                        Success = false,
+                        Message = "Refresh Token is expired" 
+                    });
                 }
 
                 var principals = authService.GetPrincipalsFromToken(tokens.AccessToken);
@@ -75,7 +81,10 @@ namespace ClinicPlatformWebAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new HttpResponseModel() { StatusCode = 400, Message = "Error while refreshing the user tokens", Detail = ex.Message });
+                return BadRequest(new HttpResponseModel() { 
+                    StatusCode = 400, 
+                    Success = false,
+                    Message = ex.Message });
             }
 
         }
@@ -104,13 +113,19 @@ namespace ClinicPlatformWebAPI.Controllers
 
                 if (user == null)
                 {
-                    return BadRequest(new HttpResponseModel() { StatusCode = 500, Message = "Internal Server Error", Content = message });
+                    return BadRequest(new HttpResponseModel
+                    { 
+                        StatusCode = 500, 
+                        Success = false,
+                        Message = "Internal Server Error", 
+                        Content = message });
                 };
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Login Successfully",
                 Content = authService.GenerateTokens(user!)
             });

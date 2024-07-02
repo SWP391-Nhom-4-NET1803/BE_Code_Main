@@ -32,14 +32,15 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Update failed",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Update sucessfully",
             });
 
@@ -56,14 +57,15 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Invalid Request",
-                    Detail = "This email is not used to register an account"
+                    Success = false,
+                    Message = "This email is not used to register an account"
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Request Approved",
             });
         }

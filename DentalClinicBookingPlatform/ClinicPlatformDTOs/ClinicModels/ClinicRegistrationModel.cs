@@ -15,6 +15,5 @@ namespace ClinicPlatformDTOs.ClinicModels
         public string Email { get; set; } = null!;
         public TimeOnly? OpenHour { get; set; }
         public TimeOnly? CloseHour { get; set; }
-        public List<int>? ClinicServices { get; set; }
     }
 }
