@@ -202,5 +202,10 @@ namespace ClinicPlatformRepositories
                 Price = bookedServiceInfo.Price,
             };
         }
+
+        public IEnumerable<AppointmentInfoModel> GetUserBooking(int userId)
+        {
+            return from item in context.Appointments.Where(x => x.DentistId == userId || x.CustomerId == userId ).ToList() select MapBookingToBookingModel(item);
+        }
     }
 }

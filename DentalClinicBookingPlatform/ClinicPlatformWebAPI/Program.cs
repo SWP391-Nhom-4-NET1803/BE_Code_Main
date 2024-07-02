@@ -98,8 +98,8 @@ builder.Services.AddAuthentication(options =>
             var result = new ObjectResult(new HttpResponseModel()
             {
                 StatusCode = 401,
-                Message = "Unauthorized",
-                Detail = "You are not logged in or this resource is not accessible."
+                Success = false,
+                Message = "You are not logged in or this resource is not accessible."
             })
             { StatusCode = 401 };
 

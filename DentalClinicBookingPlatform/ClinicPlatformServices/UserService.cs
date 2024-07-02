@@ -61,15 +61,12 @@ namespace ClinicPlatformServices
 
         public IEnumerable<UserInfoModel> GetAllUserOfRole(string role)
         {
-            return from user in userRepository.GetAllUser() where user.Role == role select user;
+            return userRepository.GetUserWithRole(role);
         }
 
         public UserInfoModel? GetWithUsernameAndPassword(string username, string password)
         {
             var user = userRepository.GetUserWithUsername(username);
-
-
-              
 
             if (user == null)
             {

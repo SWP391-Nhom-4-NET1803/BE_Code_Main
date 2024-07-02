@@ -89,9 +89,6 @@ namespace ClinicPlatformRepositories
                 context.Update(clinicId);
                 context.SaveChanges();
             }
-            
-
-            
         }
 
         protected virtual void Dispose(bool disposing)
@@ -145,7 +142,7 @@ namespace ClinicPlatformRepositories
                 CloseHour = (TimeOnly)clinic.CloseHour!,
                 OwnerId = clinic.OwnerId,
                 Status = clinic.Status,
-                Working = clinic.Working
+                Working = clinic.Working,
             };
         }
     }

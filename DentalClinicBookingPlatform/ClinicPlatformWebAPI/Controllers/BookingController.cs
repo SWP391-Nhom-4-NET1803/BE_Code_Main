@@ -40,8 +40,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed",
-                    Detail = $"Unknown clinic with Id {id}"
+                    Success = false,
+                    Message =  $"Unknown clinic with Id {id}"
                 });
             }
 
@@ -51,6 +51,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = false,
                 Message = "Success",
                 Content = result
             });
@@ -64,8 +65,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed",
-                    Detail = $"Unknown clinic staff with staff Id {id}"
+                    Success = false,
+                    Message = $"Unknown clinic staff with staff Id {id}"
                 });
             }
 
@@ -76,6 +77,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = result
             });
@@ -89,22 +91,29 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed",
-                    Detail = $"Unknown customer with customer Id {id}"
+                    Success = false,
+                    Message =  $"Unknown customer with customer Id {id}"
                 });
             }
 
             var result = bookingService.GetAllCustomerBooking(id);
-            result = bookingService.FilterBookList(result, from_date, to_date, requestOldItems, page_size, page_index);
+            result = bookingService.FilterBookList(result, from_date, to_date, requestOldItems, page_size, page_index).ToList();
+
+            List<AppointmentViewModel> resultset = result.Select(x => ConvertToBookingView(x)).ToList();
+
+            /*foreach(var item in result)
+            {
+                resultset.Add(ConvertToBookingView(item));
+            }*/
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
-                Content = result
+                Content = resultset
             });
         }
-
 
         [HttpPost("staff/create-schedule")]
         public ActionResult<HttpResponseModel> CreateNewSchedule([FromBody] AppointmentRegistrationModel bookInfo, [FromQuery] AppointmentSetting setting)
@@ -115,7 +124,15 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 DateOnly originalDate = appointment.AppointmentDate;
 
-                var TotalDate = setting.RepeatYear * 365 + setting.RepeatMonth * 30 + setting.RepeatWeek * 7 + setting.RepeatDay;
+                var TotalDate = SeparatedDayCount(setting);
+
+                for (int i = 1; i < setting.MaxRecurring; i++)
+                {
+                    if (bookingService.DentistIsAvailableOn(originalDate.AddDays(i * TotalDate), appointment.ClinicSlotId, bookInfo.DentistId, out var mess))
+                    {
+                        message += $" Addng Slot No.{i+2}: {mess}. ";
+                    }
+                }
 
                 for (int i = 0; i < setting.MaxRecurring; i++)
                 {
@@ -129,8 +146,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel()
                 {
                     StatusCode = 200,
-                    Message = "Success",
-                    Detail = "Created schedule!"
+                    Success = true,
+                    Message =  "Created schedule!"
                 });
             }
             else
@@ -138,8 +155,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
         }
@@ -155,8 +172,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Created(nameof(CreateNewCustomerAppointment), new HttpResponseModel()
                 {
                     StatusCode = 201,
-                    Message = "Success",
-                    Detail = $"Created a booking for customer {appointment.CustomerId}!",
+                    Success = true,
+                    Message = $"Created a booking for customer {appointment.CustomerId}!",
                     Content = appointment
                 });
             }
@@ -165,8 +182,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
         }
@@ -179,14 +196,15 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = "Not found",
-                    Detail = $"No clinic with Id {clinicId} was found.",
+                    Success = false,
+                    Message = $"No clinic with Id {clinicId} was found.",
                 });
             }
 
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = clinicServiceServivce.GetAllClinicService(clinicId).Where(x => x.Available && !x.Removed)
             });
@@ -200,16 +218,17 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = "Not found",
-                    Detail = $"No clinic with Id {clinicId} was found.",
+                    Success = false,
+                    Message = $"No clinic with Id {clinicId} was found.",
                 });
             }
 
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
-                Content = from dentist in userService.GetAllUserWithClinicId(clinicId).Where(x => x.IsActive && !x.IsRemoved) select UserInfoMapper.ToDentistView(dentist)
+                Content = userService.GetAllUserWithClinicId(clinicId)!.Where(x => x.IsActive && !x.IsRemoved).Select(x => UserInfoMapper.ToDentistView(x))
             });
         }
 
@@ -221,8 +240,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = "Not found",
-                    Detail = $"No clinic with Id {clinicId} was found.",
+                    Success = false,
+                    Message = $"No clinic with Id {clinicId} was found.",
                 });
             }
 
@@ -248,15 +267,14 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
-                Message = "Success",
-                Detail = $"Found {availableSlot.Count()} available slot.",
+                Success = true,
+                Message = $"Found {availableSlot.Count()} available slot.",
                 Content = clinicSlotByWeekday
             });
         }
 
         private AppointmentViewModel ConvertToBookingView(AppointmentInfoModel bookModel)
         {
-
             var clinicInfo = clinicService.GetClinicWithId(bookModel.ClinicId!)!;
             var customerInfo = userService.GetUserWithCustomerId(bookModel.CustomerId!)!;
             var dentistInfo = userService.GetUserWithDentistId(bookModel.DentistId!)!;
@@ -265,11 +283,7 @@ namespace ClinicPlatformWebAPI.Controllers
             BookedServiceInfoModel? service = bookingService.GetBookedService(bookModel.Id);
             ClinicServiceInfoModel? serviceInfo = null;
 
-            if (service == null)
-            {
-
-            }
-            else
+            if (service != null)
             {
                 serviceInfo = clinicServiceServivce.GetClinicService(service.ClinicServiceId);
             }
@@ -286,8 +300,33 @@ namespace ClinicPlatformWebAPI.Controllers
                 AppointmentDate = (DateOnly)bookModel.AppointmentDate!,
                 AppointmentTime = (TimeOnly)clinicSlotInfo.StartTime!,
                 ExpectedEndTime = (TimeOnly)clinicSlotInfo.EndTime!,
-                SelectedServiceName = serviceInfo?.Name ?? "No service"
+                SelectedServiceName = serviceInfo?.Name ?? "No service",
+                FinalFee = bookModel.AppointmentFee,
+                
             };
+        }
+
+        private int SeparatedDayCount(AppointmentSetting setting)
+        {
+            int day = setting.TimeSpan;
+
+            if (setting.RepeatType == AppointmentSetting.Weekly)
+            {
+                return day * 7;
+            }
+
+            if (setting.RepeatType == AppointmentSetting.Monthly)
+            {
+                return day * 30; 
+            }
+
+            if (setting.RepeatType == AppointmentSetting.Yearly)
+            {
+                return day * 365;
+            }
+
+
+            throw new Exception("Unsupported type of setting!");
         }
     }
 }

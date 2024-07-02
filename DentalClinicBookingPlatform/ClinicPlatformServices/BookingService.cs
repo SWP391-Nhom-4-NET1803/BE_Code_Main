@@ -332,7 +332,7 @@ namespace ClinicPlatformServices
 
             if (dentist == null) 
             {
-                message = $"Can not find information for dentist {dentistId}";
+                message = $"Can not find information for user {dentistId}";
                 return null;
             }
 
@@ -435,6 +435,12 @@ namespace ClinicPlatformServices
             return bookInfo;
         }
 
+
+        IEnumerable<AppointmentInfoModel> GetAllUserAppointment(int id)
+        {
+            return bookingRepository.GetUserBooking(id);
+        }
+
         // Create
         public AppointmentInfoModel? CreateNewBooking(AppointmentRegistrationModel bookRegistrationInfo, out string message)
         {
@@ -471,7 +477,7 @@ namespace ClinicPlatformServices
 
             if (dentist == null)
             {
-                message = "Can not find the dentist information";
+                message = "Can not find the user information";
                 return null;
             }
 
@@ -497,12 +503,27 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            int count = GetAllBookingOnDay(bookRegistrationInfo.AppointmentDate).Where(x => x.ClinicId == bookRegistrationInfo.ClinicId && x.DentistId  == dentist.DentistId && x.Type == bookRegistrationInfo.AppointmentType).Count();
+            int dentistCount = GetAllBookingOnDay(bookRegistrationInfo.AppointmentDate).Where(x => x.ClinicSlotId == slotInfo.ClinicSlotId && x.ClinicId == bookRegistrationInfo.ClinicId && x.DentistId  == dentist.DentistId && x.Type == bookRegistrationInfo.AppointmentType).Count();
 
-            if (bookRegistrationInfo.AppointmentType == "treatement" && count >= slotInfo.MaxTreatment || bookRegistrationInfo.AppointmentType == "checkup" && count >= slotInfo.MaxCheckup )
+            if (bookRegistrationInfo.AppointmentType == "treatement" && dentistCount >= slotInfo.MaxTreatment || bookRegistrationInfo.AppointmentType == "checkup" && dentistCount >= slotInfo.MaxCheckup )
             {
                 message = "This slot is fully booked and unavailable for this date";
                 return null;
+            }
+
+            IEnumerable<AppointmentInfoModel> customerAppointment = GetAllBookingOnDay(bookRegistrationInfo.AppointmentDate).Where(x => x.CustomerId == customer.Id && x.Type == bookRegistrationInfo.AppointmentType);
+
+            foreach(var appointment in customerAppointment) 
+            {
+                var appointmentSlot = scheduleRepository.GetClinicSlot(appointment.ClinicSlotId);
+
+                var chosenSlot = scheduleRepository.GetClinicSlot(appointment.ClinicSlotId);
+
+                if (appointmentSlot.StartTime == chosenSlot.StartTime)
+                {
+                    message = $"The customer has another appointment on this time frame. {appointmentSlot.StartTime} ";
+                    return null;
+                }
             }
 
             ClinicServiceInfoModel? service = clinicServiceRepository.GetClinicService((Guid)bookRegistrationInfo.ServiceId!);
@@ -657,7 +678,7 @@ namespace ClinicPlatformServices
 
             if (dentist == null)
             {
-                message = $"Can not find dentist with Id {dentistId}";
+                message = $"Can not find user with Id {dentistId}";
                 return false;
             }
 
@@ -687,7 +708,7 @@ namespace ClinicPlatformServices
 
             if (dentist == null)
             {
-                message = $"Unavailable dentist with Id {dentistId}";
+                message = $"Unavailable user with Id {dentistId}";
                 return false;
             }
 
@@ -717,7 +738,7 @@ namespace ClinicPlatformServices
 
             if (dentist == null)
             {
-                message = $"Unavailable dentist with Id {dentistId}";
+                message = $"Unavailable user with Id {dentistId}";
                 return false;
             }
 

@@ -38,6 +38,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
+                    Success = false,
                     Message = "User not found",
                 });
 
@@ -46,6 +47,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = false,
                 Message = "Success",
                 Content = UserInfoMapper.ToCustomerView(customer)
             });
@@ -62,16 +64,16 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed",
-                    Detail = message,
+                    Success = false,
+                    Message = message,
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
-                StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
+                StatusCode = 201,
+                Success = true,
+                Message = "User created successfully!",
             });
         }
 
@@ -86,8 +88,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = $"User Id and update info Id mismatch! UserId: {customer.Id}, TargetUserId: {updatedInfo.Id}."
+                    Success = false,
+                    Message = $"User Id and update info Id mismatch! UserId: {customer.Id}, TargetUserId: {updatedInfo.Id}."
                 });
             }
 
@@ -105,8 +107,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
             else
@@ -114,8 +116,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel
                 {
                     StatusCode = 200,
-                    Message = $"Updated successfully.",
-                    Detail = $"Update information for customer UserId {customer.Id}",
+                    Success = true,
+                    Message = $"Update information for customer UserId {customer.Id}",
                     Content = customer
                 });
             }
@@ -131,16 +133,16 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Activition failed",
-                    Detail = message,
+                    Success = false,
+                    Message = message,
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
-                Message = "Activation success",
-                Detail = $"Activated user account for user {userId}",
+                Success = true,
+                Message = $"Activated user account for user {userId}",
             });
         }
 
@@ -155,14 +157,15 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Deactivation failed",
-                    Detail = message,
+                    Success = true,
+                    Message = message,
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Deactivation success",
             });
         }
@@ -178,15 +181,15 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Delete user failed",
-                    Detail = message,
+                    Success = true,
+                    Message = message,
                 });
             }
-
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Delete user info success",
             });
         }

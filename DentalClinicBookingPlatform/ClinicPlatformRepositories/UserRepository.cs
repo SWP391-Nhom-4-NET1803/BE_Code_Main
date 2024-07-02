@@ -45,6 +45,11 @@ namespace ClinicPlatformRepositories
             return from user in userList.ToList() select MapToUserInfo(user);
         } 
 
+        public IEnumerable<UserInfoModel> GetUserWithRole(string role) 
+        {
+            return context.Users.Where(x => x.Role == role).Select(x => MapToUserInfo(x)).ToList();
+        }
+
         public UserInfoModel? GetUser(int userId)
         {
             User? user = context.Users.Include(x => x.Dentist).Include(x => x.Customer).Where(x => x.Id == userId).FirstOrDefault();
@@ -149,7 +154,7 @@ namespace ClinicPlatformRepositories
             GC.SuppressFinalize(this);
         }
 
-        User MapToUser(UserInfoModel userInfo)
+        static User MapToUser(UserInfoModel userInfo)
         {
             User user = new User()
             {
@@ -193,7 +198,7 @@ namespace ClinicPlatformRepositories
             return user;
         }
 
-        UserInfoModel MapToUserInfo(User user)
+        static UserInfoModel MapToUserInfo(User user)
         {
             UserInfoModel userInfo = new UserInfoModel()
             {

@@ -12,6 +12,7 @@ namespace ClinicPlatformRepositories.Contracts
     {
         AppointmentInfoModel CreateNewBooking(AppointmentInfoModel booking);
         AppointmentInfoModel? GetBooking(Guid id);
+        IEnumerable<AppointmentInfoModel> GetUserBooking(int userId);
         IEnumerable<AppointmentInfoModel> GetAll();
         AppointmentInfoModel? UpdateBookingInfo(AppointmentInfoModel booking);
         bool DeleteBookingInfo(Guid bookId);

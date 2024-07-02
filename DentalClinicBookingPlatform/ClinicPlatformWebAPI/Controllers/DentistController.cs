@@ -41,6 +41,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = UserInfoMapper.ToDentistView(invoker)
             });
@@ -57,8 +58,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = $"User Id and update info Id mismatch! UserId: {invoker.Id}, TargetUserId: {updatedInfo.Id}."
+                    Success = false,
+                    Message = $"User Id and update info Id mismatch! UserId: {invoker.Id}, TargetUserId: {updatedInfo.Id}."
                 });
             }
 
@@ -74,8 +75,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
             else
@@ -83,8 +84,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel
                 {
                     StatusCode = 200,
-                    Message = $"Updated successfully.",
-                    Detail = $"Update information for invoker UserId {invoker.Id}",
+                    Success = true,
+                    Message = $"Update information for invoker UserId {invoker.Id}",
                     Content = invoker
                 });
             }
@@ -104,8 +105,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Unauthorized(new HttpResponseModel()
                 {
                     StatusCode = 403,
-                    Message = "Unauthorized",
-                    Detail = "You don't have permission to access the resource"
+                    Success = false,
+                    Message = "You don't have permission to access the resource"
                 });
             }
 
@@ -114,6 +115,7 @@ namespace ClinicPlatformWebAPI.Controllers
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = dentistList
             });
@@ -132,8 +134,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "User not found",
-                    Detail = $"User does not exist for dentistId {dentistId}!"
+                    Success = false,
+                    Message = $"User does not exist for dentistId {dentistId}!"
                 });
             }
 
@@ -142,14 +144,15 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 404,
-                    Message = "User not found",
-                    Detail = $"User does not exist for dentistId {dentistId}!"
+                    Success = false,
+                    Message = $"User does not exist for dentistId {dentistId}!"
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
+                Success = true,
                 Message = "Success",
                 Content = UserInfoMapper.ToDentistView(dentist)
             });
@@ -166,8 +169,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Unauthorized(new HttpResponseModel()
                 {
                     StatusCode = 403,
-                    Message = "Unauthorized",
-                    Detail = "You do not have permission to invoke this method.",
+                    Success = false,
+                    Message = "You do not have permission to invoke this method.",
                 });
             }
 
@@ -183,16 +186,16 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel()
                 {
                     StatusCode = 400,
-                    Message = "Failed",
-                    Detail = message,
+                    Success = false,
+                    Message = message,
                 });
             }
 
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
-                Message = "OK",
-                Detail = "User created successfully!",
+                Success = true,
+                Message = "User created successfully!",
             });
         }
 
@@ -209,8 +212,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = $"Can not find invoker with provided Id."
+                    Success = false,
+                    Message = $"Can not find invoker with provided Id."
                 });
             }
 
@@ -219,8 +222,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Unauthorized(new HttpResponseModel
                 {
                     StatusCode = 403,
-                    Message = $"Forbidden",
-                    Detail = $"You can not update the target resource!."
+                    Success = false,
+                    Message = $"You can not update the target resource!."
                 });
             }
             if (!target.IsActive)
@@ -228,8 +231,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = "Dentist account is already actived!"
+                    Success = false,
+                    Message = "Dentist account is already actived!"
                 });
             }
 
@@ -241,16 +244,16 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = message
+                    Success = false,
+                    Message = message
                 });
             }
 
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
-                Message = $"Updated successfully",
-                Detail = "Deactivated dentist account"
+                Success = true,
+                Message = "Deactivated dentist account"
             });
             
         }
@@ -268,8 +271,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = $"Can not find invoker with provided Id."
+                    Success = false,
+                    Message = $"Can not find invoker with provided Id."
                 });
             }
 
@@ -280,8 +283,8 @@ namespace ClinicPlatformWebAPI.Controllers
                     return BadRequest(new HttpResponseModel
                     {
                         StatusCode = 400,
-                        Message = $"Update failed",
-                        Detail = "Dentist account is already actived!"
+                        Success = false,
+                        Message = "Dentist account is already actived!"
                     });
                 }
 
@@ -293,16 +296,16 @@ namespace ClinicPlatformWebAPI.Controllers
                     return BadRequest(new HttpResponseModel
                     {
                         StatusCode = 400,
-                        Message = $"Update failed",
-                        Detail = message
+                        Success = false,
+                        Message = message
                     });
                 }
 
                 return Ok(new HttpResponseModel
                 {
                     StatusCode = 200,
-                    Message = $"Updated successfully",
-                    Detail = "Activated dentist account"
+                    Success = true,
+                    Message = "Activated dentist account"
                 });
             }
             else
@@ -310,8 +313,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Unauthorized(new HttpResponseModel
                 {
                     StatusCode = 403,
-                    Message = $"Forbidden",
-                    Detail = $"You can not update the target resource!."
+                    Success = false,
+                    Message = $"You can not update the target resource!."
                 });
             }
         }
@@ -329,8 +332,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return BadRequest(new HttpResponseModel
                 {
                     StatusCode = 400,
-                    Message = $"Update failed",
-                    Detail = $"Can not find invoker with provided Id."
+                    Success = false,
+                    Message = $"Can not find invoker with provided Id."
                 });
             }
 
@@ -339,8 +342,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Unauthorized(new HttpResponseModel
                 {
                     StatusCode = 403,
-                    Message = $"Unauthorized",
-                    Detail = $"You do not have access to this resource."
+                    Success = false,
+                    Message = $"You do not have access to this resource."
                 });
 
             }
@@ -350,17 +353,17 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(new HttpResponseModel
                 {
                     StatusCode = 200,
-                    Message = $"Update success",
-                    Detail = message
+                    Success = true,
+                    Message = message
                 });
             }
             else
             {
-                return Ok(new HttpResponseModel
+                return BadRequest(new HttpResponseModel
                 {
-                    StatusCode = 200,
-                    Message = $"Update success",
-                    Detail = message,
+                    StatusCode = 400,
+                    Success = false,
+                    Message = message,
                 });
             }
         }
