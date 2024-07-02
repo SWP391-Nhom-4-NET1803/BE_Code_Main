@@ -25,15 +25,25 @@ namespace ClinicPlatformRepositories
             return MapBookingToBookingModel(appointment);
         }
 
+        public IEnumerable<AppointmentInfoModel> GetUserBooking(int userId)
+        {
+            return from item in context.Appointments.Where(x => x.DentistId == userId || x.CustomerId == userId).ToList() select MapBookingToBookingModel(item);
+        }
+
         public AppointmentInfoModel? GetBooking(Guid id)
         {
             var result = context.Appointments.Find(id);
             return result == null ? null : MapBookingToBookingModel(result);
         }
 
+        public IEnumerable<AppointmentInfoModel> GetAllBookingInDate(DateOnly date)
+        {
+            return context.Appointments.Where(x => x.Date == date).Select(x => MapBookingToBookingModel(x)).ToList();
+        }
+
         public IEnumerable<AppointmentInfoModel> GetAll()
         {
-            return from item in context.Appointments select MapBookingToBookingModel(item);
+            return context.Appointments.Select(x => MapBookingToBookingModel(x)).ToList();
         }
 
         public BookedServiceInfoModel? AddBookingService(BookedServiceInfoModel bookedService)
@@ -201,11 +211,6 @@ namespace ClinicPlatformRepositories
                 ServiceId = bookedServiceInfo.ClinicServiceId,
                 Price = bookedServiceInfo.Price,
             };
-        }
-
-        public IEnumerable<AppointmentInfoModel> GetUserBooking(int userId)
-        {
-            return from item in context.Appointments.Where(x => x.DentistId == userId || x.CustomerId == userId ).ToList() select MapBookingToBookingModel(item);
         }
     }
 }

@@ -9,6 +9,7 @@ namespace ClinicPlatformServices.Contracts
 {
     public interface IAdminService: IDisposable
     {
+        AdminSumarizedInfo GetSummaryReportOnDate(DateOnly date);
         AdminSumarizedInfo GetTodaySummaryReport();
         IEnumerable<AdminSumarizedInfo> GetReportInDateRange(DateOnly start, DateOnly end);
     }

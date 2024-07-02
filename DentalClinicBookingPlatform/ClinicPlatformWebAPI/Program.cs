@@ -124,6 +124,8 @@ builder.Services.AddScoped<IScheduleService, ScheduleService>();
 builder.Services.AddScoped<IClinicServiceService, ClinicServiceService>();
 builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IAuthService,  AuthService>();
+builder.Services.AddScoped<IPaymentService, PaymentService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 builder.Services.AddTransient<AuthorizationMiddleware>();
 
