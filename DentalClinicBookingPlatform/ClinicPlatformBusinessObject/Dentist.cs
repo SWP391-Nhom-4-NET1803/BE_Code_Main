@@ -9,7 +9,7 @@ public partial class Dentist
 
     public bool IsOwner { get; set; }
 
-    public int? UserId { get; set; }
+    public int UserId { get; set; }
 
     public int? ClinicId { get; set; }
 

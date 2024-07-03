@@ -34,6 +34,4 @@ public partial class User
     public virtual Dentist? Dentist { get; set; }
 
     public virtual ICollection<Token> Tokens { get; set; } = new List<Token>();
-
-    public virtual UserPanfoymentInfo? UserPanfoymentInfo { get; set; }
 }

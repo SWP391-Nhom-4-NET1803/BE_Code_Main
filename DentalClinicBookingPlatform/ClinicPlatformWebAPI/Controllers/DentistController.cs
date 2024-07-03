@@ -272,7 +272,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     StatusCode = 400,
                     Success = false,
-                    Message = $"Can not find invoker with provided Id."
+                    Message = $"Can not find dentist with provided Id."
                 });
             }
 

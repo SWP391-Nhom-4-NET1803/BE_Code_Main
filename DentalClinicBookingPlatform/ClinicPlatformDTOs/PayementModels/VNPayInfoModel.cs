@@ -8,8 +8,9 @@ namespace ClinicPlatformDTOs.PayementModels
 {
     public class VNPayInfoModel
     {
-        public string amount { get; set; } = string.Empty;
-        public string info { get; set; } = string.Empty;
-        public string order_info { get; set; } = string.Empty;
+        public string amount { get; set; } = null!; // Can be removed.
+        public string orderInfo { get; set; } = null!;
+        public string returnUrl { get; set; } = null!;
+        public Guid appointmentId { get; set; }
     }
 }

@@ -305,7 +305,7 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             UserInfoModel invoker = (HttpContext.Items["user"] as UserInfoModel)!;
 
-            if (!invoker.IsOwner)
+            if (!invoker.IsOwner || invoker.ClinicId != id)
             {
                 return Unauthorized(new HttpResponseModel
                 {

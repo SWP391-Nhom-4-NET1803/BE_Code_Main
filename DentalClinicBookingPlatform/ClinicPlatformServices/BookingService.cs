@@ -444,7 +444,6 @@ namespace ClinicPlatformServices
         // Create
         public AppointmentInfoModel? CreateNewBooking(AppointmentRegistrationModel bookRegistrationInfo, out string message)
         {
-
             var book = new AppointmentInfoModel()
             {
                 Type = bookRegistrationInfo.AppointmentType,
@@ -556,6 +555,12 @@ namespace ClinicPlatformServices
 
                 bookedService = bookingRepository.AddBookingService(bookedService);
 
+                if (bookedService == null)
+                {
+                    message = "Can not find service information";
+                    return null;
+                }
+
                 book.SelectedService = bookedService.ClinicServiceId;
 
                 message = $"Created new bookRegistrationInfo for customer {bookRegistrationInfo.CustomerId}";
@@ -608,14 +613,21 @@ namespace ClinicPlatformServices
 
         public IEnumerable<AppointmentInfoModel> GetAllDentistBooking(int dentistId, bool onlyFuture = false)
         {
-            var result = bookingRepository.GetAll().Where(x => x.CustomerId == dentistId);
+            var result = bookingRepository.GetAll().Where(x => x.DentistId == dentistId);
 
             return onlyFuture ? FilterBookList(result, includeCancelled: true) : result;
         }
 
         public AppointmentInfoModel? GetBooking(Guid id)
         {
-            return bookingRepository.GetBooking(id);
+            var item =  bookingRepository.GetBooking(id);
+
+            if (item != null)
+            {
+                item.SelectedService = bookingRepository.GetBookingService(id)!.ClinicServiceId;
+            }
+            
+            return item;
         }
 
         public AppointmentInfoModel? updateBookingSlot(Guid appointmentId, Guid newSlot, out string message)
@@ -790,6 +802,34 @@ namespace ClinicPlatformServices
         public BookedServiceInfoModel? GetBookedService(Guid bookId)
         {
             return bookingRepository.GetBookingService(bookId);
+        }
+
+        public AppointmentInfoModel? SetAppoinmentStatus(Guid bookId, string status, out string message)
+        {
+            var target = bookingRepository.GetBooking(bookId);
+
+            if (target != null)
+            {
+                if (target.Status == "canceled" || target.Status == "finished")
+                {
+                    message = "Can not change the state of a finished or canceled appointment";
+                    return null;
+                }
+                target.Status = status;
+                target = bookingRepository.UpdateBookingInfo(target);
+                message = $"Mark appointment as {status}";
+
+                if (target == null)
+                {
+                    message = "Failed while updating appointment information";
+                }
+            }
+            else
+            {
+                message = "Can not find the appointment information";
+            }
+
+            return target;
         }
     }
 }

@@ -26,12 +26,11 @@ exec sp_addextendedproperty @name = N'MS_Description', @value = N'0: Sunday
 6: Saturday', @level0type = N'Schema', @level0name = N'dbo', @level1type = N'Table', @level1name = N'ClinicSlot', @level2type = N'Column', @level2name = N'weekday';
 create table Customer (id int identity(1, 1) not null, insurance nvarchar(20) null, birthdate date null, sex nvarchar(16) null, user_id int not null unique, primary key (id));
 create table Dentist (id int identity(1, 1) not null, is_owner bit default 0 not null, user_id int not null unique, clinic_id int null, primary key (id));
-create table Payment (id int identity not null, transaction_id nvarchar(255) not null, title nvarchar(255) null, amount decimal(19, 0) not null, creation_time datetime default (GETDATE()) not null, provider nvarchar(20) not null, appointment_id uniqueidentifier not null, sender int not null, recieve int not null, other nvarchar(255) null, primary key (id));
+create table Payment (id int identity(1, 1) not null, transaction_id nvarchar(255) not null, info nvarchar(255) not null, amount decimal(19, 0) not null, creation_time datetime default (GETDATE()) not null, expiration_time datetime not null, provider nvarchar(20) not null, appointment_id uniqueidentifier not null, status nvarchar(20) not null check( status IN ('canceled', 'completed', 'pending')), primary key (id));
 create table ServiceCategory (id int identity(1, 1) not null, name nvarchar(32) not null, primary key (id));
 create table Slot (id int identity(1, 1) not null, [start] time(7) not null, [end] time(7) not null, primary key (id));
-create table Token (ID uniqueidentifier not null, token_value nvarchar(255) not null, reason nvarchar(80) not null check(reason IN ('password_reset', '')), creation_time datetime default (GETDATE()) not null, used bit default 0 not null, expiration datetime default (GETDATE()) not null, [user] int not null, primary key (ID));
+create table Token (ID uniqueidentifier not null, token_value nvarchar(255) not null, reason nvarchar(80) not null check(reason IN ('pasword_reset', 'account_create')), creation_time datetime default (GETDATE()) not null, used bit default 0 not null, expiration datetime default (GETDATE()) not null, [user] int not null, primary key (ID));
 create table [User] (id int identity(1, 1) not null, username nvarchar(20) not null unique, password_hash nvarchar(128) not null, salt nvarchar(128) not null, email nvarchar(64) not null, fullname nvarchar(255) null, phone nvarchar(10) null, creation_time datetime default (GETDATE()) not null, role nvarchar(20) not null check(role IN ('Customer', 'Dentist', 'Admin')), active bit default 1 not null, removed bit not null, primary key (id));
-create table UserPaymentInfo (user_id int not null, payment_number nvarchar(255) null, primary key (user_id));
 alter table Customer add constraint FKCustomer336289 foreign key (user_id) references [User] (id);
 alter table Clinic add constraint FKClinic40491 foreign key (owner_id) references [User] (id);
 alter table ClinicService add constraint FKClinicServ128006 foreign key (clinic_id) references Clinic (clinic_id);
@@ -49,8 +48,28 @@ alter table Appointment add constraint FKAppointmen99798 foreign key (clinic_id)
 alter table Appointment add constraint FKAppointmen157913 foreign key (dentist_id) references Dentist (id);
 alter table Dentist add constraint FKDentist52014 foreign key (user_id) references [User] (id);
 alter table Dentist add constraint FKDentist429950 foreign key (clinic_id) references Clinic (clinic_id);
-alter table UserPaymentInfo add constraint FKUserPaymen514881 foreign key (user_id) references [User] (id);
-alter table Payment add constraint FKPayment155275 foreign key (sender) references UserPaymentInfo (user_id);
-alter table Payment add constraint FKPayment215903 foreign key (recieve) references UserPaymentInfo (user_id);
+GO
+
+
+-- This is for creating fixed 30 minute time slot.
+DECLARE @StartTime TIME = '00:00:00';
+DECLARE @EndTime TIME;
+
+WHILE @StartTime < '23:30:00'
+BEGIN
+    SET @EndTime = DATEADD(MINUTE, 30, @StartTime);
+    
+    INSERT INTO Slot ([start], [end]) VALUES (@StartTime, @EndTime);
+
+    SET @StartTime = @EndTime;
+END
+GO
+
+-- Because SQL Server has some problem saving 24:00:00 as time (idk ? maybe 24:00:00 IS 00:00:00) so we have to do this manually
+INSERT INTO Slot ([start], [end]) VALUES ('23:30:00', '00:00:00');
+GO
+
+
+
 
 
