@@ -27,6 +27,9 @@ namespace ClinicPlatformServices.Contracts
         AppointmentInfoModel? ChangeDentist(Guid bookId, int clinicDentist, out string message);
         AppointmentInfoModel? ChangeService(Guid bookId, Guid clinicServiceId, out string message);
         AppointmentInfoModel? RemoveService(Guid bookId, out string message);
+        AppointmentInfoModel? SetAppoinmentStatus(Guid bookId, string status, out string message);
+
+
         BookedServiceInfoModel? GetBookedService(Guid bookId);
 
         bool DeleteBookingInformation(Guid bookId, out string messgae);

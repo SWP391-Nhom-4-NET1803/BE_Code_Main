@@ -13,6 +13,8 @@ namespace ClinicPlatformWebAPI.Services.VNPayService
 
         public string CreateRequestUrl(string baseUrl, string vnp_HashSecret);
 
+        public string CreateTransactionId();
+
         public string HmacSHA512(string key, string inputData);
 
     }

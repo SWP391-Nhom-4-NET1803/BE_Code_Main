@@ -10,15 +10,13 @@ namespace ClinicPlatformObjects.PayementModels
     {
         public int Id { get; set; }
         public string TransactId { get; set; } = null!;
-        public int Amount { get; set; }
-        public string Title { get; set; } = null!;
-        public DateOnly Expiration { get; set; }
+        public decimal Amount { get; set; }
+        public string Info { get; set; } = null!;
+        public DateTime Expiration { get; set; }
         public DateTime CreatedTime { get; set; }
-        public bool Status { get; set; }
-        public int type { get; set; } = 1;
-        public string provider { get; set; } = null!;
-        public Guid appointmentId { get; set; }
-        public int UserId { get; set; }
+        public string Status { get; set; } = null!;
+        public string Provider { get; set; } = null!;
+        public Guid AppointmentId { get; set; }
 
     }
 }

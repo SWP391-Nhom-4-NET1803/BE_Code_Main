@@ -27,7 +27,7 @@ namespace ClinicPlatformRepositories
 
         public IEnumerable<AppointmentInfoModel> GetUserBooking(int userId)
         {
-            return from item in context.Appointments.Where(x => x.DentistId == userId || x.CustomerId == userId).ToList() select MapBookingToBookingModel(item);
+            return context.Appointments.Where(x => x.DentistId == userId || x.CustomerId == userId).Select(x => MapBookingToBookingModel(x)).ToList();
         }
 
         public AppointmentInfoModel? GetBooking(Guid id)

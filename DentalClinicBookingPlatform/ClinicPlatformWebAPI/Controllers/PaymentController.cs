@@ -5,6 +5,11 @@ using System.Web;
 using ClinicPlatformDTOs.PayementModels;
 using ClinicPlatformWebAPI.Services.VNPayService;
 using ClinicPlatformServices.Contracts;
+using static System.Runtime.CompilerServices.RuntimeHelpers;
+using System.Collections.Specialized;
+using ClinicPlatformWebAPI.Helpers.Models;
+using ClinicPlatformObjects.PayementModels;
+using ClinicPlatformDTOs.BookingModels;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -13,14 +18,16 @@ namespace ClinicPlatformWebAPI.Controllers
     public class PaymentController : ControllerBase
     {
         private IPaymentService paymentService;
+        private IBookingService bookingService;
         private string url = "http://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        private string returnUrl = $"https://localhost:7163/vnpayAPI/PaymentConfirm";
+        private string returnUrl = "https://localhost:7163/api/payment/vnpay/success";
         private string tmCode = string.Empty;
         private string hashSecret = string.Empty;
 
-        public PaymentController(IConfiguration configuration, IPaymentService paymentService)
+        public PaymentController(IConfiguration configuration, IPaymentService paymentService, IBookingService bookingService)
         {
             this.paymentService = paymentService;
+            this.bookingService = bookingService;
             tmCode = configuration.GetValue<string>("VNPay:TMCode")!;
             hashSecret = configuration.GetValue<string>("VNPay:VNPay")!;
         }
@@ -30,79 +37,141 @@ namespace ClinicPlatformWebAPI.Controllers
         [Route("vnpay")]
         public ActionResult CreatePayment(VNPayInfoModel sentInfo)
         {
-            string hostName = System.Net.Dns.GetHostName();
-            string clientIPAddress = System.Net.Dns.GetHostAddresses(hostName).GetValue(0)!.ToString()!;
-
             IVNPayService pay = HttpContext.RequestServices.GetService<IVNPayService>()!;
 
+            string paymentId = pay.CreateTransactionId();
+
             pay.AddRequestData("vnp_Version", "2.1.0");
-            pay.AddRequestData("vnp_Command", "pay"); //Mã API sử dụng, mã cho giao dịch thanh toán là 'pay'
+            pay.AddRequestData("vnp_Command", "pay");
             pay.AddRequestData("vnp_TmnCode", tmCode);
-            pay.AddRequestData("vnp_Amount", sentInfo.amount);
-            pay.AddRequestData("vnp_BankCode", ""); //Mã Ngân hàng thanh toán (tham khảo: https://sandbox.vnpayment.vn/apis/danh-sach-ngan-hang/), có thể để trống, người dùng có thể chọn trên cổng thanh toán VNPAY
+            pay.AddRequestData("vnp_Amount", $"{sentInfo.amount}00");
+            pay.AddRequestData("vnp_BankCode", "");
             pay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", "VND");
-            pay.AddRequestData("vnp_IpAddr", clientIPAddress);
+            pay.AddRequestData("vnp_IpAddr", "127.0.0.1");
             pay.AddRequestData("vnp_Locale", "vn");
-            pay.AddRequestData("vnp_OrderInfo", sentInfo.info);
+            pay.AddRequestData("vnp_OrderInfo", sentInfo.orderInfo);
             pay.AddRequestData("vnp_OrderType", "other");
             pay.AddRequestData("vnp_ReturnUrl", returnUrl);
-            pay.AddRequestData("vnp_TxnRef", sentInfo.order_info); //mã hóa đơn
-
-            // Database operation
-
-            // TODO: Create database operations (such as storing payment details)
+            pay.AddRequestData("vnp_TxnRef", paymentId);
 
             string paymentUrl = pay.CreateRequestUrl(url, hashSecret);
-            return Redirect(paymentUrl);
+
+            var payment = paymentService.CreateNewPayment(Decimal.Parse(sentInfo.amount), paymentId, sentInfo.orderInfo, sentInfo.appointmentId, "VNPay", DateTime.UtcNow.AddHours(1), out var message);
+
+            if (payment == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Message = message,
+                    Success = false,
+                    Content = paymentUrl,
+                });
+            }
+
+            return Ok( new HttpResponseModel
+            {
+                StatusCode = 200,
+                Message = message,
+                Success = true,
+                Content = paymentUrl,
+            });
         }
 
         [HttpGet]
-        [Route("vnpay/payment-confirm")]
+        [Route("vnpay/success")]
         public IActionResult PaymentConfirm()
         {
             if (Request.QueryString.HasValue)
             {
-                //lấy toàn bộ dữ liệu trả về
                 var queryString = Request.QueryString.Value;
                 var json = HttpUtility.ParseQueryString(queryString);
 
-                foreach (var item in json)
-                {
-                    Console.WriteLine($" {item.ToString()}");
-                }
-
-                //long orderId = Convert.ToInt64(json["vnp_TxnRef"]); //mã hóa đơn
-                //string orderInfor = json["vnp_OrderInfo"]!.ToString(); //Thông tin giao dịch
-                //long vnpayTranId = Convert.ToInt64(json["vnp_TransactionNo"]); //mã giao dịch tại hệ thống VNPAY
-                string vnp_ResponseCode = json["vnp_ResponseCode"]!.ToString(); //response code: 00 - thành công, khác 00 - xem thêm https://sandbox.vnpayment.vn/apis/docs/bang-ma-loi/
+                string orderId = json["vnp_TxnRef"]!;
+                //string orderInformaion = json["vnp_OrderInfo"].ToString();
+                //long vnpayTranId = Convert.ToInt64(json["vnp_TransactionNo"]);
+                string vnp_ResponseCode = json["vnp_ResponseCode"]!.ToString();
                 string vnp_SecureHash = json["vnp_SecureHash"]!.ToString(); //hash của dữ liệu trả về
                 var pos = Request.QueryString.Value.IndexOf("&vnp_SecureHash");
 
-                //return Ok(Request.QueryString.Value.Substring(1, pos-1) + "\n" + vnp_SecureHash + "\n"+ PayLib.HmacSHA512(hashSecret, Request.QueryString.Value.Substring(1, pos-1)));
                 bool checkSignature = ValidateSignature(Request.QueryString.Value.Substring(1, pos - 1), vnp_SecureHash, hashSecret); //check chữ ký đúng hay không?
-
                 if (checkSignature && tmCode == json["vnp_TmnCode"]!.ToString())
                 {
+                    PaymentInfoModel? payment = paymentService.GetPayment(orderId);
+
+                    if (payment == null)
+                    {
+                        return BadRequest(new HttpResponseModel
+                        {
+                            StatusCode = 400,
+                            Success = false,
+                            Message = "Can not find payment information",
+                        });
+                    }
+
                     if (vnp_ResponseCode == "00")
                     {
-                        //Thanh toán thành công
-                        return Redirect("[Thay đổi điều hướng]");
+
+                        payment = paymentService.SetPaymentStatusToCompleted(orderId, out var message);
+
+                        if (payment == null)
+                        {
+                            return BadRequest(new HttpResponseModel
+                            {
+                                StatusCode = 400,
+                                Success = false,
+                                Message = message
+                            });
+                        }
+
+                        AppointmentInfoModel? appointment = bookingService.SetAppoinmentStatus(payment.AppointmentId, "booked", out message);
+
+                        if (appointment == null)
+                        {
+                            return BadRequest(new HttpResponseModel
+                            {
+                                StatusCode = 400,
+                                Success = false,
+                                Message = message
+                            });
+                        }
+
+                        return Ok(new HttpResponseModel
+                        {
+                            StatusCode = 200,
+                            Success = true,
+                            Message = message,
+                            Content = payment
+                        });
                     }
                     else
                     {
-                        //Thanh toán không thành công. Mã lỗi: vnp_ResponseCode
-                        return Redirect("[Thay đổi điều hướng]");
+                        BadRequest(new HttpResponseModel
+                        {
+                            StatusCode = 400,
+                            Success = false,
+                            Message = $"Payment failed with error code {vnp_ResponseCode}"
+                        });
                     }
                 }
                 else
                 {
-                    //phản hồi không khớp với chữ ký
-                    return Redirect("[Thay đổi điều hướng]");
+                    return BadRequest(new HttpResponseModel
+                    {
+                        StatusCode = 400,
+                        Success = false,
+                        Message = "Invalid Signature"
+                    });
                 }
             }
-            //phản hồi không hợp lệ
-            return Redirect("[Thay đổi điều hướng]");
+
+            return BadRequest(new HttpResponseModel
+            {
+                StatusCode = 400,
+                Success = false,
+                Message = "Invalid request"
+            });
         }
 
         private bool ValidateSignature(string rspraw, string inputHash, string secretKey)

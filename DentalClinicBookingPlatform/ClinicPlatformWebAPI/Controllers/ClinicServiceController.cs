@@ -37,7 +37,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 200,
                 Success = true,
                 Message = "Success",
-                Content = clinicServiceService.GetAllClinicService(clinicId)
+                Content = clinicServiceService.GetAllClinicService(clinicId).Where(x => x.Available && !x.Removed)
             });
         }
 

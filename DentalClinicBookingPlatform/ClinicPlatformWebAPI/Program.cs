@@ -11,6 +11,8 @@ using Microsoft.AspNetCore.Mvc;
 using ClinicPlatformWebAPI.Helpers.Models;
 using ClinicPlatformWebAPI.Middlewares.Authentication;
 using Microsoft.Extensions.Options;
+using ClinicPlatformWebAPI.Services.VNPayService;
+using System.IdentityModel.Tokens.Jwt;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -93,15 +95,39 @@ builder.Services.AddAuthentication(options =>
             context.HandleResponse();
 
             context.Response.StatusCode = 401;
+
             var actionContext = new ActionContext(context.HttpContext, context.HttpContext.GetRouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
+
+            string[] token = context.Request.Headers["Authorization"].ToString().Split(" ");
 
             var result = new ObjectResult(new HttpResponseModel()
             {
                 StatusCode = 401,
                 Success = false,
-                Message = "You are not logged in or this resource is not accessible."
+                Message = "You dont have permission to access this resource"
             })
             { StatusCode = 401 };
+
+            if (token.Length < 2)
+            {
+                (result.Value as HttpResponseModel).Message = "User has not logged in";
+            }
+            else
+            {
+                if (token[0] != "Bearer")
+                {
+                    (result.Value as HttpResponseModel).Message = "Token format has been malformed";
+                }
+
+                TokenHandler handler = new JwtSecurityTokenHandler();
+
+                var tokenInfo = handler.ReadToken(token[1]);
+
+                if (tokenInfo.ValidTo <= DateTime.UtcNow)
+                {
+                    (result.Value as HttpResponseModel).Message = "Token has expired";
+                }
+            }
 
             await result.ExecuteResultAsync(actionContext);
         }
@@ -126,6 +152,9 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IAuthService,  AuthService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+
+// Integration
+builder.Services.AddTransient<IVNPayService, VNPayService>();
 
 builder.Services.AddTransient<AuthorizationMiddleware>();
 

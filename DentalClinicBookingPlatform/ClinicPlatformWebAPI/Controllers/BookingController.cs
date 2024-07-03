@@ -294,7 +294,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 ClinicName = clinicInfo.Name!,
                 ClinicAddress = clinicInfo.Address!,
                 ClinicPhone = clinicInfo.Phone!,
-                appointmentType = bookModel.Type!,
+                AppointmentType = bookModel.Type!,
                 CustomerFullName = customerInfo.Fullname!,
                 DentistFullname = dentistInfo.Fullname!,
                 AppointmentDate = (DateOnly)bookModel.AppointmentDate!,
@@ -302,7 +302,9 @@ namespace ClinicPlatformWebAPI.Controllers
                 ExpectedEndTime = (TimeOnly)clinicSlotInfo.EndTime!,
                 SelectedServiceName = serviceInfo?.Name ?? "No service",
                 FinalFee = bookModel.AppointmentFee,
-                
+                BookingStatus = bookModel.Status,
+                CreationTime = bookModel.CreationTime,
+                IsRecurring = bookModel.CyleCount > 0,
             };
         }
 
