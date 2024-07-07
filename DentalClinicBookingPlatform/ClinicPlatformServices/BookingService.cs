@@ -62,7 +62,37 @@ namespace ClinicPlatformServices
                 
             }
 
-            message = $"This appointment state can not be changed!";
+            message = $"This appointment state can not be changed! {bookInfo.Status}";
+            return null;
+        }
+
+        public AppointmentInfoModel? FinishBooking(Guid id, out string message)
+        {
+            AppointmentInfoModel? bookInfo = bookingRepository.GetBooking(id);
+
+            if (bookInfo == null)
+            {
+                message = $"No booking information for Id {id}";
+                return null;
+            }
+
+            if (bookInfo.AppointmentDate < DateOnly.FromDateTime(DateTime.Now))
+            {
+                message = $"This appointment is already in the past!";
+                return null;
+            }
+
+            if (bookInfo.Status == "booked")
+            {
+                bookInfo.Status = "finished";
+                bookingRepository.UpdateBookingInfo(bookInfo);
+
+                message = $"Successfully canceled appointment for booking {id}";
+                return bookInfo;
+
+            }
+
+            message = $"This appointment state can not be changed! {bookInfo.Status}";
             return null;
         }
 
@@ -435,7 +465,6 @@ namespace ClinicPlatformServices
             return bookInfo;
         }
 
-
         IEnumerable<AppointmentInfoModel> GetAllUserAppointment(int id)
         {
             return bookingRepository.GetUserBooking(id);
@@ -541,6 +570,15 @@ namespace ClinicPlatformServices
             
             book.AppointmentFee = service.Price;
 
+            if (book.AppointmentFee == 0)
+            {
+                book.Status = "booked";
+            }
+            else
+            {
+                book.Status = "pending";
+            }
+
             book = bookingRepository.CreateNewBooking(book);
 
             if (book != null)
@@ -570,12 +608,6 @@ namespace ClinicPlatformServices
             message = "Failed to create new bookRegistrationInfo";
             return null;
         }
-
-        public AppointmentInfoModel CreateNewPeriodicBooking(AppointmentRegistrationModel bookInfo, AppointmentSetting setting, out string message)
-        {
-            throw new NotImplementedException();
-        }
-
 
         // Delete
 

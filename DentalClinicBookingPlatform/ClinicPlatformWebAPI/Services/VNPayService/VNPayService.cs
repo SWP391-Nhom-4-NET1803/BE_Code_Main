@@ -83,8 +83,8 @@ namespace ClinicPlatformWebAPI.Services.VNPayService
 
         public string CreateTransactionId()
         {
-            var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-            var stringChars = new char[50];
+            var chars = "0123456789";
+            var stringChars = new char[10];
             var random = new Random();
 
             for (int i = 0; i < stringChars.Length; i++)

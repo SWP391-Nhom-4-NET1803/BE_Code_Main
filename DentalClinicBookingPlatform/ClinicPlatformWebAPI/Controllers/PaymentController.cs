@@ -10,6 +10,7 @@ using System.Collections.Specialized;
 using ClinicPlatformWebAPI.Helpers.Models;
 using ClinicPlatformObjects.PayementModels;
 using ClinicPlatformDTOs.BookingModels;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -20,14 +21,17 @@ namespace ClinicPlatformWebAPI.Controllers
         private IPaymentService paymentService;
         private IBookingService bookingService;
         private string url = "http://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-        private string returnUrl = "https://localhost:7163/api/payment/vnpay/success";
+        private string returnUrl = "https://localhost:7163/api/payment/vnpay/return";
         private string tmCode = string.Empty;
         private string hashSecret = string.Empty;
 
         public PaymentController(IConfiguration configuration, IPaymentService paymentService, IBookingService bookingService)
         {
+            var return_url = configuration.GetValue<string>("Frontend:PaymentSuccessPage");
+
             this.paymentService = paymentService;
             this.bookingService = bookingService;
+            this.returnUrl = return_url == null || return_url.Length == 0 ? returnUrl : return_url;
             tmCode = configuration.GetValue<string>("VNPay:TMCode")!;
             hashSecret = configuration.GetValue<string>("VNPay:VNPay")!;
         }
@@ -39,6 +43,8 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             IVNPayService pay = HttpContext.RequestServices.GetService<IVNPayService>()!;
 
+            string hostName = System.Net.Dns.GetHostName();
+            string clientIPAddress = System.Net.Dns.GetHostAddresses(hostName).GetValue(0)!.ToString()!;
             string paymentId = pay.CreateTransactionId();
 
             pay.AddRequestData("vnp_Version", "2.1.0");
@@ -48,7 +54,7 @@ namespace ClinicPlatformWebAPI.Controllers
             pay.AddRequestData("vnp_BankCode", "");
             pay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", "VND");
-            pay.AddRequestData("vnp_IpAddr", "127.0.0.1");
+            pay.AddRequestData("vnp_IpAddr", clientIPAddress);
             pay.AddRequestData("vnp_Locale", "vn");
             pay.AddRequestData("vnp_OrderInfo", sentInfo.orderInfo);
             pay.AddRequestData("vnp_OrderType", "other");
@@ -66,7 +72,6 @@ namespace ClinicPlatformWebAPI.Controllers
                     StatusCode = 400,
                     Message = message,
                     Success = false,
-                    Content = paymentUrl,
                 });
             }
 
@@ -86,6 +91,7 @@ namespace ClinicPlatformWebAPI.Controllers
             if (Request.QueryString.HasValue)
             {
                 var queryString = Request.QueryString.Value;
+                Console.WriteLine(queryString.ToString());
                 var json = HttpUtility.ParseQueryString(queryString);
 
                 string orderId = json["vnp_TxnRef"]!;
@@ -112,7 +118,6 @@ namespace ClinicPlatformWebAPI.Controllers
 
                     if (vnp_ResponseCode == "00")
                     {
-
                         payment = paymentService.SetPaymentStatusToCompleted(orderId, out var message);
 
                         if (payment == null)
@@ -172,6 +177,13 @@ namespace ClinicPlatformWebAPI.Controllers
                 Success = false,
                 Message = "Invalid request"
             });
+        }
+
+        [HttpGet]
+        [Route("vnpay/return")]
+        public IActionResult PaymentReturn()
+        {
+            return Redirect(@"https://localhost:7163/api/payment/vnpay/success" + Request.QueryString);
         }
 
         private bool ValidateSignature(string rspraw, string inputHash, string secretKey)
