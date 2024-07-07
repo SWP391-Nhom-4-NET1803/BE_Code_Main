@@ -533,7 +533,7 @@ namespace ClinicPlatformServices
 
             int dentistCount = GetAllBookingOnDay(bookRegistrationInfo.AppointmentDate).Where(x => x.ClinicSlotId == slotInfo.ClinicSlotId && x.ClinicId == bookRegistrationInfo.ClinicId && x.DentistId  == dentist.DentistId && x.Type == bookRegistrationInfo.AppointmentType).Count();
 
-            if (bookRegistrationInfo.AppointmentType == "treatement" && dentistCount >= slotInfo.MaxTreatment || bookRegistrationInfo.AppointmentType == "checkup" && dentistCount >= slotInfo.MaxCheckup )
+            if ((bookRegistrationInfo.AppointmentType == "treatment" && dentistCount >= slotInfo.MaxTreatment) || (bookRegistrationInfo.AppointmentType == "checkup" && dentistCount >= slotInfo.MaxCheckup) )
             {
                 message = "This slot is fully booked and unavailable for this date";
                 return null;
