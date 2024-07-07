@@ -127,17 +127,27 @@ namespace ClinicPlatformWebAPI.Controllers
 
                 var TotalDate = SeparatedDayCount(setting);
 
-                for (int i = 1; i < setting.MaxRecurring; i++)
+                for (int i = 0; i < setting.MaxRecurring; i++)
                 {
-                    if (bookingService.DentistIsAvailableOn(originalDate.AddDays(i * TotalDate), appointment.ClinicSlotId, bookInfo.DentistId, out var mess))
+                    if (!bookingService.DentistIsAvailableOn(originalDate.AddDays(i * TotalDate), appointment.ClinicSlotId, bookInfo.DentistId, out var mess))
                     {
-                        message += $" Addng Slot No.{i+2}: {mess}. ";
+                        message = mess + $"{originalDate.AddDays(i * TotalDate)} | {appointment.ClinicSlotId}";
+
+                        Console.WriteLine(message);
+
+                        return BadRequest(new HttpResponseModel
+                        {
+                            StatusCode = 400,
+                            Success = false,
+                            Message = message
+                        });
                     }
                 }
 
                 for (int i = 0; i < setting.MaxRecurring; i++)
                 {
                     originalDate = originalDate.AddDays(TotalDate);
+                    bookInfo.AppointmentDate = originalDate;
                     var tempt = AppointmentMapper.MapToAppointment(bookInfo);
                     tempt.OriginalAppoinment = appointment.Id;
 
@@ -148,7 +158,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     StatusCode = 200,
                     Success = true,
-                    Message =  "Created schedule!"
+                    Message =  "Created schedule!",
+                    Content = null
                 });
             }
             else
