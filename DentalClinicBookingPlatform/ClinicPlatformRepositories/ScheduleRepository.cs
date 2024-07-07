@@ -119,6 +119,7 @@ namespace ClinicPlatformRepositories
                        MaxTreatment = clinicSlot.MaxTreatment,
                        StartTime = baseSlot.Start,
                        EndTime = baseSlot.End,
+                       Status = clinicSlot.Status,
                    };
         }
 

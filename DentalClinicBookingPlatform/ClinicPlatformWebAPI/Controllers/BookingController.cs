@@ -118,6 +118,7 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpPost("staff/create-schedule")]
         public ActionResult<HttpResponseModel> CreateNewSchedule([FromBody] AppointmentRegistrationModel bookInfo, [FromQuery] AppointmentSetting setting)
         {
+            bookInfo.AppointmentType = "treatment";
             AppointmentInfoModel? appointment = bookingService.CreateNewBooking(bookInfo, out var message);
 
             if (appointment != null)
@@ -261,8 +262,9 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     clinicSlotByWeekday[slot.Weekday].Add(slot);
                 }
-                        
             }
+
+            Console.WriteLine(scheduleService.GetAllClinicSlot(clinicId).Count());
 
             return Ok(new HttpResponseModel
             {
@@ -271,6 +273,60 @@ namespace ClinicPlatformWebAPI.Controllers
                 Message = $"Found {availableSlot.Count()} available slot.",
                 Content = clinicSlotByWeekday
             });
+        }
+
+        [HttpPut("/cancel")]
+        public ActionResult<IHttpResponseModel<AppointmentViewModel>> CancelBooking(Guid book_id)
+        {
+            var result = bookingService.CancelBooking(book_id, out var message);
+
+            if (result != null)
+            {
+                return Ok(new HttpResponseModel
+                {
+                    StatusCode = 200,
+                    Success = true,
+                    Message = message,
+                    Content = result,
+                });
+            }
+            else
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = message,
+                    Content = null,
+                });
+            }
+        }
+
+        [HttpPut("/finish")]
+        public ActionResult<IHttpResponseModel<AppointmentViewModel>> FinishBooking(Guid book_id)
+        {
+            var result = bookingService.FinishBooking(book_id, out var message);
+
+            if (result != null)
+            {
+                return Ok(new HttpResponseModel
+                {
+                    StatusCode = 200,
+                    Success = true,
+                    Message = message,
+                    Content = result,
+                });
+            }
+            else
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = message,
+                    Content = null,
+                });
+            }
         }
 
         private AppointmentViewModel ConvertToBookingView(AppointmentInfoModel bookModel)

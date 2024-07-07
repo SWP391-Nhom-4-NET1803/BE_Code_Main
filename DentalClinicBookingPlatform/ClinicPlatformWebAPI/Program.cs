@@ -13,6 +13,7 @@ using ClinicPlatformWebAPI.Middlewares.Authentication;
 using Microsoft.Extensions.Options;
 using ClinicPlatformWebAPI.Services.VNPayService;
 using System.IdentityModel.Tokens.Jwt;
+using ClinicPlatformWebAPI.Services.EmailService;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -152,6 +153,8 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IAuthService,  AuthService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+
+builder.Services.AddTransient<IEmailService, EmailService>();
 
 // Integration
 builder.Services.AddTransient<IVNPayService, VNPayService>();
