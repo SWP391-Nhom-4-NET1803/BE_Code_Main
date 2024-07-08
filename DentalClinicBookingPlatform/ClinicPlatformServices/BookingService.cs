@@ -863,5 +863,22 @@ namespace ClinicPlatformServices
 
             return target;
         }
+
+        public AppointmentInfoModel? SetAppointmentNote(Guid bookId, string note, out string message)
+        {
+            var appointment = GetBooking(bookId);
+            
+            if (appointment == null || appointment.Status == "canceled")
+            {
+                message = "Can not find available aqppointment with provided Id";
+                return null;
+            }
+
+            appointment.Note = note;
+            appointment = bookingRepository.UpdateBookingInfo(appointment);
+            
+            message = appointment != null ? "Successfully updated appointment note" : "Failed to update appointment note";
+            return appointment;
+        }
     }
 }

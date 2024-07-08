@@ -99,7 +99,7 @@ namespace ClinicPlatformRepositories
             return MapToPaymentInfo(target);
         }
 
-        private PaymentInfoModel MapToPaymentInfo(Payment payment)
+        private static PaymentInfoModel MapToPaymentInfo(Payment payment)
         {
             return new PaymentInfoModel
             {
@@ -115,7 +115,7 @@ namespace ClinicPlatformRepositories
             };
         }
 
-        private Payment MapToPayment(PaymentInfoModel payment)
+        private static Payment MapToPayment(PaymentInfoModel payment)
         {
             return new Payment
             {
@@ -138,11 +138,9 @@ namespace ClinicPlatformRepositories
             return result == null ? null : MapToPaymentInfo(result);
         }
 
-        public PaymentInfoModel? GetPaymentForAppointment(Guid appointmentId)
+        public IEnumerable<PaymentInfoModel> GetPaymentForAppointment(Guid appointmentId)
         {
-            var target = context.Payments.Where(x => x.AppointmentId == appointmentId).FirstOrDefault();
-
-            return target == null ? null : MapToPaymentInfo(target);
+            return context.Payments.Where(x => x.AppointmentId == appointmentId).Select(x => MapToPaymentInfo(x)).ToList();
         }
     }
 }

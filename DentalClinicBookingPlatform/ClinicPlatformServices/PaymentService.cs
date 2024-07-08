@@ -42,9 +42,9 @@ namespace ClinicPlatformServices
             GC.SuppressFinalize(this);
         }
 
-        public PaymentInfoModel? CreateNewPayment(decimal amount,string transactId, string information, Guid appointmentInfo, string provider, DateTime expiration, out string message)
+        public PaymentInfoModel? CreateNewPayment(decimal amount,string transactId, string information, Guid appointmentId, string provider, DateTime expiration, out string message)
         {
-            AppointmentInfoModel? bookingInfo = bookingRepository.GetBooking(appointmentInfo);
+            AppointmentInfoModel? bookingInfo = bookingRepository.GetBooking(appointmentId);
 
             if (bookingInfo == null)
             {
@@ -52,12 +52,20 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            PaymentInfoModel? pastPayment = paymentRepository.GetPaymentForAppointment(appointmentInfo);
+            PaymentInfoModel? pastPayment = GetLatestPaymentForAppointment(appointmentId);
 
-            if (pastPayment != null)
+            if (pastPayment != null) 
             {
-                message = "All payment for this appointment is already completed";
-                return null;
+                if (pastPayment.Status == "completed")
+                {
+                    message = "All payment for this appointment is already completed";
+                    return null;
+                }
+                else if (pastPayment.Status == "pending" && pastPayment.Expiration >= DateTime.UtcNow)
+                {
+                    message = $"Using existing pending payment for {appointmentId}";
+                    return pastPayment;
+                }
             }
 
             PaymentInfoModel? newPayment = new PaymentInfoModel
@@ -68,7 +76,7 @@ namespace ClinicPlatformServices
                 CreatedTime = DateTime.UtcNow,
                 Expiration = expiration,
                 Provider = provider,
-                AppointmentId = appointmentInfo,
+                AppointmentId = appointmentId,
                 Status = "pending",
             };
 
@@ -76,7 +84,7 @@ namespace ClinicPlatformServices
 
             if (newPayment != null)
             {
-                message = $"Successfully created payment for appointment {appointmentInfo}";
+                message = $"Successfully created payment for appointment {appointmentId}";
             }
             else
             {
@@ -130,9 +138,33 @@ namespace ClinicPlatformServices
             return paymentRepository.GetPaymentWithPaymentId(paymentId);
         }
 
-        public PaymentInfoModel? GetPaymentForAppointment(Guid appointmentId)
+        public IEnumerable<PaymentInfoModel> GetPaymentsForAppointment(Guid appointmentId)
         {
             return paymentRepository.GetPaymentForAppointment(appointmentId);
+        }
+
+        public PaymentInfoModel? GetLatestPaymentForAppointment(Guid appointmentId)
+        {
+            return GetPaymentsForAppointment(appointmentId).OrderByDescending(x => x.CreatedTime).FirstOrDefault();
+        }
+
+        public IEnumerable<PaymentInfoModel> GetAllClinicAppointmentPayment(int clinicId)
+        {
+            var appointments = bookingRepository.GetAllClinicBooking(clinicId);
+
+            List<PaymentInfoModel> appointmentPayments = new List<PaymentInfoModel>();
+
+            foreach(var appointment in appointments)
+            {
+                var payment = GetLatestPaymentForAppointment(appointment.Id);
+
+                if (payment != null)
+                {
+                    appointmentPayments.Add(payment);
+                }
+            }
+
+            return appointmentPayments;
         }
 
         public IEnumerable<PaymentInfoModel> GetPaymentOfCustomer(int customerId)
@@ -143,7 +175,7 @@ namespace ClinicPlatformServices
 
             foreach (var appointment in bookingInfo)
             {
-                var payment = paymentRepository.GetPaymentForAppointment(appointment.Id);
+                var payment = GetLatestPaymentForAppointment(appointment.Id);
 
                 if (payment != null)
                 {

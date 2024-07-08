@@ -21,7 +21,7 @@ namespace ClinicPlatformRepositories.Contracts
 
         IEnumerable<PaymentInfoModel> GetAllPaymentOnDate(DateOnly date);
 
-        PaymentInfoModel? GetPaymentForAppointment(Guid appointmentId);
+        IEnumerable<PaymentInfoModel> GetPaymentForAppointment(Guid appointmentId);
 
         PaymentInfoModel? CreatePayment(PaymentInfoModel paymentInfo);
 
