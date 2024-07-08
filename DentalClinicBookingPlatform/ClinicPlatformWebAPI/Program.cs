@@ -144,6 +144,7 @@ builder.Services.AddScoped<IClinicServiceRepository, ClinicServiceRepository>();
 builder.Services.AddScoped<IScheduleRepository, ScheduleRepository>();
 builder.Services.AddScoped<IBookingRepository, BookingRepository>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<ITokenRepository, TokenRepository>();
 
 builder.Services.AddScoped<IUserService, UserService>();
 builder.Services.AddScoped<IClinicService, PlatformClinicService>();
@@ -153,6 +154,7 @@ builder.Services.AddScoped<IBookingService, BookingService>();
 builder.Services.AddScoped<IAuthService,  AuthService>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<ITokenService, TokenService>();
 
 builder.Services.AddTransient<IEmailService, EmailService>();
 
