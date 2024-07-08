@@ -41,6 +41,11 @@ namespace ClinicPlatformRepositories
             return context.Appointments.Where(x => x.Date == date).Select(x => MapBookingToBookingModel(x)).ToList();
         }
 
+        public IEnumerable<AppointmentInfoModel> GetAllClinicBooking(int clinicId)
+        {
+            return context.Appointments.Where(x => x.ClinicId == clinicId).Select(x => MapBookingToBookingModel(x)).ToList();
+        }
+
         public IEnumerable<AppointmentInfoModel> GetAll()
         {
             return context.Appointments.Select(x => MapBookingToBookingModel(x)).ToList();

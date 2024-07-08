@@ -108,7 +108,7 @@ namespace ClinicPlatformServices.Contracts
         AppointmentInfoModel? ChangeService(Guid bookId, Guid clinicServiceId, out string message);
         AppointmentInfoModel? RemoveService(Guid bookId, out string message);
         AppointmentInfoModel? SetAppoinmentStatus(Guid bookId, string status, out string message);
-
+        AppointmentInfoModel? SetAppointmentNote(Guid bookId, string note, out string message);
 
         BookedServiceInfoModel? GetBookedService(Guid bookId);
 

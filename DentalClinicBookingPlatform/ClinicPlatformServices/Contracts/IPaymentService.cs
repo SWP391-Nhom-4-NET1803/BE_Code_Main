@@ -21,7 +21,9 @@ namespace ClinicPlatformServices.Contracts
 
         PaymentInfoModel? GetPayment(string paymentId);
 
-        PaymentInfoModel? GetPaymentForAppointment(Guid appointmentId);
+        IEnumerable<PaymentInfoModel> GetPaymentsForAppointment(Guid appointmentId);
+
+        IEnumerable<PaymentInfoModel> GetAllClinicAppointmentPayment(int clinicId);
 
         IEnumerable<PaymentInfoModel> GetPaymentOfCustomer(int customerId);
     }

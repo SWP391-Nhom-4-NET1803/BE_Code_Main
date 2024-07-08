@@ -19,26 +19,29 @@ namespace ClinicPlatformWebAPI.Controllers
     public class PaymentController : ControllerBase
     {
         private IPaymentService paymentService;
+        private IUserService userService;
+        private IClinicService clinicService;
         private IBookingService bookingService;
         private string url = "http://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
         private string returnUrl = "https://localhost:7163/api/payment/vnpay/return";
         private string tmCode = string.Empty;
         private string hashSecret = string.Empty;
 
-        public PaymentController(IConfiguration configuration, IPaymentService paymentService, IBookingService bookingService)
+        public PaymentController(IConfiguration configuration, IPaymentService paymentService, IBookingService bookingService, IUserService userService, IClinicService clinicService)
         {
             var return_url = configuration.GetValue<string>("Frontend:PaymentSuccessPage");
 
             this.paymentService = paymentService;
             this.bookingService = bookingService;
+            this.userService = userService;
             this.returnUrl = return_url == null || return_url.Length == 0 ? returnUrl : return_url;
             tmCode = configuration.GetValue<string>("VNPay:TMCode")!;
             hashSecret = configuration.GetValue<string>("VNPay:VNPay")!;
+            this.clinicService = clinicService;
         }
 
 
-        [HttpPost]
-        [Route("vnpay")]
+        [HttpPost("vnpay")]
         public ActionResult CreatePayment(VNPayInfoModel sentInfo)
         {
             IVNPayService pay = HttpContext.RequestServices.GetService<IVNPayService>()!;
@@ -47,12 +50,35 @@ namespace ClinicPlatformWebAPI.Controllers
             string clientIPAddress = System.Net.Dns.GetHostAddresses(hostName).GetValue(0)!.ToString()!;
             string paymentId = pay.CreateTransactionId();
 
+            var booking = bookingService.GetBooking(sentInfo.appointmentId);
+
+            if (booking == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = "Can not find the appointment information"
+                });
+            }
+
+            if (booking.Status != "pending")
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = $"Can not create new payment for this appointment. Because the appointment is already {booking.Status}."
+                });
+            }
+
             pay.AddRequestData("vnp_Version", "2.1.0");
             pay.AddRequestData("vnp_Command", "pay");
             pay.AddRequestData("vnp_TmnCode", tmCode);
-            pay.AddRequestData("vnp_Amount", $"{sentInfo.amount}00");
+            pay.AddRequestData("vnp_Amount", $"{booking.AppointmentFee}00");
             pay.AddRequestData("vnp_BankCode", "");
-            pay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            pay.AddRequestData("vnp_CreateDate", DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
+            pay.AddRequestData("vnp_ExpireDate", DateTime.UtcNow.AddHours(1).ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", "VND");
             pay.AddRequestData("vnp_IpAddr", clientIPAddress);
             pay.AddRequestData("vnp_Locale", "vn");
@@ -63,7 +89,7 @@ namespace ClinicPlatformWebAPI.Controllers
 
             string paymentUrl = pay.CreateRequestUrl(url, hashSecret);
 
-            var payment = paymentService.CreateNewPayment(Decimal.Parse(sentInfo.amount), paymentId, sentInfo.orderInfo, sentInfo.appointmentId, "VNPay", DateTime.UtcNow.AddHours(1), out var message);
+            var payment = paymentService.CreateNewPayment(booking.AppointmentFee, paymentId, sentInfo.orderInfo, sentInfo.appointmentId, "VNPay", DateTime.UtcNow.AddHours(1), out var message);
 
             if (payment == null)
             {
@@ -84,8 +110,7 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpGet]
-        [Route("vnpay/success")]
+        [HttpGet("vnpay/success")]
         public IActionResult PaymentConfirm()
         {
             if (Request.QueryString.HasValue)
@@ -179,11 +204,62 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpGet]
-        [Route("vnpay/return")]
+        /// <summary>
+        ///  This is an example of how (what) to process when VNPay return the transaction result.
+        ///  We just need to forward the query string to the preference endpoint for further processing.
+        /// </summary>
+        /// <returns>action result of the operation. In this case, since it a redirect, the return value will be based on vnpay/success endpoint.</returns>
+        [HttpGet("vnpay/return")]
         public IActionResult PaymentReturn()
         {
             return Redirect(@"https://localhost:7163/api/payment/vnpay/success" + Request.QueryString);
+        }
+
+        [HttpGet("customer/{id}")]
+        public IActionResult GetCustomerPayment(int id)
+        {
+            var user = userService.GetUserWithCustomerId(id);
+            if (user == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = "Can not find customer with provided Id",
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Success = true,
+                Message = "Success",
+                Content = paymentService.GetPaymentOfCustomer(id),
+            });
+        }
+
+        [HttpGet("clinic/{id}")]
+        public IActionResult GetClinicPayment(int id)
+        {
+            if (clinicService.GetClinicWithId(id) == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = "Can not find clinic with provided Id"
+                });
+            }
+
+            var result = paymentService.GetAllClinicAppointmentPayment(id);
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Success = true,
+                Message = $"Found {result.Count()} result",
+                Content = result
+            });
         }
 
         private bool ValidateSignature(string rspraw, string inputHash, string secretKey)

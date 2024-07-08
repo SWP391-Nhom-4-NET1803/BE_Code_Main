@@ -173,10 +173,36 @@ namespace ClinicPlatformWebAPI.Controllers
             }
         }
 
+        [HttpPut("staff/note/{id}")]
+        public ActionResult<HttpResponse> AddAppointmentNote([Required]Guid id, [FromBody] string note)
+        {
+            var appointment = bookingService.SetAppointmentNote(id, note, out var message);
+
+            if (appointment == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = message
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Success = true,
+                Message = message,
+                Content = appointment,
+            });
+        }
+
         [HttpPost("customer/book")]
         public ActionResult<HttpResponseModel> CreateNewCustomerAppointment([FromBody] AppointmentRegistrationModel bookInfo)
         {
             bookInfo.Status = "pending";
+            bookInfo.AppointmentType = "checkup";
+            bookInfo.OrginialAppointment = null;
             AppointmentInfoModel? appointment = bookingService.CreateNewBooking(bookInfo, out var message);
 
             if (appointment != null)
@@ -298,7 +324,7 @@ namespace ClinicPlatformWebAPI.Controllers
                     StatusCode = 200,
                     Success = true,
                     Message = message,
-                    Content = result,
+                    Content = ConvertToBookingView(result),
                 });
             }
             else
@@ -325,7 +351,7 @@ namespace ClinicPlatformWebAPI.Controllers
                     StatusCode = 200,
                     Success = true,
                     Message = message,
-                    Content = result,
+                    Content = ConvertToBookingView(result)
                 });
             }
             else
