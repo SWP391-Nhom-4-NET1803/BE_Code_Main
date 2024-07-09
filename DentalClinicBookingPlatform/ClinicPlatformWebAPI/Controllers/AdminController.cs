@@ -13,25 +13,25 @@ namespace ClinicPlatformWebAPI.Controllers
 {
     [Route("api/admin")]
     [ApiController]
-    //[Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin")]
     public class AdminController : ControllerBase
     {
         private IUserService userService;
         private IClinicService clinicService;
         //private ITokenService tokenService;
         private IBookingService bookingService;
-        //private IPaymentService paymentService;
+        private IPaymentService paymentService;
         private IScheduleService scheduleService;
         private IClinicServiceService clinicServiceService;
         private IAdminService adminService;
 
-        public AdminController(IUserService userService, IClinicService clinicService, IBookingService bookingService, IScheduleService scheduleService, IClinicServiceService clinicServiceService, IAdminService adminService)
+        public AdminController(IUserService userService, IClinicService clinicService, IBookingService bookingService, IScheduleService scheduleService, IClinicServiceService clinicServiceService, IAdminService adminService, IPaymentService paymentService)
         {
             this.userService = userService;
             this.clinicService = clinicService;
             //this.tokenService = tokenService;
             this.bookingService = bookingService;
-            //this.paymentService = paymentService;
+            this.paymentService = paymentService;
             this.scheduleService = scheduleService;
             this.clinicServiceService = clinicServiceService;
             this.adminService = adminService;

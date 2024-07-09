@@ -70,7 +70,7 @@ namespace ClinicPlatformServices
             report.TodayUserUnactivated = userRepository.GetUnactivatedUser().Count();
             report.TodayUserDeleted = userRepository.GetRemovedUsers().Count();
 
-            report.TodayMoneyEarned = 0; // PaymentService not done.
+            report.TodayMoneyEarned = paymentRepository.GetAllPaymentOnDate(date).Sum(x => x.Amount);
 
 
             // Others
@@ -125,7 +125,7 @@ namespace ClinicPlatformServices
 
         public AdminSumarizedInfo GetTodaySummaryReport()
         {
-            return GetSummaryReportOnDate(DateOnly.FromDateTime(DateTime.UtcNow));
+            return GetSummaryReportOnDate(DateOnly.FromDateTime(DateTime.Now));
         }
 
         protected virtual void Dispose(bool disposing)

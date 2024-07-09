@@ -52,7 +52,7 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            if (bookInfo.Status == "booked")
+            if (bookInfo.Status == "booked" || bookInfo.Status == "pending")
             {
                 bookInfo.Status = "canceled";
                 bookingRepository.UpdateBookingInfo(bookInfo);

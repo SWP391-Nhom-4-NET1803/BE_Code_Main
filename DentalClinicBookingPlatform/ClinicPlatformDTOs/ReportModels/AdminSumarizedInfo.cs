@@ -22,7 +22,7 @@ namespace ClinicPlatformObjects.ReportModels
         public int TodayTotal { get; set; }
 
         // Money Informations
-        public long TodayMoneyEarned {  get; set; }
+        public decimal TodayMoneyEarned {  get; set; }
 
         // User Informations
         public int TodayUserCreation {  get; set; }

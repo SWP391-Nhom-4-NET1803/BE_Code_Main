@@ -61,10 +61,12 @@ namespace ClinicPlatformServices
                     message = "All payment for this appointment is already completed";
                     return null;
                 }
-                else if (pastPayment.Status == "pending" && pastPayment.Expiration >= DateTime.UtcNow)
+                else if (pastPayment.Status == "pending" && pastPayment.Expiration >= DateTime.Now)
                 {
-                    message = $"Using existing pending payment for {appointmentId}";
-                    return pastPayment;
+                    
+                    pastPayment.Status = "canceled";
+                    paymentRepository.UpdatePayment(pastPayment);
+
                 }
             }
 
@@ -73,7 +75,7 @@ namespace ClinicPlatformServices
                 Amount = amount,
                 TransactId = transactId,
                 Info = information,
-                CreatedTime = DateTime.UtcNow,
+                CreatedTime = DateTime.Now,
                 Expiration = expiration,
                 Provider = provider,
                 AppointmentId = appointmentId,
@@ -121,7 +123,7 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            target.Status = "completed";
+            target.Status = "canceled";
             paymentRepository.UpdatePayment(target);
 
             message = $"Successfully updated payment {paymentId} status to completed";

@@ -43,8 +43,8 @@ namespace ClinicPlatformServices
                 Id = Guid.NewGuid(),
                 Value = res.ToString(),
                 Reason = reason,
-                Creation = DateTime.UtcNow,
-                Expiration = DateTime.UtcNow.AddMinutes(10),
+                Creation = DateTime.Now,
+                Expiration = DateTime.Now.AddMinutes(10),
                 UserId = userId,
             };
 
@@ -86,7 +86,7 @@ namespace ClinicPlatformServices
                     return null;
                 }
 
-                if (token.Expiration <=  DateTime.UtcNow) 
+                if (token.Expiration <=  DateTime.Now) 
                 {
                     message = "This token is expired!";
                     return null;

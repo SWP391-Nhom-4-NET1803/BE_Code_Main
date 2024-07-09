@@ -108,7 +108,7 @@ namespace ClinicPlatformWebAPI.Controllers
 
             var token = tokenService.CreateUserPasswordResetToken(user.Id, out var message)!;
 
-            var emailService = HttpContext.RequestServices.GetService<IEmailService>();
+            var emailService = HttpContext.RequestServices.GetService<IEmailService>()!;
 
             emailService.SendMailGoogleSmtp(email, "User Password Reset Request", $"Your password reset token is {token.Value}. Use it at {PasswordResetPage} to reset your password!");
 

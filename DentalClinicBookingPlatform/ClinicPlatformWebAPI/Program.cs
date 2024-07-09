@@ -124,7 +124,7 @@ builder.Services.AddAuthentication(options =>
 
                 var tokenInfo = handler.ReadToken(token[1]);
 
-                if (tokenInfo.ValidTo <= DateTime.UtcNow)
+                if (tokenInfo.ValidTo <= DateTime.Now)
                 {
                     (result.Value as HttpResponseModel).Message = "Token has expired";
                 }

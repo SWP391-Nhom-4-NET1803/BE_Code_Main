@@ -198,7 +198,7 @@ namespace ClinicPlatformRepositories
                 Fullname = userInfo.Fullname,
                 Active = false,
                 Removed = false,
-                CreationTime = DateTime.UtcNow,
+                CreationTime = DateTime.Now,
                 Role = userInfo.Role,
             };
 

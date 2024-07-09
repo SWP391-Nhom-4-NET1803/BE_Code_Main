@@ -12,6 +12,7 @@ namespace ClinicPlatformWebAPI.Controllers
 {
     [Route("api/auth")]
     [ApiController]
+    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
         private readonly IUserService userService;
@@ -59,7 +60,7 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 string[] refreshTokenParts = Encoding.UTF8.GetString(Convert.FromBase64String(tokens.RefreshToken)).Split("|");
 
-                if (DateTime.Compare(DateTime.Parse(refreshTokenParts[2]), DateTime.UtcNow) < 0)
+                if (DateTime.Compare(DateTime.Parse(refreshTokenParts[2]), DateTime.Now) < 0)
                 {
                     return BadRequest(new HttpResponseModel
                     { 
