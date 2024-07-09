@@ -64,7 +64,7 @@ namespace ClinicPlatformWebAPI.Controllers
 
             result = clinicService.GetAllClinic(page_size, page-1);
 
-            result = result.Where(x => x.Status != "removed");
+            result = result.Where(x => x.Status == "verified");
 
             if (name != null)
             {

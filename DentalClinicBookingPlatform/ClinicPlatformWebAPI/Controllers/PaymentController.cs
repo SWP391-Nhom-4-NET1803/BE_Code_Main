@@ -77,19 +77,19 @@ namespace ClinicPlatformWebAPI.Controllers
             pay.AddRequestData("vnp_TmnCode", tmCode);
             pay.AddRequestData("vnp_Amount", $"{booking.AppointmentFee}00");
             pay.AddRequestData("vnp_BankCode", "");
-            pay.AddRequestData("vnp_CreateDate", DateTime.UtcNow.ToString("yyyyMMddHHmmss"));
-            pay.AddRequestData("vnp_ExpireDate", DateTime.UtcNow.AddHours(1).ToString("yyyyMMddHHmmss"));
+            pay.AddRequestData("vnp_CreateDate", DateTime.Now.ToString("yyyyMMddHHmmss"));
+            pay.AddRequestData("vnp_ExpireDate", DateTime.Now.AddHours(1).ToString("yyyyMMddHHmmss"));
             pay.AddRequestData("vnp_CurrCode", "VND");
             pay.AddRequestData("vnp_IpAddr", clientIPAddress);
             pay.AddRequestData("vnp_Locale", "vn");
             pay.AddRequestData("vnp_OrderInfo", sentInfo.orderInfo);
             pay.AddRequestData("vnp_OrderType", "other");
-            pay.AddRequestData("vnp_ReturnUrl", returnUrl);
+            pay.AddRequestData("vnp_ReturnUrl", sentInfo.returnUrl ?? returnUrl);
             pay.AddRequestData("vnp_TxnRef", paymentId);
 
             string paymentUrl = pay.CreateRequestUrl(url, hashSecret);
 
-            var payment = paymentService.CreateNewPayment(booking.AppointmentFee, paymentId, sentInfo.orderInfo, sentInfo.appointmentId, "VNPay", DateTime.UtcNow.AddHours(1), out var message);
+            var payment = paymentService.CreateNewPayment(booking.AppointmentFee, paymentId, sentInfo.orderInfo, sentInfo.appointmentId, "VNPay", DateTime.Now.AddHours(1), out var message);
 
             if (payment == null)
             {
@@ -177,11 +177,14 @@ namespace ClinicPlatformWebAPI.Controllers
                     }
                     else
                     {
-                        BadRequest(new HttpResponseModel
+                        payment = paymentService.SetPaymentStatusToCanceled(payment.TransactId, out var message);
+
+                        return BadRequest(new HttpResponseModel
                         {
                             StatusCode = 400,
                             Success = false,
-                            Message = $"Payment failed with error code {vnp_ResponseCode}"
+                            Message = $"Payment failed with error code {vnp_ResponseCode}",
+                            Content = payment
                         });
                     }
                 }

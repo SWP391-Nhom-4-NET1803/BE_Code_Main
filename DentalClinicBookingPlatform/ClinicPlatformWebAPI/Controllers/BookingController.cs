@@ -6,6 +6,7 @@ using ClinicPlatformObjects.UserModels.DentistModel;
 using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.ModelMapper;
 using ClinicPlatformWebAPI.Helpers.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
@@ -33,6 +34,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("clinic/{id}")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<IHttpResponseModel<IEnumerable<AppointmentViewModel>>> GetClinicAppointments(int id, DateOnly? from_date, DateOnly? to_date, TimeOnly? from_time, TimeOnly? to_time, bool requestOldItems = true, int? page_size = null, int? page_index = null)
         {
             if (clinicService.GetClinicWithId(id) == null)
@@ -58,6 +60,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("staff/{id}")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<IHttpResponseModel<IEnumerable<AppointmentViewModel>>> GetClinicStaffAppointments(int id, DateOnly? from_date, DateOnly? to_date, TimeOnly? from_time, TimeOnly? to_time, bool requestOldItems = true, int? page_size = null, int? page_index = null)
         {
             if (userService.GetUserWithDentistId(id) == null)
@@ -84,6 +87,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("customer/{id}")]
+        [Authorize(Roles = "Customer")]
         public ActionResult<IHttpResponseModel<IEnumerable<AppointmentViewModel>>> GetCustomerAppointments(int id, DateOnly? from_date, DateOnly? to_date, TimeOnly? from_time, TimeOnly? to_time, bool requestOldItems = true, int? page_size = null, int? page_index = null)
         {
             if (userService.GetUserWithCustomerId(id) == null)
@@ -116,6 +120,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPost("staff/create-schedule")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> CreateNewSchedule([FromBody] AppointmentRegistrationModel bookInfo, [FromQuery] AppointmentSetting setting)
         {
             bookInfo.AppointmentType = "treatment";
@@ -174,6 +179,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("staff/note/{id}")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponse> AddAppointmentNote([Required]Guid id, [FromBody] string note)
         {
             var appointment = bookingService.SetAppointmentNote(id, note, out var message);
@@ -198,6 +204,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPost("customer/book")]
+        [Authorize(Roles = "Customer")]
         public ActionResult<HttpResponseModel> CreateNewCustomerAppointment([FromBody] AppointmentRegistrationModel bookInfo)
         {
             bookInfo.Status = "pending";
@@ -212,7 +219,7 @@ namespace ClinicPlatformWebAPI.Controllers
                     StatusCode = 201,
                     Success = true,
                     Message = $"Created a booking for customer {appointment.CustomerId}!",
-                    Content = appointment
+                    Content = ConvertToBookingView(appointment)
                 });
             }
             else
@@ -313,6 +320,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("/cancel")]
+        [Authorize]
         public ActionResult<IHttpResponseModel<AppointmentViewModel>> CancelBooking(Guid book_id)
         {
             var result = bookingService.CancelBooking(book_id, out var message);
@@ -340,6 +348,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("/finish")]
+        [Authorize(Roles = "Dentist")]
         public ActionResult<IHttpResponseModel<AppointmentViewModel>> FinishBooking(Guid book_id)
         {
             var result = bookingService.FinishBooking(book_id, out var message);
