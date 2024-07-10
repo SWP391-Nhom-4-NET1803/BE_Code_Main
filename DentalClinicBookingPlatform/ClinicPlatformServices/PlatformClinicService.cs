@@ -81,6 +81,16 @@ namespace ClinicPlatformServices
             return result;
         }
 
+        public IEnumerable<ClinicInfoModel> GetVerifiedClinics()
+        {
+            return clinicRepository.GetAllClinic(true, false, false);
+        }
+        public IEnumerable<ClinicInfoModel> GetUnverifiedClinics()
+        {
+            return clinicRepository.GetAllClinic(false, false, true);
+        }
+
+
         public ClinicInfoModel? GetClinicWithId(int id)
         {
             return clinicRepository.GetClinic(id);

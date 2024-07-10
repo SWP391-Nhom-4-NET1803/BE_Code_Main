@@ -8,6 +8,8 @@ namespace ClinicPlatformServices.Contracts
         IEnumerable<ClinicInfoModel> GetClinicWorkingInHourRange(TimeOnly start, TimeOnly end);
         ClinicInfoModel? GetClinicWithId(int id);
         IEnumerable<ClinicInfoModel> GetAllClinic(int size, int page);
+        IEnumerable<ClinicInfoModel> GetVerifiedClinics();
+        IEnumerable<ClinicInfoModel> GetUnverifiedClinics();
         IEnumerable<ClinicInfoModel> GetClinicWithName(string name);
         ClinicInfoModel? GetClinicWithOwnerId(int ownerId);
         ClinicInfoModel? UpdateClinicInformation(ClinicInfoModel clinicInfo, out string message);

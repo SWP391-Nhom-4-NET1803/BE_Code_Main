@@ -49,9 +49,14 @@ namespace ClinicPlatformRepositories
             return null;
         }
 
-        public IEnumerable<ClinicInfoModel> GetAllClinic(bool includeRemoved = true, bool includeUnverified = true)
+        public IEnumerable<ClinicInfoModel> GetAllClinic(bool includeVerified = true,bool includeRemoved = true, bool includeUnverified = true)
         {
             IEnumerable<ClinicInfoModel> result = from clinic in context.Clinics.ToList() select MapToClinicInfo(clinic);
+
+            if (!includeVerified)
+            {
+                result = result.Where(x => x.Status != "verified");
+            }
 
             if (!includeRemoved) 
             {

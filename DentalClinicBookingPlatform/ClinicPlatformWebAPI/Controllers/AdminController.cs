@@ -209,5 +209,94 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
+        [HttpGet("registered-clinic")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicRegistrationModel>>>
+    GetRegisteredClinics()
+        {
+
+            var registeredClinic = clinicService.GetVerifiedClinics();
+            if (registeredClinic == null)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = "There is no registered clinic"
+                });
+            }
+            else
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Success = true,
+                    Content = registeredClinic,
+                    Message = "Success"
+                });
+            }
+        }
+
+        [HttpGet("unregistered-clinic")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicRegistrationModel>>>
+            GetUnregisteredClinics()
+        {
+
+            var unregisteredClinic = clinicService.GetUnverifiedClinics();
+            if (unregisteredClinic == null)
+            {
+                return BadRequest(new HttpResponseModel()
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = "There is no unregistered clinic"
+                });
+            }
+            else
+            {
+                return Ok(new HttpResponseModel()
+                {
+                    StatusCode = 200,
+                    Success = true,
+                    Content = unregisteredClinic,
+                    Message = "Success"
+                });
+            }
+        }
+
+        [HttpPut("clinic/unverify/{clinicId}")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> UnverifyClinicStatus(int clinicId)
+        {
+            ClinicInfoModel? clinic = clinicService.GetClinicWithId(clinicId);
+
+            HttpResponseModel response = new HttpResponseModel();
+
+            if (clinic == null)
+            {
+                response.StatusCode = 400;
+                response.Success = false;
+                response.Message = $"Can not find clinic with Id {clinicId}";
+                return BadRequest(response);
+            }
+            else if (clinic.Status == "unverified" || clinic.Status == "removed")
+            {
+                response.StatusCode = 400;
+                response.Success = false;
+                response.Message = "Can not unverify this clinic!";
+                return BadRequest(response);
+            }
+            else
+            {
+                clinic.Status = "unverified";
+                clinicService.UpdateClinicInformation(clinic, out _);
+
+                response.StatusCode = 200;
+                response.Message = "Updated clinic status!";
+                response.Success = true;
+                return Ok(response);
+            }
+        }
+
+
+
     }
 }
