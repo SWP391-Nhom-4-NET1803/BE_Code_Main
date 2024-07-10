@@ -55,7 +55,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 200,
                 Success = false,
                 Message = "Success",
-                Content = result
+                Content = result.Select(x => ConvertToBookingView(x)),
             });
         }
 
@@ -82,7 +82,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 200,
                 Success = true,
                 Message = "Success",
-                Content = result
+                Content = result.Select(x => ConvertToBookingView(x)),
             });
         }
 
@@ -103,19 +103,12 @@ namespace ClinicPlatformWebAPI.Controllers
             var result = bookingService.GetAllCustomerBooking(id);
             result = bookingService.FilterBookList(result, from_date, to_date, requestOldItems, page_size, page_index).ToList();
 
-            List<AppointmentViewModel> resultset = result.Select(x => ConvertToBookingView(x)).ToList();
-
-            /*foreach(var item in result)
-            {
-                resultset.Add(ConvertToBookingView(item));
-            }*/
-
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
                 Success = true,
                 Message = "Success",
-                Content = resultset
+                Content = result.Select(x => ConvertToBookingView(x))
             });
         }
 
@@ -382,13 +375,8 @@ namespace ClinicPlatformWebAPI.Controllers
             var dentistInfo = userService.GetUserWithDentistId(bookModel.DentistId!)!;
             var clinicSlotInfo = scheduleService.GetClinicSlotById(bookModel.ClinicSlotId!)!;
 
-            BookedServiceInfoModel? service = bookingService.GetBookedService(bookModel.Id);
-            ClinicServiceInfoModel? serviceInfo = null;
-
-            if (service != null)
-            {
-                serviceInfo = clinicServiceServivce.GetClinicService(service.ClinicServiceId);
-            }
+            BookedServiceInfoModel service = bookingService.GetBookedService(bookModel.Id)!;
+            ClinicServiceInfoModel serviceInfo = clinicServiceServivce.GetClinicService(service.ClinicServiceId)!;
 
             return new AppointmentViewModel()
             {
@@ -399,14 +387,21 @@ namespace ClinicPlatformWebAPI.Controllers
                 AppointmentType = bookModel.Type!,
                 CustomerFullName = customerInfo.Fullname!,
                 DentistFullname = dentistInfo.Fullname!,
+                DentistNote = bookModel.Note,
                 AppointmentDate = (DateOnly)bookModel.AppointmentDate!,
                 AppointmentTime = (TimeOnly)clinicSlotInfo.StartTime!,
                 ExpectedEndTime = (TimeOnly)clinicSlotInfo.EndTime!,
-                SelectedServiceName = serviceInfo?.Name ?? "No service",
+                SelectedServiceName = serviceInfo.Name ,
                 FinalFee = bookModel.AppointmentFee,
                 BookingStatus = bookModel.Status,
                 CreationTime = bookModel.CreationTime,
-                IsRecurring = bookModel.CyleCount > 0,
+                IsRecurring = bookModel.OriginalAppoinment != null,
+                ClinicId = clinicInfo.Id,
+                CustomerId = customerInfo.Id,
+                DentistId = dentistInfo.Id,
+                OriginalAppointment = bookModel.OriginalAppoinment,
+                ServiceId = serviceInfo.ClinicServiceId,
+                SlotId = bookModel.ClinicSlotId,
             };
         }
 

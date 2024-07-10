@@ -16,6 +16,7 @@ namespace ClinicPlatformDTOs.BookingModels
         public DateTime CreationTime { get; set; }
         public TimeOnly AppointmentTime { get; set; }
         public TimeOnly ExpectedEndTime { get; set; }
+        public string DentistNote { get; set; } = null!;
         public string ClinicName { get; set; } = null!;
         public string ClinicAddress { get; set; } = null!;
         public string ClinicPhone { get; set; } = null!;
@@ -23,5 +24,13 @@ namespace ClinicPlatformDTOs.BookingModels
         public int FinalFee { get; set; }
         public bool IsRecurring { get; set; }
         public string BookingStatus { get; set; } = null!;
+
+        // Ids for other reasons
+        public int CustomerId { get; set; }
+        public int DentistId { get; set; }
+        public int ClinicId { get; set; }
+        public Guid SlotId { get; set; }
+        public Guid ServiceId { get; set; }
+        public Guid? OriginalAppointment {  get; set; }
     }
 }
