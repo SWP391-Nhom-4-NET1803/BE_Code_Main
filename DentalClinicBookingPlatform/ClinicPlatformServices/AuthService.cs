@@ -44,6 +44,7 @@ namespace ClinicPlatformServices
                 new Claim(ClaimTypes.NameIdentifier, user.Username!),
                 new Claim(ClaimTypes.Email, user.Email!),
                 new Claim(ClaimTypes.Role, user.Role.ToString()!),
+                new Claim("IsOwner", user.IsOwner ? "1" : "0"),
 
                 //new Claim("status",userStatus.StatusName),
             });
