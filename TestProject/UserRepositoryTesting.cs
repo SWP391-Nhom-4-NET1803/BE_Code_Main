@@ -1,3 +1,4 @@
+using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformRepositories;
 using ClinicPlatformRepositories.Contracts;
@@ -11,6 +12,8 @@ namespace TestProject
     public class UserRepositoryTesting
     {
         private Mock<IUserRepository> userRepository;
+        private Mock<IClinicRepository> clinicRepository;
+
 
         public UserRepositoryTesting()
         {
@@ -19,7 +22,7 @@ namespace TestProject
         [SetUp]
         public void SetUpTest()
         {
-            List<UserInfoModel> MockDatabase = new List<UserInfoModel>()
+            List<UserInfoModel> MockUserTable = new List<UserInfoModel>()
             { 
                 new UserInfoModel() {Id = 1, Username = "Example1", PasswordHash="3JCFCWE33", Salt="Uok334fe", Email="G@gmail.com" },
                 new UserInfoModel() {Id = 2, Username = "Example2", PasswordHash="Haerufe2424gt", Salt="Uwwe23ke", Email="F@gmail.com" },
@@ -27,31 +30,39 @@ namespace TestProject
                 new UserInfoModel() {Id = 4, Username = "Example4", PasswordHash="bbEC42rfff34342", Salt="56keGG", Email="D@gmail.com" },
             };
 
+            List<ClinicInfoModel> MockClinicTable = new List<ClinicInfoModel>()
+            {
+
+            };
+
             userRepository = new Mock<IUserRepository>();
 
             userRepository.Setup(x => x.GetAllUser(true, true))
-                .Returns(MockDatabase);
+                .Returns(MockUserTable);
 
             userRepository.Setup(x => x.GetUser(It.IsAny<int>()))
-                .Returns<int>((int id) => { return MockDatabase.Where(x => x.Id == id).FirstOrDefault(); });
+                .Returns<int>((int id) => { return MockUserTable.Where(x => x.Id == id).FirstOrDefault(); });
 
                 userRepository.Setup(x => x.GetUserWithEmail(It.IsAny<string>()))
-                .Returns<string>((string id) => { return MockDatabase.Where(x => x.Email == id).FirstOrDefault(); });
+                .Returns<string>((string id) => { return MockUserTable.Where(x => x.Email == id).FirstOrDefault(); });
 
             userRepository.Setup(x => x.AddUser(It.IsAny<UserInfoModel>()))
-                .Returns<UserInfoModel>((x) => { x.Id = MockDatabase.Count() + 1; MockDatabase.Add(x); return x; });
+                .Returns<UserInfoModel>((x) => { x.Id = MockUserTable.Count() + 1; MockUserTable.Add(x); return x; });
+
+            clinicRepository = new Mock<IClinicRepository>();
         }
 
         [TearDown]
         public void CleanTest()
         {
             userRepository.Reset();
+            clinicRepository.Reset();
         }
 
         [Test]
         public void AddNewUser()
         {
-            UserService userService = new UserService(userRepository.Object);
+            UserService userService = new UserService(userRepository.Object, clinicRepository.Object);
 
             UserInfoModel? user = new UserInfoModel()
             {
@@ -79,7 +90,7 @@ namespace TestProject
         [Test]
         public void GetUser()
         {
-            UserService userService = new UserService(userRepository.Object);
+            UserService userService = new UserService(userRepository.Object, clinicRepository.Object);
 
             UserInfoModel? user = userService.GetUserWithUserId(3);
 
@@ -96,7 +107,7 @@ namespace TestProject
         [Test]
         public void FindUserWithEmail()
         {
-            UserService userService = new UserService(userRepository.Object);
+            UserService userService = new UserService(userRepository.Object, clinicRepository.Object);
 
             UserInfoModel? user = userService.GetUserWithEmail("M@gmail.com");
 
