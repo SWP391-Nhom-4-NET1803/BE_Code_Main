@@ -9,7 +9,7 @@ namespace ClinicPlatformRepositories.Contracts
 {
     public interface IClinicRepository: IDisposable
     {
-        IEnumerable<ClinicInfoModel> GetAllClinic(bool includeRemoved = true, bool includeUnverified = true);
+        IEnumerable<ClinicInfoModel> GetAllClinic(bool includeVerified = true, bool includeRemoved = true, bool includeUnverified = true);
 
         ClinicInfoModel? GetClinic(int clinicId);
 
