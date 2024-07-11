@@ -33,12 +33,14 @@ namespace ClinicPlatformServices
 
         public UserInfoModel? GetUserWithCustomerId(int customerId)
         {
-            return userRepository.GetUserWithCustomerID(customerId);
+            var user = userRepository.GetUserWithCustomerID(customerId);
+            return user == null || user.IsRemoved ? null : user;
         }
 
         public UserInfoModel? GetUserWithDentistId(int dentistId)
         {
-            return userRepository.GetUserWithDentistID(dentistId);
+            var user = userRepository.GetUserWithDentistID(dentistId);
+            return  user == null|| user.IsRemoved ? null : user;
         }
 
         public IEnumerable<UserInfoModel>? GetAllUserWithClinicId(int clinicId)

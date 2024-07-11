@@ -197,7 +197,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPost("customer/book")]
-        [Authorize(Roles = "Customer")]
+        //[Authorize(Roles = "Customer")]
         public ActionResult<HttpResponseModel> CreateNewCustomerAppointment([FromBody] AppointmentRegistrationModel bookInfo)
         {
             bookInfo.Status = "pending";
@@ -249,7 +249,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("available/{clinicId}/dentist")]
-        public ActionResult<IHttpResponseModel<IEnumerable<DentistInfoViewModel>>> GetFreeSlotOn(int clinicId)
+        public ActionResult<IHttpResponseModel<IEnumerable<DentistInfoViewModel>>> GetFreeDentistOn(int clinicId)
         {
             if (clinicService.GetClinicWithId(clinicId) == null)
             {
@@ -309,6 +309,51 @@ namespace ClinicPlatformWebAPI.Controllers
                 Success = true,
                 Message = $"Found {availableSlot.Count()} available slot.",
                 Content = clinicSlotByWeekday
+            });
+        }
+
+        [HttpPut("change/dentist")]
+        [Authorize(Roles = "Dentist")]
+        public ActionResult<HttpResponseModel> ChangeDentistForAppointment([Required] Guid appointmentId, [Required] int dentistId)
+        {
+            var appointment = bookingService.GetBooking(appointmentId);
+
+            if (appointment == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = "Can not find appointment with provided Id"
+                });
+            }
+
+            bool avaiable = appointment.Type == "checkup" ? 
+                bookingService.DentistIsFreeForCheckupOn(appointment.AppointmentDate, appointment.ClinicSlotId, dentistId, out string message):
+                bookingService.DentistIsFreeForTreatmentOn(appointment.AppointmentDate, appointment.ClinicSlotId, dentistId, out message);
+
+            if (avaiable)
+            {
+                appointment = bookingService.ChangeDentist(appointmentId, dentistId, out message);
+
+                if (appointment != null)
+                {
+                    return Ok(new HttpResponseModel
+                    {
+                        StatusCode = 200,
+                        Success = true,
+                        Message = message,
+                        Content = ConvertToBookingView(appointment)
+                    });
+                }
+                
+            }
+
+            return BadRequest(new HttpResponseModel
+            {
+                StatusCode = 400,
+                Success = false,
+                Message = message,
             });
         }
 

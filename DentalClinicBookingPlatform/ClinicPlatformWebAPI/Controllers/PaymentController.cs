@@ -22,18 +22,20 @@ namespace ClinicPlatformWebAPI.Controllers
         private IUserService userService;
         private IClinicService clinicService;
         private IBookingService bookingService;
+        private IScheduleService scheduleService;
         private string url = "http://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
         private string returnUrl = "https://localhost:7163/api/payment/vnpay/return";
         private string tmCode = string.Empty;
         private string hashSecret = string.Empty;
 
-        public PaymentController(IConfiguration configuration, IPaymentService paymentService, IBookingService bookingService, IUserService userService, IClinicService clinicService)
+        public PaymentController(IConfiguration configuration, IPaymentService paymentService, IBookingService bookingService, IUserService userService, IClinicService clinicService, IScheduleService scheduleService)
         {
             var return_url = configuration.GetValue<string>("Frontend:PaymentSuccessPage");
 
             this.paymentService = paymentService;
             this.bookingService = bookingService;
             this.userService = userService;
+            this.scheduleService = scheduleService;
             this.returnUrl = return_url == null || return_url.Length == 0 ? returnUrl : return_url;
             tmCode = configuration.GetValue<string>("VNPay:TMCode")!;
             hashSecret = configuration.GetValue<string>("VNPay:VNPay")!;
@@ -107,6 +109,99 @@ namespace ClinicPlatformWebAPI.Controllers
                 Message = message,
                 Success = true,
                 Content = paymentUrl,
+            });
+        }
+
+        [HttpPost("cash")]
+        public ActionResult CreateCashPayment([FromBody] VNPayInfoModel paymentInfo)
+        {
+            var appointment = bookingService.GetBooking(paymentInfo.appointmentId);
+
+            if (appointment != null && appointment.Status == "pending")
+            {
+                IVNPayService pay = HttpContext.RequestServices.GetService<IVNPayService>()!;
+
+                var slot = scheduleService.GetClinicSlotById(appointment.ClinicSlotId);
+
+                var payment = paymentService.CreateNewPayment(appointment.AppointmentFee, pay.CreateTransactionId(), paymentInfo.orderInfo, appointment.Id, "cash", appointment.AppointmentDate.ToDateTime(slot.EndTime).AddHours(1), out string message);
+
+                if (payment != null)
+                {
+                    appointment = bookingService.SetAppoinmentStatus(paymentInfo.appointmentId, "booked", out message);
+                }
+                else
+                {
+                    BadRequest(new HttpResponseModel
+                    {
+                        StatusCode = 400,
+                        Success = false,
+                        Message = message
+                    });
+                }
+
+                return Ok(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = message,
+                });
+            }
+
+            return BadRequest(new HttpResponseModel
+            {
+                StatusCode = 400,
+                Success = false,
+                Message = "Appointment either non exist or already completed"
+            });  
+        }
+
+        [HttpGet("cash/confirm")]
+        public ActionResult CompleteCashPayment([FromQuery] Guid appointmentId)
+        {
+            var appointment = bookingService.GetBooking(appointmentId);
+
+            if (appointment == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = "Appointment does not exist with provided Id"
+                });
+            }
+
+            var payment = paymentService.GetPaymentsForAppointment(appointmentId).Where(x => x.Provider == "cash");
+
+            if (payment.Count() == 0)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = "No cash payment found for this appointment"
+                });
+            }
+
+            var targetPayment = payment.First();
+
+            targetPayment = paymentService.SetPaymentStatusToCompleted(targetPayment.TransactId, out var message);
+
+            if (targetPayment == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 400,
+                    Success = false,
+                    Message = message,
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 200,
+                Success = true,
+                Message = message,
+                Content = targetPayment
             });
         }
 

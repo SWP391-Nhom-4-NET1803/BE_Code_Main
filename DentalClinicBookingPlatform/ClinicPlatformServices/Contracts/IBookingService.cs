@@ -1,5 +1,6 @@
 ﻿using ClinicPlatformDatabaseObject;
 using ClinicPlatformDTOs.BookingModels;
+using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformObjects.BookingModels;
 using System;
 using System.Collections.Generic;
@@ -118,6 +119,7 @@ namespace ClinicPlatformServices.Contracts
 
         public bool DentistIsFreeForCheckupOn(DateOnly date, Guid slotId, int dentistId, out string message);
         public bool DentistIsFreeForTreatmentOn(DateOnly date, Guid slotId, int dentistId, out string message);
+        IEnumerable<UserInfoModel> GetDentistFreeForCheckup(int clinicId, DateOnly date, Guid slotId);
 
         IEnumerable<AppointmentInfoModel> FilterBookList(IEnumerable<AppointmentInfoModel> list, DateOnly? start = null, DateOnly? end = null, bool includeCanceledOrFinished = false, int? page_size = null, int? page = null);
 

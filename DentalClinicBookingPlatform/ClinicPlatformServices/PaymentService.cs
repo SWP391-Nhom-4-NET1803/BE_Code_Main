@@ -172,8 +172,10 @@ namespace ClinicPlatformServices
         public IEnumerable<PaymentInfoModel> GetPaymentOfCustomer(int customerId)
         {
             List<PaymentInfoModel> paymentList = new List<PaymentInfoModel>();
+
+            var user = userRepository.GetUserWithCustomerID(customerId);
             
-            var bookingInfo = bookingRepository.GetUserBooking(customerId);
+            var bookingInfo = bookingRepository.GetUserBooking(user.Id);
 
             foreach (var appointment in bookingInfo)
             {

@@ -76,6 +76,7 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
                 Email = userInfo.Email,
                 Username = userInfo.Username,
                 PasswordHash = userInfo.Password,
+                Fullname = userInfo.Username
             };
         }
 
