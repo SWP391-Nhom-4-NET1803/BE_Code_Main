@@ -505,7 +505,7 @@ namespace ClinicPlatformServices
 
             if (dentist == null)
             {
-                message = "Can not find the user information";
+                message = "Can not find the dentist information";
                 return null;
             }
 
@@ -531,21 +531,22 @@ namespace ClinicPlatformServices
                 return null;
             }
 
-            int dentistCount = GetAllBookingOnDay(bookRegistrationInfo.AppointmentDate).Where(x => x.ClinicSlotId == slotInfo.ClinicSlotId && x.ClinicId == bookRegistrationInfo.ClinicId && x.DentistId  == dentist.DentistId && x.Type == bookRegistrationInfo.AppointmentType).Count();
+            
 
-            if ((bookRegistrationInfo.AppointmentType == "treatment" && dentistCount >= slotInfo.MaxTreatment) || (bookRegistrationInfo.AppointmentType == "checkup" && dentistCount >= slotInfo.MaxCheckup) )
+            if ((bookRegistrationInfo.AppointmentType == "treatment" && !DentistIsFreeForTreatmentOn(bookRegistrationInfo.AppointmentDate, bookRegistrationInfo.TimeSlotId, bookRegistrationInfo.DentistId, out message)) || 
+                (bookRegistrationInfo.AppointmentType == "checkup" && !DentistIsFreeForCheckupOn(bookRegistrationInfo.AppointmentDate, bookRegistrationInfo.TimeSlotId, bookRegistrationInfo.DentistId, out message)))
             {
                 message = "This slot is fully booked and unavailable for this date";
                 return null;
             }
 
-            IEnumerable<AppointmentInfoModel> customerAppointment = GetAllBookingOnDay(bookRegistrationInfo.AppointmentDate).Where(x => x.CustomerId == customer.Id && x.Type == bookRegistrationInfo.AppointmentType);
+            IEnumerable<AppointmentInfoModel> customerAppointment = GetAllBookingOnDay(bookRegistrationInfo.AppointmentDate).Where(x => x.CustomerId == customer.CustomerId);
 
             foreach(var appointment in customerAppointment) 
             {
                 var appointmentSlot = scheduleRepository.GetClinicSlot(appointment.ClinicSlotId);
 
-                var chosenSlot = scheduleRepository.GetClinicSlot(appointment.ClinicSlotId);
+                var chosenSlot = scheduleRepository.GetClinicSlot(bookRegistrationInfo.TimeSlotId);
 
                 if (appointmentSlot.StartTime == chosenSlot.StartTime)
                 {
@@ -804,6 +805,19 @@ namespace ClinicPlatformServices
 
             message = "Unavailable!";
             return false;
+        }
+
+        public IEnumerable<UserInfoModel> GetDentistFreeForCheckup(int clinicId, DateOnly date, Guid slotId)
+        {
+            List<UserInfoModel> users = (userRepository.GetUserWithRole("Dentist").Where(x => x.ClinicId == clinicId && x.IsActive && !x.IsRemoved) as List<UserInfoModel>)!;
+
+            foreach (var user in users)
+            {
+                if (!DentistIsFreeForCheckupOn(date, slotId, (int) user.DentistId!, out _))
+                users.Remove(user);
+            }
+
+            return users;
         }
 
         public IEnumerable<AppointmentInfoModel> FilterBookList(IEnumerable<AppointmentInfoModel> list, DateOnly? start = null, DateOnly? end = null, bool includeCancelled = false, int? page_size = null, int? page = null)
