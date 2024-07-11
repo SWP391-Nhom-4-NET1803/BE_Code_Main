@@ -141,9 +141,10 @@ namespace ClinicPlatformWebAPI.Controllers
 
                 return Ok(new HttpResponseModel
                 {
-                    StatusCode = 400,
-                    Success = false,
+                    StatusCode = 200,
+                    Success = true,
                     Message = message,
+                    Content = payment
                 });
             }
 
