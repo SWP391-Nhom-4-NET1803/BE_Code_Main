@@ -47,14 +47,13 @@ namespace ClinicPlatformWebAPI.Controllers
                 Success = true,
                 Message = "Update sucessfully",
             });
-
         }
 
         [HttpPost("password/reset")]
         [AllowAnonymous]
         public ActionResult<HttpResponseModel> ResetPassword([FromBody] PasswordResetModel resetInfo)
         {
-            TokenInfoModel? tokenInfo = tokenService.MatchTokenValue(resetInfo.TokenValue, out var message);
+            TokenInfoModel? tokenInfo = tokenService.MatchTokenValue(resetInfo.TokenValue!, out var message);
 
             if (tokenInfo == null)
             {
@@ -67,8 +66,6 @@ namespace ClinicPlatformWebAPI.Controllers
             }
 
             UserInfoModel user = userService.GetUserWithUserId(tokenInfo.UserId)!;
-
-            
 
             if (!userService.UpdatePasswordForUserWithId(user.Id, resetInfo.NewPassword, out message))
             {
