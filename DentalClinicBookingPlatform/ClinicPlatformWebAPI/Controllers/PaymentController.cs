@@ -314,6 +314,30 @@ namespace ClinicPlatformWebAPI.Controllers
             return Redirect(@"https://localhost:7163/api/payment/vnpay/success" + Request.QueryString);
         }
 
+        [HttpGet]
+        public ActionResult GetPayment(string transactionId)
+        {
+            var payment = paymentService.GetPayment(transactionId);
+
+            if (payment == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 404,
+                    Success = false,
+                    Message = "Can not find the payment information",
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 0,
+                Success = true,
+                Message = "Found transaction",
+                Content = payment
+            });
+        }
+
         [HttpGet("customer/{id}")]
         public IActionResult GetCustomerPayment(int id)
         {

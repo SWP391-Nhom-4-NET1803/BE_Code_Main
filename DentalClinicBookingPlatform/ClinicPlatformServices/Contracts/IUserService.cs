@@ -32,7 +32,7 @@ namespace ClinicPlatformServices.Contracts
 
         bool CheckLogin(string username, string password, out UserInfoModel? user);
 
-        UserInfoModel? UpdateUserInformation(UserInfoModel information, out string message);
+        (int statusCode, UserInfoModel? userInfo) UpdateUserInformation(UserInfoModel information, out string message);
 
         bool ExistUser(int id);
 

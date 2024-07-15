@@ -1,4 +1,5 @@
-﻿using ClinicPlatformDTOs.ClinicModels;
+﻿using Azure;
+using ClinicPlatformDTOs.ClinicModels;
 using ClinicPlatformDTOs.Comparator;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformRepositories;
@@ -71,11 +72,9 @@ namespace ClinicPlatformServices
                 result = result.Take(top).ToList();
             }
 
-            foreach(var item in result)
+            foreach (var clinic in result)
             {
-                UserInfoModel ownerInfo = userRepository.GetUser(item.OwnerId)!;
-
-                item.OwnerName = ownerInfo.Fullname;
+                clinic.OwnerName = userRepository.GetUser(clinic.OwnerId)!.Fullname;
             }
 
             return result;
@@ -83,17 +82,37 @@ namespace ClinicPlatformServices
 
         public IEnumerable<ClinicInfoModel> GetVerifiedClinics()
         {
-            return clinicRepository.GetAllClinic(true, false, false);
+            var result = clinicRepository.GetAllClinic(true, false, false);
+
+            foreach (var clinic in result)
+            {
+                clinic.OwnerName = userRepository.GetUser(clinic.OwnerId)!.Fullname;
+            }
+
+            return result;
         }
         public IEnumerable<ClinicInfoModel> GetUnverifiedClinics()
         {
-            return clinicRepository.GetAllClinic(false, false, true);
-        }
+            var result = clinicRepository.GetAllClinic(false, false, true);
 
+            foreach (var clinic in result)
+            {
+                clinic.OwnerName = userRepository.GetUser(clinic.OwnerId)!.Fullname;
+            }
+
+            return result;
+        }
 
         public ClinicInfoModel? GetClinicWithId(int id)
         {
-            return clinicRepository.GetClinic(id);
+            ClinicInfoModel? result = clinicRepository.GetClinic(id);
+
+            if (result != null)
+            {
+                result.OwnerName = userRepository.GetUser(result.OwnerId)!.Fullname;
+            }
+
+            return result;
         }
 
         public IEnumerable<ClinicInfoModel> GetClinicWithName(string prefix)

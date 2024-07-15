@@ -59,6 +59,7 @@ namespace ClinicPlatformWebAPI.Controllers
         public ActionResult<HttpResponseModel> RegisterCustomer([FromBody] CustomerRegistrationModel userInfo)
         {
             UserInfoModel? user = UserInfoMapper.FromRegistration(userInfo);
+            user.IsActive = true;
 
             user = userService.RegisterAccount(user, "Customer", out var message);
             if (user == null)
@@ -85,16 +86,6 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             UserInfoModel? customer = (UserInfoModel?)HttpContext.Items["user"]!;
 
-            if (customer.Id != updatedInfo.Id)
-            {
-                return BadRequest(new HttpResponseModel
-                {
-                    StatusCode = 400,
-                    Success = false,
-                    Message = $"User Id and update info Id mismatch! UserId: {customer.Id}, TargetUserId: {updatedInfo.Id}."
-                });
-            }
-
             customer.Insurance = updatedInfo.Insurance ?? customer.Insurance;
             customer.Email = updatedInfo.Email ?? customer.Email;
             customer.Fullname = updatedInfo.Fullname ?? customer.Fullname;
@@ -102,13 +93,13 @@ namespace ClinicPlatformWebAPI.Controllers
             customer.Birthdate = updatedInfo.Birthdate ?? customer.Birthdate;
             customer.Sex = updatedInfo.Sex ?? customer.Sex;
 
-            customer = userService.UpdateUserInformation(customer, out var message);
+            var result = userService.UpdateUserInformation(customer, out var message);
 
-            if (customer == null)
+            if (result.userInfo == null)
             {
                 return BadRequest(new HttpResponseModel
                 {
-                    StatusCode = 400,
+                    StatusCode = result.statusCode,
                     Success = false,
                     Message = message
                 });
@@ -117,17 +108,17 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 return Ok(new HttpResponseModel
                 {
-                    StatusCode = 200,
+                    StatusCode = result.statusCode,
                     Success = true,
-                    Message = $"Update information for customer UserId {customer.Id}",
-                    Content = customer
+                    Message = "Updated information for user",
+                    Content = UserInfoMapper.ToCustomerView(result.userInfo)
                 });
             }
         }
 
         [HttpPut("activate")]
         [AllowAnonymous]
-        public ActionResult<HttpResponseModel> ActivateUserAccount([FromQuery] int userId, [FromQuery] string token)
+        public ActionResult<HttpResponseModel> ActivateUserAccount([FromQuery] int userId)
         {
 
             if (!userService.ActivateUser(userId, out var message))
@@ -149,7 +140,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("deactivate")]
-        [Authorize(Roles = "Customer")]
+        [Authorize(Roles = "Customer,Admin")]
         public ActionResult<HttpResponseModel> InactivateUserAccount()
         {
             UserInfoModel user = (UserInfoModel)HttpContext.Items["user"]!;

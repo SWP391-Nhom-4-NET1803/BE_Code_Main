@@ -33,6 +33,31 @@ namespace ClinicPlatformWebAPI.Controllers
             this.clinicServiceServivce = clinicServiceService; 
         }
 
+        [HttpGet("{id}")]
+        public ActionResult GetAppointmentInformation(Guid id)
+        {
+            var appointment = bookingService.GetBooking(id);
+
+            if (appointment != null)
+            {
+                return Ok(new HttpResponseModel
+                {
+                    StatusCode = 0,
+                    Success = true,
+                    Message = "Found appointment information",
+                    Content = appointment,
+                });
+            }
+
+            return BadRequest(new HttpResponseModel
+            {
+                StatusCode = 404,
+                Success = false,
+                Message = "No appointment was found with provided Id",
+            });
+        }
+
+
         [HttpGet("clinic/{id}")]
         [Authorize(Roles = "Dentist")]
         public ActionResult<IHttpResponseModel<IEnumerable<AppointmentViewModel>>> GetClinicAppointments(int id, DateOnly? from_date, DateOnly? to_date, TimeOnly? from_time, TimeOnly? to_time, bool requestOldItems = true, int? page_size = null, int? page_index = null)
@@ -266,7 +291,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 200,
                 Success = true,
                 Message = "Success",
-                Content = userService.GetAllUserWithClinicId(clinicId)!.Where(x => x.IsActive && !x.IsRemoved).Select(x => UserInfoMapper.ToDentistView(x))
+                Content = userService.GetAllUserWithClinicId(clinicId)!.Where(x => x.IsActive && !x.IsRemoved && !x.IsOwner).Select(x => UserInfoMapper.ToDentistView(x))
             });
         }
 
@@ -313,7 +338,6 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpPut("change/dentist")]
-        [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> ChangeDentistForAppointment([Required] Guid appointmentId, [Required] int dentistId)
         {
             var appointment = bookingService.GetBooking(appointmentId);
@@ -354,6 +378,40 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 400,
                 Success = false,
                 Message = message,
+            });
+        }
+
+        [HttpPut("change-time")]
+        public ActionResult<HttpResponseModel> ChangeTimeForAppointment([Required] Guid appointmentId, DateOnly? newDate = null, Guid? newTimeSlot = null)
+        {
+            if (newDate != null || newTimeSlot != null)
+            {
+                var appointment = bookingService.ChangeAppointmentTime(out var message, appointmentId, newDate, newTimeSlot);
+
+                if (appointment == null)
+                {
+                    return BadRequest(new HttpResponseModel
+                    {
+                        StatusCode = 400,
+                        Success = false,
+                        Message = message,
+                    });
+                }
+
+                return Ok(new HttpResponseModel
+                {
+                    StatusCode = 200,
+                    Success = true,
+                    Message = message,
+                    Content = ConvertToBookingView(appointment)
+                });
+            }
+
+            return BadRequest(new HttpResponseModel
+            {
+                StatusCode = 400,
+                Success = false,
+                Message = "You must fill in at least one query parameter newDate or newTime",
             });
         }
 

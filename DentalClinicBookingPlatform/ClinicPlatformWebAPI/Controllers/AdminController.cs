@@ -37,6 +37,15 @@ namespace ClinicPlatformWebAPI.Controllers
             this.adminService = adminService;
         }
 
+
+        /// <summary>
+        ///  I WAS WRONG WHEN I CREATED THIS ENDPOINT! 
+        ///  DON'T USE THIS WHILE I'M FINDING ANOTHER WAY TO FIX THIS DANGEROUS ONE.
+        ///  THIS WILL RETURN "ALL" USER INFORMATION, INCLUDING PASSWORD.
+        /// </summary>
+        /// <returns>
+        ///  All system user informations
+        /// </returns>
         [HttpGet("users")]
         public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetUsers()
         {
@@ -54,18 +63,18 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("clinics")]
-        public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> GetClinics([FromQuery] int page = 1)
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> GetClinics([FromQuery] int page_size = int.MaxValue, [FromQuery] int page = 1)
         {
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
                 Message = $"Showing page {page}.",
-                Content = clinicService.GetAllClinic(20, page - 1)
+                Content = clinicService.GetAllClinic(page_size, page - 1)
             });
         }
 
         [HttpGet("customer")]
-        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetCustomer([FromQuery] int pageSize = 20, [FromQuery] int page = 1)
+        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetCustomer([FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
             return Ok(new HttpResponseModel
             {
@@ -77,7 +86,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("clinic-owners")]
-        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetClinicOwners([FromQuery] int pageSize = 20, [FromQuery] int page = 1)
+        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetClinicOwners([FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
             return Ok(new HttpResponseModel
             {
@@ -89,7 +98,7 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("dentist")]
-        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetDentists(int clinicId, [FromQuery] int pageSize = 20, [FromQuery] int page = 1)
+        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetDentists(int clinicId, [FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
             return Ok(new HttpResponseModel
             {
@@ -209,12 +218,14 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
-        [HttpGet("registered-clinic")]
-        public ActionResult<IHttpResponseModel<IEnumerable<ClinicRegistrationModel>>>
-    GetRegisteredClinics()
+        [HttpGet("verified-clinic")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicRegistrationModel>>> GetRegisteredClinics([FromQuery] string name = "", [FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
 
             var registeredClinic = clinicService.GetVerifiedClinics();
+
+            Console.WriteLine(registeredClinic.First().OwnerName);
+
             if (registeredClinic == null)
             {
                 return BadRequest(new HttpResponseModel()
@@ -230,18 +241,18 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     StatusCode = 200,
                     Success = true,
-                    Content = registeredClinic,
+                    Content = registeredClinic.Where(x => x.Name.Contains(name, StringComparison.OrdinalIgnoreCase)).Skip(pageSize * (page - 1)).Take(pageSize),
                     Message = "Success"
                 });
             }
         }
 
-        [HttpGet("unregistered-clinic")]
-        public ActionResult<IHttpResponseModel<IEnumerable<ClinicRegistrationModel>>>
-            GetUnregisteredClinics()
+        [HttpGet("unverified-clinic")]
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicRegistrationModel>>> GetUnregisteredClinics([FromQuery] string name = "", [FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
 
             var unregisteredClinic = clinicService.GetUnverifiedClinics();
+
             if (unregisteredClinic == null)
             {
                 return BadRequest(new HttpResponseModel()
@@ -257,7 +268,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     StatusCode = 200,
                     Success = true,
-                    Content = unregisteredClinic,
+                    Content = unregisteredClinic.Where(x => x.Name.Contains(name, StringComparison.OrdinalIgnoreCase)).Skip(pageSize*(page-1)).Take(pageSize),
                     Message = "Success"
                 });
             }

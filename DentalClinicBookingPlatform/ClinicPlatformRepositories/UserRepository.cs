@@ -81,6 +81,15 @@ namespace ClinicPlatformRepositories
                 .Select(x => MapToUserInfo(x));
         }
 
+        public IEnumerable<UserInfoModel> GetActivatedUser() 
+        {
+            return context.Users
+                .Include(x => x.Customer)
+                .Include(x => x.Dentist)
+                .Where(x => x.Active)
+                .Select(x => MapToUserInfo(x));
+        }
+
         public UserInfoModel? GetUser(int userId)
         {
             User? user = context.Users.Include(x => x.Dentist).Include(x => x.Customer).Where(x => x.Id == userId).FirstOrDefault();
@@ -95,23 +104,36 @@ namespace ClinicPlatformRepositories
 
         public UserInfoModel? GetUserWithCustomerID(int customerId)
         {
-            return GetAllUser().Where(x => x.CustomerId == customerId).FirstOrDefault();
+            return context.Users.Include(x => x.Customer)
+                .Where(x => x.Customer != null && x.Customer.Id == customerId)
+                .Select(x => MapToUserInfo(x))
+                .FirstOrDefault();
         }
 
         public UserInfoModel? GetUserWithDentistID(int dentistId)
         {
-
-            return GetAllUser().Where(x => x.DentistId == dentistId).FirstOrDefault();
+            return context.Users.Include(x => x.Dentist)
+                .Where(x => x.Dentist != null && x.Dentist.Id == dentistId)
+                .Select(x => MapToUserInfo(x))
+                .FirstOrDefault();
         }
 
         public UserInfoModel? GetUserWithEmail(string email)
         {
-            return GetAllUser().Where(x => x.Email == email).FirstOrDefault();
+            return context.Users.Include(x => x.Customer)
+                .Include(x => x.Dentist)
+                .Where(x => x.Email == email && !x.Removed)
+                .Select(x => MapToUserInfo(x))
+                .FirstOrDefault();
         }
 
         public UserInfoModel? GetUserWithUsername(string username)
         {
-            return GetAllUser().Where(x => x.Username == username).FirstOrDefault();
+            return context.Users.Include(x => x.Customer)
+                .Include(x => x.Dentist)
+                .Where(x => x.Username == username)
+                .Select(x => MapToUserInfo(x))
+                .FirstOrDefault();
         }
 
         public void DeleteUser(int userId)
@@ -196,8 +218,8 @@ namespace ClinicPlatformRepositories
                 Email = userInfo.Email,
                 Phone = userInfo.Phone,
                 Fullname = userInfo.Fullname,
-                Active = false,
-                Removed = false,
+                Active = userInfo.IsActive,
+                Removed = userInfo.IsRemoved,
                 CreationTime = DateTime.Now,
                 Role = userInfo.Role,
             };

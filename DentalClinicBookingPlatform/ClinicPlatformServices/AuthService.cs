@@ -68,7 +68,7 @@ namespace ClinicPlatformServices
 
         public string GenerateRefreshToken(UserInfoModel user, int duration = 60)
         {
-            string expirationTime = DateTime.UtcNow.AddMinutes(duration).ToString("MM-dd-yyyy HH:mm:ss");
+            string expirationTime = DateTime.Now.AddMinutes(duration).ToString("MM-dd-yyyy HH:mm:ss");
 
             using (var rng = RandomNumberGenerator.Create())
             {

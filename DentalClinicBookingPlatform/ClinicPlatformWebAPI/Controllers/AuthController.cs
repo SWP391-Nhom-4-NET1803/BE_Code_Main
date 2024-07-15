@@ -1,6 +1,7 @@
 ﻿using ClinicPlatformDTOs.AuthenticationModels;
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformServices.Contracts;
+using ClinicPlatformWebAPI.Helpers.ModelMapper;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -12,7 +13,6 @@ namespace ClinicPlatformWebAPI.Controllers
 {
     [Route("api/auth")]
     [ApiController]
-    [AllowAnonymous]
     public class AuthController : ControllerBase
     {
         private readonly IUserService userService;
@@ -52,7 +52,6 @@ namespace ClinicPlatformWebAPI.Controllers
 
         }
 
-
         [HttpPost("refresh")]
         public ActionResult<IHttpResponseModel<AuthenticationTokenModel>> RefreshToken([FromBody] AuthenticationTokenModel tokens)
         {
@@ -88,6 +87,38 @@ namespace ClinicPlatformWebAPI.Controllers
                     Message = ex.Message });
             }
 
+        }
+
+        [HttpGet("validate")]
+        [Authorize]
+        public ActionResult<HttpResponseModel> ValidateAcessToken()
+        {
+            UserInfoModel? userInfo = HttpContext.Items["user"]! as UserInfoModel;
+
+            Object content = null;
+
+            switch (userInfo.Role)
+            {
+                case "Admin":
+                    content = UserInfoMapper.ToCustomerView(userInfo);
+                    break;
+                case "Customer":
+                    content = UserInfoMapper.ToCustomerView(userInfo);
+                    break;
+                case "Dentist":
+                    content = UserInfoMapper.ToDentistView(userInfo);
+                    break;
+                default:
+                    break;
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 0,
+                Message = "User Is Authenticated",
+                Success = true,
+                Content = content
+            });
         }
 
         [HttpPost("login-google")]
