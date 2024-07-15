@@ -41,6 +41,7 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
             return new CustomerInfoViewModel
             {
                 CustomerId = userInfo.CustomerId ?? 0,
+                UserId = userInfo.Id,
                 Email = userInfo.Email,
                 Username = userInfo.Username,
                 Phone = userInfo.Phone,
@@ -58,6 +59,7 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
             return new DentistInfoViewModel
             {
                 DentistId = userInfo.DentistId ?? 0,
+                UserId = userInfo.Id,
                 Email = userInfo.Email,
                 Username = userInfo.Username,
                 Phone = userInfo.Phone,

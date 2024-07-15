@@ -17,6 +17,5 @@ namespace ClinicPlatformObjects.PayementModels
         public string Status { get; set; } = null!;
         public string Provider { get; set; } = null!;
         public Guid AppointmentId { get; set; }
-
     }
 }

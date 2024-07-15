@@ -188,5 +188,43 @@ namespace ClinicPlatformWebAPI.Controllers
             });
 
         }
+
+        [HttpGet("categories")]
+        [AllowAnonymous]
+        public ActionResult<IHttpResponseModel<IEnumerable<ClinicServiceCategoryModel>>> GetAllCategories()
+        {
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 0,
+                Success = true,
+                Message = "Success",
+                Content = clinicServiceService.GetAllCategory()
+            });
+        }
+
+        [HttpGet("category/{id}")]
+        [AllowAnonymous]
+        public ActionResult<IHttpResponseModel<ClinicServiceCategoryModel>> GetCategory(int id)
+        {
+            var result = clinicServiceService.GetCategory(id);
+
+            if (result == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 404,
+                    Success = false,
+                    Message = $"Can not find service category with Id {id}"
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 0,
+                Success = true,
+                Message = "Found service category",
+                Content = result
+            });
+        }
     }
 }

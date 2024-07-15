@@ -53,28 +53,18 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             UserInfoModel? invoker = (HttpContext.Items["user"] as UserInfoModel)!;
 
-            if (invoker.Id != updatedInfo.Id)
-            {
-                return BadRequest(new HttpResponseModel
-                {
-                    StatusCode = 400,
-                    Success = false,
-                    Message = $"User Id and update info Id mismatch! UserId: {invoker.Id}, TargetUserId: {updatedInfo.Id}."
-                });
-            }
-
             invoker.Username = updatedInfo.Username ?? invoker.Email;
             invoker.Fullname = updatedInfo.Fullname ?? invoker.Fullname;
             invoker.Email = updatedInfo.Email ?? invoker.Email;
             invoker.Phone = updatedInfo.Phone ?? invoker.Phone;
 
-            invoker = userService.UpdateUserInformation(invoker, out var message);
+            var result = userService.UpdateUserInformation(invoker, out var message);
 
-            if (invoker is null)
+            if (result.userInfo is null)
             {
                 return BadRequest(new HttpResponseModel
                 {
-                    StatusCode = 400,
+                    StatusCode = result.statusCode,
                     Success = false,
                     Message = message
                 });
@@ -83,10 +73,10 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 return Ok(new HttpResponseModel
                 {
-                    StatusCode = 200,
+                    StatusCode = result.statusCode,
                     Success = true,
-                    Message = $"Update information for invoker UserId {invoker.Id}",
-                    Content = invoker
+                    Message = message,
+                    Content = result.userInfo
                 });
             }
         }
@@ -211,9 +201,9 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 return BadRequest(new HttpResponseModel
                 {
-                    StatusCode = 400,
+                    StatusCode = 404,
                     Success = false,
-                    Message = $"Can not find invoker with provided Id."
+                    Message = $"Can not find dentist with provided Id."
                 });
             }
 
@@ -237,13 +227,13 @@ namespace ClinicPlatformWebAPI.Controllers
             }
 
             target.IsActive = false;
-            target = userService.UpdateUserInformation(target, out var message);
+            var result = userService.UpdateUserInformation(target, out var message);
 
             if (target == null)
             {
                 return BadRequest(new HttpResponseModel
                 {
-                    StatusCode = 400,
+                    StatusCode = result.statusCode,
                     Success = false,
                     Message = message
                 });
@@ -251,13 +241,20 @@ namespace ClinicPlatformWebAPI.Controllers
 
             return Ok(new HttpResponseModel
             {
-                StatusCode = 200,
+                StatusCode = result.statusCode,
                 Success = true,
                 Message = "Deactivated dentist account"
             });
             
         }
 
+        /// <summary>
+        ///  580. Dentist Already activated.
+        ///  404. Can not find dentist with Id.
+        ///  0. Success
+        /// </summary>
+        /// <param name="dentistId"></param>
+        /// <returns></returns>
         [HttpPut("staff/activate")]
         [Authorize(Roles = "Dentist")]
         public ActionResult<HttpResponseModel> ActivateDentistAccount(int dentistId)
@@ -270,9 +267,9 @@ namespace ClinicPlatformWebAPI.Controllers
             {
                 return BadRequest(new HttpResponseModel
                 {
-                    StatusCode = 400,
+                    StatusCode = 404,
                     Success = false,
-                    Message = $"Can not find dentist with provided Id."
+                    Message = "Can not find dentist with provided Id."
                 });
             }
 
@@ -282,20 +279,20 @@ namespace ClinicPlatformWebAPI.Controllers
                 {
                     return BadRequest(new HttpResponseModel
                     {
-                        StatusCode = 400,
+                        StatusCode = 580,
                         Success = false,
                         Message = "Dentist account is already actived!"
                     });
                 }
 
                 target.IsActive = true;
-                target = userService.UpdateUserInformation(target, out var message);
+                var result = userService.UpdateUserInformation(target, out var message);
 
-                if (target == null)
+                if (result.userInfo == null)
                 {
                     return BadRequest(new HttpResponseModel
                     {
-                        StatusCode = 400,
+                        StatusCode = result.statusCode,
                         Success = false,
                         Message = message
                     });

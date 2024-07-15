@@ -9,6 +9,7 @@ namespace ClinicPlatformObjects.UserModels.DentistModel
     public class DentistInfoViewModel
     {
         public int DentistId { get; set; }
+        public int UserId { get; set; }
         public string Fullname { get; set; } = null!;
         public string Username { get; set; } = null!;
         public string Email { get; set; } = null!;

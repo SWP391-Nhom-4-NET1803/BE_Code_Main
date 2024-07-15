@@ -536,7 +536,7 @@ namespace ClinicPlatformServices
             if ((bookRegistrationInfo.AppointmentType == "treatment" && !DentistIsFreeForTreatmentOn(bookRegistrationInfo.AppointmentDate, bookRegistrationInfo.TimeSlotId, bookRegistrationInfo.DentistId, out message)) || 
                 (bookRegistrationInfo.AppointmentType == "checkup" && !DentistIsFreeForCheckupOn(bookRegistrationInfo.AppointmentDate, bookRegistrationInfo.TimeSlotId, bookRegistrationInfo.DentistId, out message)))
             {
-                message = "This slot is fully booked and unavailable for this date";
+                message = "The current selected docter is fully booked and unavailable for the selected time frame";
                 return null;
             }
 

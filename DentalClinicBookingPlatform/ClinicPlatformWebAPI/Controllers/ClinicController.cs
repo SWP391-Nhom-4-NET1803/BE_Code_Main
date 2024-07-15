@@ -73,14 +73,12 @@ namespace ClinicPlatformWebAPI.Controllers
 
             if (open != null)
             {
-                result = result
-                    .Where(x => x.OpenHour >= open);
+                result = result.Where(x => x.OpenHour >= open);
             }
 
             if (close != null)
             {
-                result = result
-                    .Where(x => x.CloseHour <= close);
+                result = result.Where(x => x.CloseHour <= close);
             }
 
             return Ok(new HttpResponseModel()
@@ -103,7 +101,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 PasswordHash = info.OwnerPassword,
                 Fullname = info.OwnerFullName,
                 Email = info.OwnerEmail,
-                IsOwner = true
+                IsOwner = true,
+                IsActive = true,
             };
                 
             userInfo = userService.RegisterAccount(userInfo, "Dentist", out var message);
@@ -135,17 +134,20 @@ namespace ClinicPlatformWebAPI.Controllers
             }
 
             userInfo.ClinicId = clinic.Id;
-            UserInfoModel? user = userService.UpdateUserInformation(userInfo, out message);
 
-            if (user == null)
+            var result = userService.UpdateUserInformation(userInfo, out message);
+
+            if (result.userInfo == null)
             {
                 return BadRequest(new HttpResponseModel()
                 {
-                    StatusCode = 400,
+                    StatusCode = result.statusCode,
                     Success = false,
                     Message =  message
                 });
             }
+
+            clinic.OwnerName = result.userInfo.Fullname;
             
             return Ok(new HttpResponseModel()
             {

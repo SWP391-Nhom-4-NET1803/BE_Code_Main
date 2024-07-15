@@ -113,7 +113,7 @@ namespace ClinicPlatformServices
         {
             user = GetWithUsernameAndPassword(username, password);
 
-            if (user != null) 
+            if (user != null && user.IsActive && !user.IsRemoved) 
             {
                 return true;
             }
@@ -200,31 +200,31 @@ namespace ClinicPlatformServices
             }
         }
 
-        public UserInfoModel? UpdateUserInformation(UserInfoModel information, out string message)
+        public (int statusCode, UserInfoModel? userInfo) UpdateUserInformation(UserInfoModel information, out string message)
         {
             var AllUserInfo = userRepository.GetAllUser();
 
             if (AllUserInfo.Any(x => x.Username == information.Username && x.Id != information.Id))
             {
                 message = "Username is taken by another account.";
-                return null;
+                return (1, null);
             }
 
             if (AllUserInfo.Any(x => x.Email == information.Email && x.Id != information.Id && !x.IsRemoved))
             {
                 message = "Email is used by another account.";
-                return null;
+                return (2, null);
             }
 
             UserInfoModel? user = userRepository.UpdateUser(information);
             if (user != null)
             {
                 message = "Update user information successfully";
-                return user;
+                return (0, user);
             }
 
             message = "Update user information failed";
-            return null;
+            return (3, null);
         }
 
         public bool UpdatePasswordForUserWithId(int userId, string newPassword, out string message)
@@ -242,7 +242,7 @@ namespace ClinicPlatformServices
             {
                 userInfo.PasswordHash = HashPassword(newPassword, userInfo.Salt);
 
-                return UpdateUserInformation(userInfo, out message) != null;
+                return UpdateUserInformation(userInfo, out message).userInfo != null;
             }
 
             message = $"User does not exist for Id {userId}";
