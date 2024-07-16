@@ -6,7 +6,9 @@ using ClinicPlatformServices.Contracts;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
 
 namespace ClinicPlatformWebAPI.Controllers
@@ -250,7 +252,6 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpGet("unverified-clinic")]
         public ActionResult<IHttpResponseModel<IEnumerable<ClinicRegistrationModel>>> GetUnregisteredClinics([FromQuery] string name = "", [FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
-
             var unregisteredClinic = clinicService.GetUnverifiedClinics();
 
             if (unregisteredClinic == null)
@@ -306,8 +307,6 @@ namespace ClinicPlatformWebAPI.Controllers
                 return Ok(response);
             }
         }
-
-
 
     }
 }

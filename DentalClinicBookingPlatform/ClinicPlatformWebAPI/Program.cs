@@ -14,6 +14,8 @@ using Microsoft.Extensions.Options;
 using ClinicPlatformWebAPI.Services.VNPayService;
 using System.IdentityModel.Tokens.Jwt;
 using ClinicPlatformWebAPI.Services.EmailService;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -92,24 +94,23 @@ builder.Services.AddAuthentication(options =>
     {
         OnChallenge = async context =>
         {
-
             context.HandleResponse();
 
-            context.Response.StatusCode = 401;
+            context.Response.ContentType = "application/json";
+            context.Response.StatusCode = StatusCodes.Status401Unauthorized; context.Response.StatusCode = 401;
 
-            var actionContext = new ActionContext(context.HttpContext, context.HttpContext.GetRouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
+            //var actionContext = new ActionContext(context.HttpContext, context.HttpContext.GetRouteData(), new Microsoft.AspNetCore.Mvc.Abstractions.ActionDescriptor());
 
-            string[] token = context.Request.Headers["Authorization"].ToString().Split(" ");
-
-            var result = new ObjectResult(new HttpResponseModel()
+            var result = new HttpResponseModel()
             {
                 StatusCode = 401,
                 Success = false,
                 Message = "You dont have permission to access this resource"
-            })
-            { StatusCode = 401 };
+            };
 
-            if (token.Length < 2)
+            await context.Response.WriteAsync(JsonConvert.SerializeObject(result));
+
+            /*if (token.Length < 2)
             {
                 (result.Value as HttpResponseModel).Message = "User has not logged in";
             }
@@ -128,9 +129,10 @@ builder.Services.AddAuthentication(options =>
                 {
                     (result.Value as HttpResponseModel).Message = "Token has expired";
                 }
-            }
+            }*/
 
-            await result.ExecuteResultAsync(actionContext);
+            //await result.ExecuteResultAsync(actionContext);
+
         }
     };
 });

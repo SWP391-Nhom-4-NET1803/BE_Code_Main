@@ -77,7 +77,7 @@ namespace ClinicPlatformWebAPI.Controllers
 
                 var token = authService.GenerateTokens(user);
 
-                return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Authorized", Content = token });
+                return Ok(new HttpResponseModel() { StatusCode = 200, Message = "Authorized", Success=true, Content = token });
             }
             catch (Exception ex)
             {

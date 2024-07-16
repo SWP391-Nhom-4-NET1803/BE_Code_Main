@@ -18,7 +18,7 @@ namespace ClinicPlatformDTOs.ClinicModels
         public TimeOnly OpenHour { get; set; }
         public TimeOnly CloseHour { get; set; }
         public int OwnerId { get; set; }
-        public string OwnerName { get; set; } = null!;
+        public string? OwnerName { get; set; } = null!;
         public bool Working { get; set; } = false;
         public string Status { get; set; } = Unverified;
 
