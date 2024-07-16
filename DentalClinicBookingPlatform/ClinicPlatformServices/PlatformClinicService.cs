@@ -82,7 +82,7 @@ namespace ClinicPlatformServices
 
         public IEnumerable<ClinicInfoModel> GetVerifiedClinics()
         {
-            var result = clinicRepository.GetAllClinic(true, false, false);
+            var result = clinicRepository.GetAllClinic(true, false, false).ToList();
 
             foreach (var clinic in result)
             {
@@ -93,7 +93,7 @@ namespace ClinicPlatformServices
         }
         public IEnumerable<ClinicInfoModel> GetUnverifiedClinics()
         {
-            var result = clinicRepository.GetAllClinic(false, false, true);
+            var result = clinicRepository.GetAllClinic(false, false, true).ToList();
 
             foreach (var clinic in result)
             {

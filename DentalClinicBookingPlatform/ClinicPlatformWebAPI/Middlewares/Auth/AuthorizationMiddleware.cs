@@ -20,6 +20,8 @@ namespace ClinicPlatformWebAPI.Middlewares.Authentication
             {
                 UserInfoModel? user = authService.ValidateAccessToken(token.Split(" ").Last(), out var message);
 
+                Console.WriteLine(message);
+
                 context.Items.Add("user", user);
             }
 

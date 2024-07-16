@@ -35,7 +35,7 @@ namespace ClinicPlatformServices
             GoogleO2Auth = configuration.GetSection("GoogleO2Auth:Token").Value!;
         }
 
-        public string GenerateAccessToken(UserInfoModel user, int duration = 10)
+        public string GenerateAccessToken(UserInfoModel user, int duration = 3)
         {
             // Get User information to put in the token to create user Identity.
             var claims = new ClaimsIdentity(new[]
@@ -66,7 +66,7 @@ namespace ClinicPlatformServices
             return TokenHandler.WriteToken(token);
         }
 
-        public string GenerateRefreshToken(UserInfoModel user, int duration = 60)
+        public string GenerateRefreshToken(UserInfoModel user, int duration = 5)
         {
             string expirationTime = DateTime.Now.AddMinutes(duration).ToString("MM-dd-yyyy HH:mm:ss");
 
@@ -83,7 +83,7 @@ namespace ClinicPlatformServices
             }
         }
 
-        public AuthenticationTokenModel GenerateTokens(UserInfoModel user, int accessDuration = 10, int refreshDuration = 60)
+        public AuthenticationTokenModel GenerateTokens(UserInfoModel user, int accessDuration = 3, int refreshDuration = 5)
         {
             AuthenticationTokenModel authToken = new AuthenticationTokenModel()
             {
