@@ -1,4 +1,5 @@
 ﻿using ClinicPlatformDTOs.UserModels;
+using ClinicPlatformObjects.UserModels;
 using ClinicPlatformObjects.UserModels.CustomerModel;
 using ClinicPlatformObjects.UserModels.DentistModel;
 
@@ -90,6 +91,28 @@ namespace ClinicPlatformWebAPI.Helpers.ModelMapper
                 Username = userInfo.Username,
                 PasswordHash = userInfo.Password,
                 Fullname = userInfo.Fullname
+            };
+        }
+
+        public static UserInfoViewModel FromUserInfoToView (UserInfoModel userInfo)
+        {
+            return new UserInfoViewModel
+            {
+                UserId = userInfo.Id,
+                CustomerId = userInfo.CustomerId,
+                DentistId = userInfo.DentistId,
+                ClinicId = userInfo.ClinicId,
+                Username = userInfo.Username,
+                Fullname = userInfo.Fullname,
+                Insurance = userInfo.Insurance,
+                Email = userInfo.Email,
+                Phone = userInfo.Phone,
+                Role = userInfo.Role,
+                Sex = userInfo.Sex,
+                JoinedDate = userInfo.JoinedDate,
+                Birthdate = userInfo.Birthdate,
+                IsActive = userInfo.IsActive,
+                IsRemoved = userInfo.IsRemoved
             };
         }
     }

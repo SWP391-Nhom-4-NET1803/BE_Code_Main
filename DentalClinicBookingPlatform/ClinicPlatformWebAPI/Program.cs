@@ -87,7 +87,8 @@ builder.Services.AddAuthentication(options =>
         ValidateIssuer = true,
         ValidateAudience = false,
         ValidateLifetime = true,
-        ValidateIssuerSigningKey = true
+        ValidateIssuerSigningKey = true,
+        ClockSkew = TimeSpan.Zero,
     };
 
     options.Events = new JwtBearerEvents
@@ -105,7 +106,7 @@ builder.Services.AddAuthentication(options =>
             {
                 StatusCode = 401,
                 Success = false,
-                Message = "You dont have permission to access this resource"
+                Message = "You have not logged in yet or your access token is expired"
             };
 
             await context.Response.WriteAsync(JsonConvert.SerializeObject(result));

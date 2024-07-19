@@ -57,14 +57,36 @@ namespace ClinicPlatformWebAPI.Controllers
             });
         }
 
+        [HttpGet("owner/{id}")]
+        public ActionResult<IHttpResponseModel<ClinicInfoModel>> GetClinicInformationWithOwner(int id)
+        {
+            var clinicInfo = clinicService.GetClinicWithOwnerId(id);
+
+            if (clinicInfo == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 1,
+                    Success = false,
+                    Message = "no clinic found",
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 0,
+                Success = true,
+                Message = "success",
+                Content = clinicInfo,
+            });
+        }
+
         [HttpGet("search")]
         public ActionResult<IHttpResponseModel<IEnumerable<ClinicInfoModel>>> SearchClinic([FromQuery] string? name=null, [FromQuery] TimeOnly? open=null, [FromQuery] TimeOnly? close=null, int page_size=100, int page = 1)
         {
-            IEnumerable<ClinicInfoModel> result;
+            IEnumerable<ClinicInfoModel> result = clinicService.GetVerifiedClinics();
 
-            result = clinicService.GetAllClinic(page_size, page-1);
-
-            result = result.Where(x => x.Status == "verified");
+            Console.WriteLine(result.Count());
 
             if (name != null)
             {
@@ -81,12 +103,14 @@ namespace ClinicPlatformWebAPI.Controllers
                 result = result.Where(x => x.CloseHour <= close);
             }
 
+            Console.WriteLine(result.Count());
+
             return Ok(new HttpResponseModel()
             {
                 StatusCode = 200,
                 Success = true,
                 Message = "Success",
-                Content = result
+                Content = result.ToList().Skip((page - 1) * page_size).Take(page_size)
             });
         }
 

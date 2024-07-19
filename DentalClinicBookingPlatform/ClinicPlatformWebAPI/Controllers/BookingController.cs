@@ -38,6 +38,8 @@ namespace ClinicPlatformWebAPI.Controllers
         {
             var appointment = bookingService.GetBooking(id);
 
+            Console.WriteLine(appointment.CustomerId);
+
             if (appointment != null)
             {
                 return Ok(new HttpResponseModel
@@ -45,7 +47,7 @@ namespace ClinicPlatformWebAPI.Controllers
                     StatusCode = 0,
                     Success = true,
                     Message = "Found appointment information",
-                    Content = appointment,
+                    Content =   appointment,
                 });
             }
 
@@ -500,8 +502,8 @@ namespace ClinicPlatformWebAPI.Controllers
                 CreationTime = bookModel.CreationTime,
                 IsRecurring = bookModel.OriginalAppoinment != null,
                 ClinicId = clinicInfo.Id,
-                CustomerId = customerInfo.Id,
-                DentistId = dentistInfo.Id,
+                CustomerId = (int) customerInfo.CustomerId,
+                DentistId = (int) dentistInfo.DentistId,
                 OriginalAppointment = bookModel.OriginalAppoinment,
                 ServiceId = serviceInfo.ClinicServiceId,
                 SlotId = bookModel.ClinicSlotId,

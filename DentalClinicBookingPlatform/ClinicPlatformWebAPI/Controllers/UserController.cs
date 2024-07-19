@@ -116,5 +116,31 @@ namespace ClinicPlatformWebAPI.Controllers
                 Message = message,
             });
         }
+
+        [HttpGet("check-token")]
+        [AllowAnonymous]
+        public ActionResult<HttpResponseModel> CheckToken(string token) {
+            var result = tokenService.MatchTokenValue(token, out var message);
+
+            if (result == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 1,
+                    Success = false,
+                    Message = message,
+                    Content = false,
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 0,
+                Success = true,
+                Message= message,
+                Content = true,
+            });
+
+        }
     }
 }
