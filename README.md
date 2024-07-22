@@ -1,7 +1,7 @@
 # Dental Clinic Booking Platform BE source code
 
 <p align="center">
-  <image src="" alt="logo not found">
+  <image src="Logo.png" alt="logo not found">
 </p>
 
 ## About
