@@ -2,7 +2,11 @@
 using ClinicPlatformDTOs.UserModels;
 using ClinicPlatformObjects.ReportModels;
 using ClinicPlatformObjects.ServiceModels;
+using ClinicPlatformObjects.UserModels;
+using ClinicPlatformObjects.UserModels.CustomerModel;
+using ClinicPlatformObjects.UserModels.DentistModel;
 using ClinicPlatformServices.Contracts;
+using ClinicPlatformWebAPI.Helpers.ModelMapper;
 using ClinicPlatformWebAPI.Helpers.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
@@ -10,6 +14,7 @@ using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Newtonsoft.Json;
 using System.ComponentModel.DataAnnotations;
+using System.Runtime.InteropServices;
 
 namespace ClinicPlatformWebAPI.Controllers
 {
@@ -39,17 +44,8 @@ namespace ClinicPlatformWebAPI.Controllers
             this.adminService = adminService;
         }
 
-
-        /// <summary>
-        ///  I WAS WRONG WHEN I CREATED THIS ENDPOINT! 
-        ///  DON'T USE THIS WHILE I'M FINDING ANOTHER WAY TO FIX THIS DANGEROUS ONE.
-        ///  THIS WILL RETURN "ALL" USER INFORMATION, INCLUDING PASSWORD.
-        /// </summary>
-        /// <returns>
-        ///  All system user informations
-        /// </returns>
         [HttpGet("users")]
-        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetUsers()
+        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoViewModel>>> GetUsers([FromQuery] int page_size = int.MaxValue, [FromQuery] int page = 1)
         {
             IEnumerable<UserInfoModel> user = userService.GetUsers();
 
@@ -58,7 +54,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 200,
                 Success = true,
                 Message = "Total records: {user.Count()}",
-                Content = user
+                Content = user.Select(x => UserInfoMapper.FromUserInfoToView(x)).Skip((page-1)*page_size).Take(page_size)
             };
 
             return Ok(ResponseBody);
@@ -76,38 +72,45 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("customer")]
-        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetCustomer([FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
+        public ActionResult<IHttpResponseModel<IEnumerable<CustomerInfoViewModel>>> GetCustomer([FromQuery]string name = "", [FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
                 Success = true,
                 Message = $"Showing page {page}.",
-                Content = userService.GetAllUserOfRole("Customer").Skip(pageSize * (page - 1)).Take(pageSize).ToList()
-            });
+                Content = userService.GetAllUserOfRole("Customer").Skip(pageSize * (page - 1)).Take(pageSize).Select(x => UserInfoMapper.ToCustomerView(x))
+            });;
         }
 
         [HttpGet("clinic-owners")]
-        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetClinicOwners([FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
+        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetClinicOwners([FromQuery]string name = "", [FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
                 Success = true,
                 Message = $"Showing page {page}.",
-                Content = userService.GetAllUserOfRole("Dentist").Where(x => x.IsOwner).Skip(pageSize*(page - 1)).Take(pageSize).ToList()
+                Content = userService.GetAllUserOfRole("Dentist").Skip(pageSize * (page - 1)).Take(pageSize).Where(x => x.Fullname.Contains(name, StringComparison.OrdinalIgnoreCase) && x.IsOwner).Select(x => UserInfoMapper.ToDentistView(x))
             });
         }
 
         [HttpGet("dentist")]
-        public ActionResult<IHttpResponseModel<IEnumerable<UserInfoModel>>> GetDentists(int clinicId, [FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
+        public ActionResult<IHttpResponseModel<IEnumerable<DentistInfoViewModel>>> GetDentists([FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
+            List<DentistInfoViewModel> itemList = (List<DentistInfoViewModel>)userService.GetAllUserOfRole("Dentist").Skip(pageSize * (page - 1)).Take(pageSize).Select(x => UserInfoMapper.ToDentistView(x)).ToList();
+
+            foreach (var dentist in itemList)
+            {
+                dentist.ClinicName = clinicService.GetClinicWithId((int)dentist.ClinicId).Name;
+            }
+
             return Ok(new HttpResponseModel
             {
                 StatusCode = 200,
                 Success = true,
                 Message = $"Showing page {page}.",
-                Content = userService.GetAllUserOfRole("Dentist").Where(x => !x.IsOwner).Skip(pageSize * (page - 1)).Take(pageSize).ToList()
+                Content = itemList/*Where(x => x.Fullname.Contains(name, StringComparison.OrdinalIgnoreCase))*/
             });
         }
 
@@ -223,10 +226,7 @@ namespace ClinicPlatformWebAPI.Controllers
         [HttpGet("verified-clinic")]
         public ActionResult<IHttpResponseModel<IEnumerable<ClinicRegistrationModel>>> GetRegisteredClinics([FromQuery] string name = "", [FromQuery] int pageSize = int.MaxValue, [FromQuery] int page = 1)
         {
-
             var registeredClinic = clinicService.GetVerifiedClinics();
-
-            Console.WriteLine(registeredClinic.First().OwnerName);
 
             if (registeredClinic == null)
             {

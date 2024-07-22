@@ -31,7 +31,9 @@ namespace ClinicPlatformWebAPI.Controllers
         [Authorize]
         public ActionResult<HttpResponseModel> UpdateUserPassword([FromBody] PasswordResetModel resetInfo)
         {
-            if (!userService.UpdatePasswordForUserWithId((int)resetInfo.Id!, resetInfo.NewPassword, out var message))
+            var user = HttpContext.Items["user"] as UserInfoModel;
+
+            if (!userService.UpdatePasswordForUserWithId(user.Id, resetInfo.NewPassword, out var message))
             {
                 return BadRequest(new HttpResponseModel()
                 {
@@ -115,6 +117,32 @@ namespace ClinicPlatformWebAPI.Controllers
                 Success = true,
                 Message = message,
             });
+        }
+
+        [HttpGet("check-token")]
+        [AllowAnonymous]
+        public ActionResult<HttpResponseModel> CheckToken(string token) {
+            var result = tokenService.MatchTokenValue(token, out var message);
+
+            if (result == null)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 1,
+                    Success = false,
+                    Message = message,
+                    Content = false,
+                });
+            }
+
+            return Ok(new HttpResponseModel
+            {
+                StatusCode = 0,
+                Success = true,
+                Message= message,
+                Content = true,
+            });
+
         }
     }
 }

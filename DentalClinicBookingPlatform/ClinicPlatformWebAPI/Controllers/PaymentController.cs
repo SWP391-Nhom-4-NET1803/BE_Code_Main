@@ -362,8 +362,18 @@ namespace ClinicPlatformWebAPI.Controllers
         }
 
         [HttpGet("clinic/{id}")]
-        public IActionResult GetClinicPayment(int id)
+        public IActionResult GetClinicPayment(int id, [FromQuery] DateOnly from,[FromQuery] DateOnly to)
         {
+            if (from > to)
+            {
+                return BadRequest(new HttpResponseModel
+                {
+                    StatusCode = 2,
+                    Success = false,
+                    Message = "Can not have the from date after the to date"
+                });
+            }
+
             if (clinicService.GetClinicWithId(id) == null)
             {
                 return BadRequest(new HttpResponseModel
@@ -381,7 +391,7 @@ namespace ClinicPlatformWebAPI.Controllers
                 StatusCode = 200,
                 Success = true,
                 Message = $"Found {result.Count()} result",
-                Content = result
+                Content = result.Where(x =>  from < DateOnly.FromDateTime(x.CreatedTime) && DateOnly.FromDateTime(x.CreatedTime)< to)
             });
         }
 

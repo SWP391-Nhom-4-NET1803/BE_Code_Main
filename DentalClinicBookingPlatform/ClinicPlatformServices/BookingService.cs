@@ -659,6 +659,8 @@ namespace ClinicPlatformServices
             {
                 item.SelectedService = bookingRepository.GetBookingService(id)!.ClinicServiceId;
             }
+
+            Console.WriteLine(item.CustomerId);
             
             return item;
         }

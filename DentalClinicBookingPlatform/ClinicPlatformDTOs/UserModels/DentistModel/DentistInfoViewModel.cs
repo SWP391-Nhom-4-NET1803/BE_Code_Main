@@ -17,6 +17,7 @@ namespace ClinicPlatformObjects.UserModels.DentistModel
         public bool IsActive { get; set; }
         public DateTime? JoinedDate { get; set; }
         public int? ClinicId { get; set; }
+        public string? ClinicName { get; set; }
         public bool IsOwner { get; set; }
     }
 }
