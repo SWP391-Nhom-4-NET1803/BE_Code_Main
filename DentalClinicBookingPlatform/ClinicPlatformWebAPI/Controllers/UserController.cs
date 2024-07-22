@@ -31,7 +31,9 @@ namespace ClinicPlatformWebAPI.Controllers
         [Authorize]
         public ActionResult<HttpResponseModel> UpdateUserPassword([FromBody] PasswordResetModel resetInfo)
         {
-            if (!userService.UpdatePasswordForUserWithId((int)resetInfo.Id!, resetInfo.NewPassword, out var message))
+            var user = HttpContext.Items["user"] as UserInfoModel;
+
+            if (!userService.UpdatePasswordForUserWithId(user.Id, resetInfo.NewPassword, out var message))
             {
                 return BadRequest(new HttpResponseModel()
                 {
